@@ -1,0 +1,31 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# Obs:
+# If you are using Visual Code with "Go" extension then it
+# might overwride some configurations for the "*.go" files.
+
+# top-most EditorConfig file
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[{Makefile,.gitmodules,go.mod,go.sum,*.go}]
+indent_style = tab
+
+[*.sh]
+indent_style = space
+insert_final_newline = false
+
+[*.md]
+indent_style = tab
+trim_trailing_whitespace = false
+
+[*.{yml,yaml,json}]
+indent_style = space
+indent_size = 2
