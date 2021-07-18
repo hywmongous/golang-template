@@ -2,7 +2,7 @@ BUILDPATH=./build
 BUILDDIRS=golang docker
 
 DEPLOYMENTPATH=./deployment
-DEPLOYMENTDIRS=docker-compose
+DEPLOYMENTDIRS=docker-compose-postgres
 
 SPACE :=
 SPACE +=
@@ -44,7 +44,15 @@ dist_clean:
 .SILENT:
 .PHONY:
 %:
-	$(info Building: $(filter-out ${MAKECMDGOALS}, $(firstword $(subst _, , ${MAKECMDGOALS}))))
-	$(info Target: $(subst ${SPACE},_,$(filter-out $(firstword $(subst _, , ${MAKECMDGOALS})), $(subst _, , ${MAKECMDGOALS}))))
-	$(MAKE) -C $(BUILDPATH)/$(firstword $(subst _, , ${MAKECMDGOALS})) \
-		$(subst ${SPACE},_,$(filter-out $(firstword $(subst _, , ${MAKECMDGOALS})), $(subst _, , ${MAKECMDGOALS})))
+	$(if $(filter $(firstword $(subst _, , ${MAKECMDGOALS})),$(BUILDDIRS)), \
+		$(info Building: $(filter-out ${MAKECMDGOALS}, $(firstword $(subst _, , ${MAKECMDGOALS})))) \
+		$(info Target: $(subst ${SPACE},_,$(filter-out $(firstword $(subst _, , ${MAKECMDGOALS})), $(subst _, , ${MAKECMDGOALS})))) \
+
+		$(MAKE) -C $(BUILDPATH)/$(firstword $(subst _, , ${MAKECMDGOALS})) \
+			$(subst ${SPACE},_,$(filter-out $(firstword $(subst _, , ${MAKECMDGOALS})), $(subst _, , ${MAKECMDGOALS}))))
+	$(if $(filter $(firstword $(subst _, , ${MAKECMDGOALS})),$(DEPLOYMENTDIRS)), \
+		$(info Deploying: $(filter-out ${MAKECMDGOALS}, $(firstword $(subst _, , ${MAKECMDGOALS})))) \
+		$(info Target: $(subst ${SPACE},_,$(filter-out $(firstword $(subst _, , ${MAKECMDGOALS})), $(subst _, , ${MAKECMDGOALS})))) \
+
+		$(MAKE) -C $(DEPLOYMENTPATH)/$(firstword $(subst _, , ${MAKECMDGOALS})) \
+			$(subst ${SPACE},_,$(filter-out $(firstword $(subst _, , ${MAKECMDGOALS})), $(subst _, , ${MAKECMDGOALS}))))

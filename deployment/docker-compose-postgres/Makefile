@@ -21,7 +21,7 @@ create: build
 
 .PHONY:
 up:
-	sudo $(DOCKERCOMPOSE) up --build --abort-on-container-exit --remove-orphans
+	sudo $(DOCKERCOMPOSE) up --build --remove-orphans
 
 .PHONY:
 down:

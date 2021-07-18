@@ -1,5 +1,6 @@
 ROOTPATH=./../..
-BASEPATH=$(ROOTPATH)/cmd/hello-world
+CMDNAME=service_postgres
+BASEPATH=$(ROOTPATH)/cmd/$(CMDNAME)
 MAINPATH=$(BASEPATH)/main.go
 
 BUILDPATH=.

@@ -1,0 +1,34 @@
+version: "3.9"
+
+volumes:
+  example-service-postgressql_data:
+
+networks:
+  service_net:
+
+services:
+  example-service-postgressql:
+    image: postgres
+    container_name: postgres
+    restart: always
+    volumes:
+      - example-service-postgressql_data:/var/lib/postgresql/data:rw
+    ports:
+      - "5432"
+    networks:
+      - service_net
+    env_file:
+      - ./environments/postgres.env
+
+  example-service:
+    image: example-service:latest
+    container_name: service
+    restart: always
+    depends_on:
+      - example-service-postgressql
+    ports:
+      - "8080:8080"
+    networks:
+      - service_net
+    env_file:
+      - ./environments/example-service.env
