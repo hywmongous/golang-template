@@ -1,8 +1,9 @@
-BASEPATH=./../../cmd/rest-server
+ROOTPATH=./../..
+BASEPATH=$(ROOTPATH)/cmd/hello-world
 MAINPATH=$(BASEPATH)/main.go
 
 BUILDPATH=.
-DISTPATH=./../../dist/golang
+DISTPATH=$(ROOTPATH)/dist/golang
 BINPATH=bin
 BINMAINPATH=$(BINPATH)/main
 
@@ -20,7 +21,7 @@ help:
 
 .PHONY:
 build:
-	go build $(BFLAGS) $(BUILDPATH)/$(BINMAINPATH) $(MAINPATH)
+	go build $(BFLAGS) $(DISTPATH)/$(BINMAINPATH) $(MAINPATH)
 
 .PHONY:
 compile:
