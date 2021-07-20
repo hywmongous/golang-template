@@ -11,7 +11,7 @@ var Module = fx.Options(
 	ControllerOptions,
 	MiddlewareOptions,
 	RouteOptions,
-	LibsOptions,
+	LibOptions,
 	fx.Invoke(bootstrap),
 )
 

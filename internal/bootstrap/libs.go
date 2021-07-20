@@ -6,6 +6,6 @@ import (
 	"go.uber.org/fx"
 )
 
-var LibsOptions = fx.Options(
+var LibOptions = fx.Options(
 	fx.Provide(lib.RequestHandlerFactory),
 )

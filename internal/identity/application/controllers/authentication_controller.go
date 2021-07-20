@@ -1,4 +1,4 @@
-package identity
+package application
 
 import (
 	"fmt"
@@ -9,19 +9,15 @@ import (
 
 type AuthenticationController struct{}
 
-func AuthenticationControllerFactory() AuthenticationController {
-	return AuthenticationController{}
+func AuthenticationControllerFactory() TicketController {
+	return TicketController{}
 }
 
 func (controller AuthenticationController) Login(context *gin.Context) {
 	username, password, ok := context.Request.BasicAuth()
-	context.String(http.StatusOK, fmt.Sprintf("Authorization %s:%s %t", username, password, ok))
+	context.String(http.StatusOK, fmt.Sprintf("Logging ing %s:%s %t", username, password, ok))
 }
 
 func (controller AuthenticationController) Logout(context *gin.Context) {
-	context.String(http.StatusOK, "Logout")
-}
-
-func (controller AuthenticationController) Refresh(context *gin.Context) {
-	context.String(http.StatusOK, "Refresh")
+	context.String(http.StatusOK, "Logging out")
 }

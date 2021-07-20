@@ -1,4 +1,4 @@
-package identity
+package application
 
 import (
 	identity "github.com/hywmongous/example-service/internal/identity/application/controllers"
@@ -21,8 +21,9 @@ func AuthenticationRoutesFactory(
 }
 
 func (routes AuthenticationRoutes) Setup() {
-	group := routes.handler.Gin.Group("/api/authentication")
+	group := routes.handler.Gin.Group("/api/v1/authentication")
+	// POST since we are creating a session upon logging in an account
 	group.POST("/login", routes.controller.Login)
-	group.POST("/logout", routes.controller.Login)
-	group.POST("/refresh", routes.controller.Refresh)
+	// POST since it is not idempotent and we update the session
+	group.POST("/logout", routes.controller.Logout)
 }
