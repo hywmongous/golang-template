@@ -8,6 +8,7 @@ import (
 
 var ControllerOptions = fx.Options(
 	fx.Provide(application.AccountControllerFactory),
+	fx.Provide(application.AuthenticationControllerFactory),
 	fx.Provide(application.SessionControllerFactory),
 	fx.Provide(application.TicketControllerFactory),
 )

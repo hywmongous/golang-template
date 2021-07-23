@@ -8,6 +8,7 @@ import (
 var RouteOptions = fx.Options(
 	fx.Provide(RoutesFactory),
 	fx.Provide(application.AccountRoutesFactory),
+	fx.Provide(application.AuthenticationRoutesFactory),
 	fx.Provide(application.SessionRoutesFactory),
 	fx.Provide(application.TicketRoutesFactory),
 )
@@ -20,11 +21,15 @@ type Routes []Route
 
 func RoutesFactory(
 	accountRoutes application.AccountRoutes,
-	authenticationRoutes application.SessionRoutes,
+	authenticationRoutes application.AuthenticationRoutes,
+	sessionRoutes application.SessionRoutes,
+	ticketRoutes application.TicketRoutes,
 ) Routes {
 	return Routes{
 		accountRoutes,
 		authenticationRoutes,
+		sessionRoutes,
+		ticketRoutes,
 	}
 }
 
