@@ -31,7 +31,12 @@ func AuthenticationControllerFactory(
 
 func (controller AuthenticationController) Login(context *gin.Context) {
 	session = domain.SessionFactory()
-	username, password, _ := context.Request.BasicAuth()
+	username, password, ok := context.Request.BasicAuth()
+	if username == "" || password == "" || !ok {
+		context.Writer.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
 	controller.writeSessionToResponse(context, session)
 	context.String(http.StatusOK, fmt.Sprintf("Logging in %s:%s", username, password))
 }
@@ -51,11 +56,13 @@ func (controller AuthenticationController) Verify(context *gin.Context) {
 	accessTokenCookie, err := context.Cookie(jwtAccessTokenCookieName)
 	if err == nil {
 		context.Writer.WriteHeader(http.StatusUnauthorized)
+		return
 	}
 
 	refreshTokenCookie, err := context.Cookie(jwtRefreshTokenCookieName)
 	if err == nil {
 		context.Writer.WriteHeader(http.StatusUnauthorized)
+		return
 	}
 
 	tokenPair := infrastructure.TokenPair{
@@ -67,6 +74,7 @@ func (controller AuthenticationController) Verify(context *gin.Context) {
 
 	if controller.jwtService.VerifyClaims(tokenPair, csrf, session) != nil {
 		context.Writer.WriteHeader(http.StatusUnauthorized)
+		return
 	}
 	context.Writer.WriteHeader(http.StatusOK)
 }

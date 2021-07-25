@@ -2,7 +2,7 @@ BUILDPATH=./build
 BUILDDIRS=golang docker
 
 DEPLOYMENTPATH=./deployment
-DEPLOYMENTDIRS=docker-compose-postgres
+DEPLOYMENTDIRS=docker-compose
 
 SPACE :=
 SPACE +=
@@ -11,18 +11,26 @@ help:
 	@echo 'Cleaning targets:'
 	@echo '  build_clean                   - Invokes all build_clean in supported build makefiles'
 	@echo '  dist_clean                    - Invokes all dist_clean in supported build makefiles'
-	@echo 'Configuration targets:'
-	@echo '  format: "make BUIILD TARGET"  - eg. "make golang build_rest-server'
+	@echo 'Examples:'
+	@echo '  Build golang binary: "make golang_build'
+	@echo '  Run docker: "make docker_run'
+	@echo '  Deploy docker-compose: "make docker-compose-postgres_up'
 	@echo ''
-	@echo '--Help for builds--'
+	@echo '-- make help-build --'
+	$(MAKE) help-build
+	@echo ''
+	@echo '-- make help-deployment --'
+	$(MAKE) help-deployment
+
+help-build:
 	@(for dir in $(BUILDDIRS); do \
 		echo $${dir}
 		echo -n '  '
 		$(MAKE) -s -C $(BUILDPATH)/$$dir help; \
 		echo ''
 	done)
-	@echo ''
-	@echo '--Help for deployments--'
+
+help-deployment:
 	@(for dir in $(DEPLOYMENTDIRS); do \
 		echo $${dir}
 		echo -n '  '
@@ -44,15 +52,22 @@ dist_clean:
 .SILENT:
 .PHONY:
 %:
-	$(if $(filter $(firstword $(subst _, , ${MAKECMDGOALS})),$(BUILDDIRS)), \
-		$(info Building: $(filter-out ${MAKECMDGOALS}, $(firstword $(subst _, , ${MAKECMDGOALS})))) \
-		$(info Target: $(subst ${SPACE},_,$(filter-out $(firstword $(subst _, , ${MAKECMDGOALS})), $(subst _, , ${MAKECMDGOALS})))) \
+	$(eval argv=$(subst _, , ${MAKECMDGOALS})) \
+	$(if $(filter $(firstword $(argv)),$(BUILDDIRS)), \
+		$(eval build=$(word 1, $(argv))) \
+		$(eval target=$(word 2, $(argv))) \
 
-		$(MAKE) -C $(BUILDPATH)/$(firstword $(subst _, , ${MAKECMDGOALS})) \
-			$(subst ${SPACE},_,$(filter-out $(firstword $(subst _, , ${MAKECMDGOALS})), $(subst _, , ${MAKECMDGOALS}))))
-	$(if $(filter $(firstword $(subst _, , ${MAKECMDGOALS})),$(DEPLOYMENTDIRS)), \
-		$(info Deploying: $(filter-out ${MAKECMDGOALS}, $(firstword $(subst _, , ${MAKECMDGOALS})))) \
-		$(info Target: $(subst ${SPACE},_,$(filter-out $(firstword $(subst _, , ${MAKECMDGOALS})), $(subst _, , ${MAKECMDGOALS})))) \
+		$(info Building: $(build)) \
+		$(info Target: $(target)) \
 
-		$(MAKE) -C $(DEPLOYMENTPATH)/$(firstword $(subst _, , ${MAKECMDGOALS})) \
-			$(subst ${SPACE},_,$(filter-out $(firstword $(subst _, , ${MAKECMDGOALS})), $(subst _, , ${MAKECMDGOALS}))))
+		$(MAKE) -C $(BUILDPATH)/$(build) $(target)
+	)
+	$(if $(filter $(firstword $(argv)),$(DEPLOYMENTDIRS)), \
+		$(eval deployment=$(word 1, $(argv))) \
+		$(eval target=$(word 2, $(argv))) \
+
+		$(info Deploying: $(deployment)) \
+		$(info Target: $(target)) \
+
+		$(MAKE) -C $(DEPLOYMENTPATH)/$(deployment) $(target)
+	)
