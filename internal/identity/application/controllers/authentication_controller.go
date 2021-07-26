@@ -37,18 +37,24 @@ func (controller AuthenticationController) Login(context *gin.Context) {
 		return
 	}
 
-	controller.writeSessionToResponse(context, session)
+	sessionContext, err := session.Context()
+	if err != nil {
+		context.Writer.WriteHeader(http.StatusInternalServerError)
+		context.Abort()
+	}
+
+	controller.writeSessionToResponse(context, sessionContext)
 	context.String(http.StatusOK, fmt.Sprintf("Logging in %s:%s", username, password))
 }
 
 func (controller AuthenticationController) Logout(context *gin.Context) {
-	session.Revoked = true
+	session.Revoke()
 	context.String(http.StatusOK, "Logging out")
 }
 
 func (controller AuthenticationController) Refresh(context *gin.Context) {
-	session.Refresh()
-	controller.writeSessionToResponse(context, session)
+	newSessionContext := session.Refresh()
+	controller.writeSessionToResponse(context, newSessionContext)
 	context.String(http.StatusOK, "Refresh session tokens")
 }
 
@@ -72,22 +78,22 @@ func (controller AuthenticationController) Verify(context *gin.Context) {
 
 	csrf := context.Request.Header.Get(csrfHeaderKey)
 
-	if controller.jwtService.VerifyClaims(tokenPair, csrf, session) != nil {
+	if controller.jwtService.Verify(tokenPair, csrf, session) != nil {
 		context.Writer.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 	context.Writer.WriteHeader(http.StatusOK)
 }
 
-func (controller AuthenticationController) writeSessionToResponse(context *gin.Context, session domain.Session) {
-	tokens, _ := controller.jwtService.Sign(session)
+func (controller AuthenticationController) writeSessionToResponse(context *gin.Context, sessionContext domain.SessionContext) {
+	tokens, _ := controller.jwtService.Sign(sessionContext)
 
-	context.Header(csrfHeaderKey, string(session.Csrf))
+	context.Header(csrfHeaderKey, string(sessionContext.Csrf))
 
 	context.SetCookie(
 		jwtAccessTokenCookieName,
 		string(tokens.AccessToken),
-		domain.AccessTokenAbsoluteTimeoutDuration*60,
+		infrastructure.AccessTokenAbsoluteTimeoutDuration*60,
 		"/",
 		"localhost",
 		false,
@@ -97,7 +103,7 @@ func (controller AuthenticationController) writeSessionToResponse(context *gin.C
 	context.SetCookie(
 		jwtRefreshTokenCookieName,
 		string(tokens.RefreshToken),
-		domain.RefreshTokenAbsoluteTimeoutDuration*60,
+		infrastructure.RefreshTokenAbsoluteTimeoutDuration*60,
 		"/",
 		"localhost",
 		false,

@@ -23,13 +23,13 @@ func SessionRoutesFactory(
 func (routes SessionRoutes) Setup() {
 	group := routes.handler.Gin.Group("/api/v1")
 	// Get since we read all sessions for an account
-	group.GET("/accounts/:aid/sessions", routes.controller.GetAll)
+	group.GET("/identities/:aid/sessions", routes.controller.GetAll)
 	// POST since we create a new session for an account
-	group.POST("/accounts/:aid/sessions", routes.controller.Create)
+	group.POST("/identities/:aid/sessions", routes.controller.Create)
 	// PATCH since we partially updates all sessions by invalidating them
-	group.PATCH("/accounts/:aid/sessions", routes.controller.UseAll)
+	group.PATCH("/identities/:aid/sessions", routes.controller.UseAll)
 	// GET since we read a single session for an account
-	group.GET("/accounts/:aid/sessions/:sid", routes.controller.Get)
+	group.GET("/identities/:aid/sessions/:sid", routes.controller.Get)
 	// PATCH since we partially updates the session by invalidating it
-	group.PATCH("/accounts/:aid/sessions/:sid", routes.controller.Use)
+	group.PATCH("/identities/:aid/sessions/:sid", routes.controller.Use)
 }

@@ -1,67 +1,50 @@
 package domain
 
 import (
-	"time"
+	"errors"
 
 	"github.com/hywmongous/example-service/pkg/guid"
 )
 
 type Session struct {
-	Id           string
-	Csrf         string
-	Revoked      bool
-	AccessToken  Token
-	RefreshToken Token
+	Id       string
+	revoked  bool
+	Contexts []SessionContext
 }
 
-type Token struct {
-	Id              string
-	IssuedAt        int64
-	InitialTimeout  int64
-	AbsoluteTimeout int64
-}
-
-const (
-	AccessTokenInitialTimeoutDuration   = 0
-	AccessTokenAbsoluteTimeoutDuration  = 30
-	RefreshTokenInitialTimeoutDuration  = 15
-	RefreshTokenAbsoluteTimeoutDuration = 30
+var (
+	ErrSessionRevoked = errors.New("session is revoked")
 )
 
 func SessionFactory() Session {
+	contexts := [1]SessionContext{SessionContextFactory()}
 	return Session{
-		Id:           guid.New().String(),
-		Csrf:         guid.New().String(),
-		Revoked:      false,
-		AccessToken:  accessTokenFactory(),
-		RefreshToken: refreshTokenFactory(),
+		Id:       guid.New().String(),
+		revoked:  false,
+		Contexts: contexts[:],
 	}
 }
 
-func (session *Session) Refresh() {
-	session.Csrf = guid.New().String()
-	session.AccessToken = accessTokenFactory()
-	session.RefreshToken = refreshTokenFactory()
+func (session *Session) Refresh() SessionContext {
+	newSessionContext := SessionContextFactory()
+	session.Contexts = append(session.Contexts, newSessionContext)
+	return newSessionContext
 }
 
-func accessTokenFactory() Token {
-	// Access tokens can be used immediately and expires after 30 minutes
-	now := time.Now()
-	return Token{
-		Id:              guid.New().String(),
-		IssuedAt:        now.Unix(),
-		InitialTimeout:  now.Add(AccessTokenInitialTimeoutDuration * time.Minute).Unix(),
-		AbsoluteTimeout: now.Add(AccessTokenAbsoluteTimeoutDuration * time.Minute).Unix(),
-	}
+func (session *Session) Revoke() {
+	session.revoked = true
 }
 
-func refreshTokenFactory() Token {
-	// Refresh tokens can be used after 15 minutes and expires after 30
-	now := time.Now()
-	return Token{
-		Id:              guid.New().String(),
-		IssuedAt:        now.Unix(),
-		InitialTimeout:  now.Add(RefreshTokenInitialTimeoutDuration * time.Minute).Unix(),
-		AbsoluteTimeout: now.Add(RefreshTokenAbsoluteTimeoutDuration * time.Minute).Unix(),
+func (session Session) Context() (SessionContext, error) {
+	if session.revoked {
+		return SessionContext{}, ErrSessionRevoked
 	}
+
+	latest := session.Contexts[0]
+	for _, context := range session.Contexts {
+		if context.IssuedAt > latest.IssuedAt {
+			latest = context
+		}
+	}
+	return latest, nil
 }

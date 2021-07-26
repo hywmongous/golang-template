@@ -33,5 +33,6 @@ help-features:
 
 		$(if $(filter $(word 1, $(test)),$(K6)),
 			$(K6) run $(FEATURESPATH)/$(feature)/$(type)_test.js
+			$(K6) run $(FEATURESPATH)/$(feature)/$(type)_test.js
 		)
 	)

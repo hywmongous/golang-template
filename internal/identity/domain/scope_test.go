@@ -1,4 +1,4 @@
-package scopes
+package domain
 
 import (
 	"testing"
