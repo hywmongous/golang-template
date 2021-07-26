@@ -51,6 +51,7 @@ type Token struct {
 	IssuedAt        int64
 	InitialTimeout  int64
 	AbsoluteTimeout int64
+	Subject         string
 }
 
 const (
@@ -67,10 +68,11 @@ func JWTServiceFactory() JWTService {
 	}
 }
 
-func accessTokenFactory(context domain.SessionContext) Token {
+func accessTokenFactory(identity domain.Identity, context domain.SessionContext) Token {
 	// Access tokens can be used immediately and expires after 30 minutes
 	now := time.Now()
 	return Token{
+		Subject:         identity.Id,
 		Id:              context.AccessTokenId,
 		IssuedAt:        now.Unix(),
 		InitialTimeout:  now.Add(AccessTokenInitialTimeoutDuration * time.Minute).Unix(),
@@ -78,10 +80,11 @@ func accessTokenFactory(context domain.SessionContext) Token {
 	}
 }
 
-func refreshTokenFactory(context domain.SessionContext) Token {
+func refreshTokenFactory(identity domain.Identity, context domain.SessionContext) Token {
 	// Refresh tokens can be used after 15 minutes and expires after 30
 	now := time.Now()
 	return Token{
+		Subject:         identity.Id,
 		Id:              context.RefreshTokenId,
 		IssuedAt:        now.Unix(),
 		InitialTimeout:  now.Add(RefreshTokenInitialTimeoutDuration * time.Minute).Unix(),
@@ -103,10 +106,10 @@ func createClaims(context domain.SessionContext, token Token) Claims {
 	}
 }
 
-func (jwtService JWTService) Sign(context domain.SessionContext) (TokenPair, error) {
+func (jwtService JWTService) Sign(identity domain.Identity, context domain.SessionContext) (TokenPair, error) {
 	accessToken := jwt.NewWithClaims(
 		jwtService.alg,
-		createClaims(context, accessTokenFactory(context)),
+		createClaims(context, accessTokenFactory(identity, context)),
 	)
 	accessTokenString, err := accessToken.SignedString(jwtService.privateKey)
 	if err != nil {
@@ -115,7 +118,7 @@ func (jwtService JWTService) Sign(context domain.SessionContext) (TokenPair, err
 
 	refreshToken := jwt.NewWithClaims(
 		jwtService.alg,
-		createClaims(context, refreshTokenFactory(context)),
+		createClaims(context, refreshTokenFactory(identity, context)),
 	)
 	refreshTokenString, err := refreshToken.SignedString(jwtService.privateKey)
 	if err != nil {

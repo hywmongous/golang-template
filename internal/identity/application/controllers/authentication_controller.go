@@ -19,6 +19,7 @@ const (
 	jwtRefreshTokenCookieName = "JWT-REFRESH-TOKEN"
 )
 
+var identity = domain.IdentityFactory()
 var session = domain.SessionFactory()
 
 func AuthenticationControllerFactory(
@@ -86,7 +87,7 @@ func (controller AuthenticationController) Verify(context *gin.Context) {
 }
 
 func (controller AuthenticationController) writeSessionToResponse(context *gin.Context, sessionContext domain.SessionContext) {
-	tokens, _ := controller.jwtService.Sign(sessionContext)
+	tokens, _ := controller.jwtService.Sign(identity, sessionContext)
 
 	context.Header(csrfHeaderKey, string(sessionContext.Csrf))
 
