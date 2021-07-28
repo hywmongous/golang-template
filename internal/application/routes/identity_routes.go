@@ -1,18 +1,18 @@
-package application
+package routes
 
 import (
-	identity "github.com/hywmongous/example-service/internal/identity/application/controllers"
+	"github.com/hywmongous/example-service/internal/application/controllers"
 	"github.com/hywmongous/example-service/internal/lib"
 )
 
 type AccountRoutes struct {
 	handler    lib.RequestHandler
-	controller identity.AccountController
+	controller controllers.AccountController
 }
 
 func AccountRoutesFactory(
 	handler lib.RequestHandler,
-	controller identity.AccountController,
+	controller controllers.AccountController,
 ) AccountRoutes {
 	return AccountRoutes{
 		handler:    handler,

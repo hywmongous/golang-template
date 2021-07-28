@@ -1,18 +1,18 @@
-package application
+package routes
 
 import (
-	identity "github.com/hywmongous/example-service/internal/identity/application/controllers"
+	"github.com/hywmongous/example-service/internal/application/controllers"
 	"github.com/hywmongous/example-service/internal/lib"
 )
 
 type SessionRoutes struct {
 	handler    lib.RequestHandler
-	controller identity.SessionController
+	controller controllers.SessionController
 }
 
 func SessionRoutesFactory(
 	handler lib.RequestHandler,
-	controller identity.SessionController,
+	controller controllers.SessionController,
 ) SessionRoutes {
 	return SessionRoutes{
 		handler:    handler,

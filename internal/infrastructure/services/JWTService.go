@@ -1,4 +1,4 @@
-package infrastructure
+package services
 
 // Information:
 // https://datatracker.ietf.org/doc/html/rfc7519#section-4
@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hywmongous/example-service/internal/identity/domain"
+	"github.com/hywmongous/example-service/internal/domain/identity"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -25,9 +25,8 @@ type TokenPair struct {
 }
 
 type Claims struct {
-	SessionId string   `json:"sid,omitempty"`
-	Csrf      string   `json:"csrf,omitempty"`
-	Scopes    []string `json:"scopes,omitempty"`
+	SessionId string `json:"sid,omitempty"`
+	Csrf      string `json:"csrf,omitempty"`
 	jwt.StandardClaims
 }
 
@@ -68,7 +67,7 @@ func JWTServiceFactory() JWTService {
 	}
 }
 
-func accessTokenFactory(identity domain.Identity, context domain.SessionContext) Token {
+func accessTokenFactory(identity identity.Identity, context identity.SessionContext) Token {
 	// Access tokens can be used immediately and expires after 30 minutes
 	now := time.Now()
 	return Token{
@@ -80,7 +79,7 @@ func accessTokenFactory(identity domain.Identity, context domain.SessionContext)
 	}
 }
 
-func refreshTokenFactory(identity domain.Identity, context domain.SessionContext) Token {
+func refreshTokenFactory(identity identity.Identity, context identity.SessionContext) Token {
 	// Refresh tokens can be used after 15 minutes and expires after 30
 	now := time.Now()
 	return Token{
@@ -92,7 +91,7 @@ func refreshTokenFactory(identity domain.Identity, context domain.SessionContext
 	}
 }
 
-func createClaims(context domain.SessionContext, token Token) Claims {
+func createClaims(context identity.SessionContext, token Token) Claims {
 	return Claims{
 		SessionId: context.Id,
 		Csrf:      context.Csrf,
@@ -106,7 +105,7 @@ func createClaims(context domain.SessionContext, token Token) Claims {
 	}
 }
 
-func (jwtService JWTService) Sign(identity domain.Identity, context domain.SessionContext) (TokenPair, error) {
+func (jwtService JWTService) Sign(identity identity.Identity, context identity.SessionContext) (TokenPair, error) {
 	accessToken := jwt.NewWithClaims(
 		jwtService.alg,
 		createClaims(context, accessTokenFactory(identity, context)),
@@ -131,7 +130,7 @@ func (jwtService JWTService) Sign(identity domain.Identity, context domain.Sessi
 	}, nil
 }
 
-func (jwtService JWTService) Verify(tokenPair TokenPair, csrf string, session domain.Session) error {
+func (jwtService JWTService) Verify(tokenPair TokenPair, csrf string, session identity.Session) error {
 	accessTokenClaims, err := jwtService.parse(tokenPair.AccessToken)
 	if err != nil {
 		session.Revoke()
@@ -147,7 +146,7 @@ func (jwtService JWTService) Verify(tokenPair TokenPair, csrf string, session do
 	return jwtService.verifyClaims(accessTokenClaims, refreshTokenClaims, csrf, session)
 }
 
-func (JWTService JWTService) verifyClaims(accessToken Claims, refreshToken Claims, csrf string, session domain.Session) error {
+func (JWTService JWTService) verifyClaims(accessToken Claims, refreshToken Claims, csrf string, session identity.Session) error {
 	if accessToken.Csrf != csrf ||
 		refreshToken.Csrf != csrf {
 		return ErrVerificationIncorrectCsrf

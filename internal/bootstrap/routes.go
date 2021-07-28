@@ -1,16 +1,16 @@
 package bootstrap
 
 import (
-	application "github.com/hywmongous/example-service/internal/identity/application/routes"
+	"github.com/hywmongous/example-service/internal/application/routes"
 	"go.uber.org/fx"
 )
 
 var RouteOptions = fx.Options(
 	fx.Provide(RoutesFactory),
-	fx.Provide(application.AccountRoutesFactory),
-	fx.Provide(application.AuthenticationRoutesFactory),
-	fx.Provide(application.SessionRoutesFactory),
-	fx.Provide(application.TicketRoutesFactory),
+	fx.Provide(routes.AccountRoutesFactory),
+	fx.Provide(routes.AuthenticationRoutesFactory),
+	fx.Provide(routes.SessionRoutesFactory),
+	fx.Provide(routes.TicketRoutesFactory),
 )
 
 type Route interface {
@@ -20,10 +20,10 @@ type Route interface {
 type Routes []Route
 
 func RoutesFactory(
-	accountRoutes application.AccountRoutes,
-	authenticationRoutes application.AuthenticationRoutes,
-	sessionRoutes application.SessionRoutes,
-	ticketRoutes application.TicketRoutes,
+	accountRoutes routes.AccountRoutes,
+	authenticationRoutes routes.AuthenticationRoutes,
+	sessionRoutes routes.SessionRoutes,
+	ticketRoutes routes.TicketRoutes,
 ) Routes {
 	return Routes{
 		accountRoutes,

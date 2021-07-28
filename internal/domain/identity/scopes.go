@@ -1,4 +1,4 @@
-package domain
+package identity
 
 import (
 	"errors"
@@ -15,7 +15,7 @@ import (
  * needle: The required scope
  *
  * Grammar:
- * Scope       = Class {"." Class} ":" Action [":" Perspective]
+ * Scope       = Class {"." Class} ":" Action ":" Perspective
  * Class       = String
  * Action      = read | write
  * Perspective = user | admin
@@ -31,6 +31,16 @@ type Scope struct {
 	Classes     []string
 	Action      string
 	Perspective string
+}
+
+func (scope Scope) ToString() string {
+	var result string = scope.Classes[0]
+	for i := 1; i < len(scope.Classes); i++ {
+		result += "." + scope.Classes[i]
+	}
+	result += ":" + scope.Action
+	result += ":" + scope.Perspective
+	return result
 }
 
 type ScopeStrategy func(haystack []string, needle string) bool

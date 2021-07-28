@@ -1,12 +1,12 @@
-package application
+package controllers
 
 import (
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hywmongous/example-service/internal/identity/domain"
-	infrastructure "github.com/hywmongous/example-service/internal/identity/infrastructure/services"
+	"github.com/hywmongous/example-service/internal/domain/identity"
+	infrastructure "github.com/hywmongous/example-service/internal/infrastructure/services"
 )
 
 type AuthenticationController struct {
@@ -19,8 +19,8 @@ const (
 	jwtRefreshTokenCookieName = "JWT-REFRESH-TOKEN"
 )
 
-var identity = domain.IdentityFactory()
-var session = domain.SessionFactory()
+var currIdentity = identity.IdentityFactory()
+var currSession = identity.SessionFactory()
 
 func AuthenticationControllerFactory(
 	jwtService infrastructure.JWTService,
@@ -31,14 +31,14 @@ func AuthenticationControllerFactory(
 }
 
 func (controller AuthenticationController) Login(context *gin.Context) {
-	session = domain.SessionFactory()
+	currSession = identity.SessionFactory()
 	username, password, ok := context.Request.BasicAuth()
 	if username == "" || password == "" || !ok {
 		context.Writer.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
-	sessionContext, err := session.Context()
+	sessionContext, err := currSession.Context()
 	if err != nil {
 		context.Writer.WriteHeader(http.StatusInternalServerError)
 		context.Abort()
@@ -49,12 +49,12 @@ func (controller AuthenticationController) Login(context *gin.Context) {
 }
 
 func (controller AuthenticationController) Logout(context *gin.Context) {
-	session.Revoke()
+	currSession.Revoke()
 	context.String(http.StatusOK, "Logging out")
 }
 
 func (controller AuthenticationController) Refresh(context *gin.Context) {
-	newSessionContext := session.Refresh()
+	newSessionContext := currSession.Refresh()
 	controller.writeSessionToResponse(context, newSessionContext)
 	context.String(http.StatusOK, "Refresh session tokens")
 }
@@ -79,15 +79,15 @@ func (controller AuthenticationController) Verify(context *gin.Context) {
 
 	csrf := context.Request.Header.Get(csrfHeaderKey)
 
-	if controller.jwtService.Verify(tokenPair, csrf, session) != nil {
+	if controller.jwtService.Verify(tokenPair, csrf, currSession) != nil {
 		context.Writer.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 	context.Writer.WriteHeader(http.StatusOK)
 }
 
-func (controller AuthenticationController) writeSessionToResponse(context *gin.Context, sessionContext domain.SessionContext) {
-	tokens, _ := controller.jwtService.Sign(identity, sessionContext)
+func (controller AuthenticationController) writeSessionToResponse(context *gin.Context, sessionContext identity.SessionContext) {
+	tokens, _ := controller.jwtService.Sign(currIdentity, sessionContext)
 
 	context.Header(csrfHeaderKey, string(sessionContext.Csrf))
 
