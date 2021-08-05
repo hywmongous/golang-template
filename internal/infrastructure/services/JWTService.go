@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hywmongous/example-service/internal/domain/identity"
+	"github.com/hywmongous/example-service/internal/domain/identity/aggregate"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -67,34 +67,34 @@ func JWTServiceFactory() JWTService {
 	}
 }
 
-func accessTokenFactory(identity identity.Identity, context identity.SessionContext) Token {
+func accessTokenFactory(identity aggregate.Identity, context aggregate.SessionContext) Token {
 	// Access tokens can be used immediately and expires after 30 minutes
 	now := time.Now()
 	return Token{
-		Subject:         identity.Id,
-		Id:              context.AccessTokenId,
+		Subject:         identity.GetId().ToString(),
+		Id:              context.GetAccessTokenId().ToString(),
 		IssuedAt:        now.Unix(),
 		InitialTimeout:  now.Add(AccessTokenInitialTimeoutDuration * time.Minute).Unix(),
 		AbsoluteTimeout: now.Add(AccessTokenAbsoluteTimeoutDuration * time.Minute).Unix(),
 	}
 }
 
-func refreshTokenFactory(identity identity.Identity, context identity.SessionContext) Token {
+func refreshTokenFactory(identity aggregate.Identity, context aggregate.SessionContext) Token {
 	// Refresh tokens can be used after 15 minutes and expires after 30
 	now := time.Now()
 	return Token{
-		Subject:         identity.Id,
-		Id:              context.RefreshTokenId,
+		Subject:         identity.GetId().ToString(),
+		Id:              context.GetRefreshTokenId().ToString(),
 		IssuedAt:        now.Unix(),
 		InitialTimeout:  now.Add(RefreshTokenInitialTimeoutDuration * time.Minute).Unix(),
 		AbsoluteTimeout: now.Add(RefreshTokenAbsoluteTimeoutDuration * time.Minute).Unix(),
 	}
 }
 
-func createClaims(context identity.SessionContext, token Token) Claims {
+func createClaims(context aggregate.SessionContext, token Token) Claims {
 	return Claims{
-		SessionId: context.Id,
-		Csrf:      context.Csrf,
+		SessionId: context.GetId().ToString(),
+		Csrf:      context.GetCsrf().ToString(),
 		StandardClaims: jwt.StandardClaims{
 			Id:        token.Id,
 			Issuer:    "hywmongous",
@@ -105,7 +105,7 @@ func createClaims(context identity.SessionContext, token Token) Claims {
 	}
 }
 
-func (jwtService JWTService) Sign(identity identity.Identity, context identity.SessionContext) (TokenPair, error) {
+func (jwtService JWTService) Sign(identity aggregate.Identity, context aggregate.SessionContext) (TokenPair, error) {
 	accessToken := jwt.NewWithClaims(
 		jwtService.alg,
 		createClaims(context, accessTokenFactory(identity, context)),
@@ -130,7 +130,7 @@ func (jwtService JWTService) Sign(identity identity.Identity, context identity.S
 	}, nil
 }
 
-func (jwtService JWTService) Verify(tokenPair TokenPair, csrf string, session identity.Session) error {
+func (jwtService JWTService) Verify(tokenPair TokenPair, csrf string, session aggregate.Session) error {
 	accessTokenClaims, err := jwtService.parse(tokenPair.AccessToken)
 	if err != nil {
 		session.Revoke()
@@ -146,14 +146,14 @@ func (jwtService JWTService) Verify(tokenPair TokenPair, csrf string, session id
 	return jwtService.verifyClaims(accessTokenClaims, refreshTokenClaims, csrf, session)
 }
 
-func (JWTService JWTService) verifyClaims(accessToken Claims, refreshToken Claims, csrf string, session identity.Session) error {
+func (JWTService JWTService) verifyClaims(accessToken Claims, refreshToken Claims, csrf string, session aggregate.Session) error {
 	if accessToken.Csrf != csrf ||
 		refreshToken.Csrf != csrf {
 		return ErrVerificationIncorrectCsrf
 	}
 
-	if accessToken.SessionId != session.Id ||
-		refreshToken.SessionId != session.Id {
+	if accessToken.SessionId != session.GetId().ToString() ||
+		refreshToken.SessionId != session.GetId().ToString() {
 		return ErrVerificationIncorrestSessionId
 	}
 
@@ -162,13 +162,13 @@ func (JWTService JWTService) verifyClaims(accessToken Claims, refreshToken Claim
 		return err
 	}
 
-	if accessToken.IssuedAt != context.IssuedAt ||
-		refreshToken.IssuedAt != context.IssuedAt {
+	if accessToken.IssuedAt != context.GetIssuedAt().GetInt64() ||
+		refreshToken.IssuedAt != context.GetIssuedAt().GetInt64() {
 		return ErrVerificationIncorrectIssueTime
 	}
 
-	if accessToken.Id != context.AccessTokenId ||
-		refreshToken.Id != context.RefreshTokenId {
+	if accessToken.Id != context.GetAccessTokenId().ToString() ||
+		refreshToken.Id != context.GetRefreshTokenId().ToString() {
 		return ErrVerificationIncorrectTokenId
 	}
 

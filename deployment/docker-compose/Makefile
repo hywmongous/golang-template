@@ -25,7 +25,7 @@ up:
 
 .PHONY:
 down:
-	sudo $(DOCKERCOMPOSE) down --rmi all --remove-orphans --volumes
+	sudo $(DOCKERCOMPOSE) down --volumes
 
 .PHONY:
 dist_clean: build_clean

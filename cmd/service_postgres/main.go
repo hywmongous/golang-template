@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/hywmongous/example-service/internal/bootstrap"
+	"github.com/hywmongous/example-service/internal/presentation/gin/bootstrap"
 	"go.uber.org/fx"
 )
 
