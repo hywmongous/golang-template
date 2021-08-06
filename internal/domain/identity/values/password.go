@@ -1,4 +1,4 @@
-package values
+package identity
 
 import (
 	"golang.org/x/crypto/bcrypt"

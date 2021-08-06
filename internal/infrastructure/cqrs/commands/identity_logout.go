@@ -1,15 +1,15 @@
 package commands
 
-import "github.com/hywmongous/example-service/internal/domain/identity/values"
+import identity "github.com/hywmongous/example-service/internal/domain/identity/values"
 
 type IdentityLogout struct {
-	IdentityID values.IdentityID
-	SessionID  values.SessionID
+	IdentityID identity.IdentityID
+	SessionID  identity.SessionID
 }
 
 func CreateIdentityLogou(
-	identityId values.IdentityID,
-	sessionID values.SessionID,
+	identityId identity.IdentityID,
+	sessionID identity.SessionID,
 ) IdentityLogout {
 	return IdentityLogout{
 		IdentityID: identityId,

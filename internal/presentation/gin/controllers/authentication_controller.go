@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hywmongous/example-service/internal/domain/identity/aggregate"
-	"github.com/hywmongous/example-service/internal/domain/identity/values"
+	identity_aggregate "github.com/hywmongous/example-service/internal/domain/identity/aggregate"
+	identity_values "github.com/hywmongous/example-service/internal/domain/identity/values"
 	infrastructure "github.com/hywmongous/example-service/internal/infrastructure/services"
 )
 
@@ -20,9 +20,9 @@ const (
 	jwtRefreshTokenCookieName = "JWT-REFRESH-TOKEN"
 )
 
-var password, _ = values.CreatePassword("password")
-var email, _ = values.CreateEmail("andreasbrandhoej@hotmail.com")
-var currIdentity, _ = aggregate.CreateIdentity(email, password)
+var password, _ = identity_values.CreatePassword("password")
+var email, _ = identity_values.CreateEmail("andreasbrandhoej@hotmail.com")
+var currIdentity, _ = identity_aggregate.CreateIdentity(email, password)
 var currSession, _ = currIdentity.Login("password")
 
 func AuthenticationControllerFactory(
@@ -34,7 +34,7 @@ func AuthenticationControllerFactory(
 }
 
 func (controller AuthenticationController) Login(context *gin.Context) {
-	currSession = aggregate.CreateSession()
+	currSession = identity_aggregate.CreateSession()
 	username, password, ok := context.Request.BasicAuth()
 	if username == "" || password == "" || !ok {
 		context.Writer.WriteHeader(http.StatusUnauthorized)
@@ -89,7 +89,7 @@ func (controller AuthenticationController) Verify(context *gin.Context) {
 	context.Writer.WriteHeader(http.StatusOK)
 }
 
-func (controller AuthenticationController) writeSessionToResponse(context *gin.Context, sessionContext aggregate.SessionContext) {
+func (controller AuthenticationController) writeSessionToResponse(context *gin.Context, sessionContext identity_aggregate.SessionContext) {
 	tokens, _ := controller.jwtService.Sign(currIdentity, sessionContext)
 
 	context.Header(csrfHeaderKey, string(sessionContext.GetCsrf()))

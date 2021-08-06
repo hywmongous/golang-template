@@ -1,13 +1,13 @@
 package snapshots
 
-import "github.com/hywmongous/example-service/internal/domain/identity/aggregate"
+import identity "github.com/hywmongous/example-service/internal/domain/identity/aggregate"
 
 type Snapshot struct {
-	State aggregate.Identity
+	State identity.Identity
 }
 
 func RecreateSnapshot(
-	state aggregate.Identity,
+	state identity.Identity,
 ) Snapshot {
 	return Snapshot{
 		State: state,

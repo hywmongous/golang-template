@@ -1,23 +1,23 @@
 package visitors
 
 import (
-	"github.com/hywmongous/example-service/internal/domain/identity/aggregate"
-	"github.com/hywmongous/example-service/internal/domain/identity/values"
+	identity "github.com/hywmongous/example-service/internal/domain/identity/aggregate"
+	identity_values "github.com/hywmongous/example-service/internal/domain/identity/values"
 	"github.com/hywmongous/example-service/internal/infrastructure/cqrs/commands"
 	merr "github.com/hywmongous/example-service/pkg/errors"
 )
 
 type AggregateVisitor struct {
-	root aggregate.Identity
+	root identity.Identity
 }
 
 func CreateAggregateVisitor() (AggregateVisitor, error) {
 	return AggregateVisitor{
-		root: aggregate.Identity{},
+		root: identity.Identity{},
 	}, nil
 }
 
-func RecreateAggregateVisitor(root aggregate.Identity) (AggregateVisitor, error) {
+func RecreateAggregateVisitor(root identity.Identity) (AggregateVisitor, error) {
 	return AggregateVisitor{
 		root: root,
 	}, nil
@@ -33,16 +33,16 @@ func (visitor AggregateVisitor) Visit(commands []commands.Command) error {
 }
 
 func (visitor AggregateVisitor) VisitRegisterIdentity(command commands.RegisterIdentity) error {
-	password, err := values.CreatePassword(command.Password)
+	password, err := identity_values.CreatePassword(command.Password)
 	if err != nil {
 		return merr.CreateFailedStructInvocation("AggregateVisitor", "VisitRegisterIdentity", err)
 	}
-	visitor.root = aggregate.RecreateIdentity(
+	visitor.root = identity.RecreateIdentity(
 		command.IdentityID,
-		values.RecreateEmail(command.EmailAddress, false),
+		identity_values.RecreateEmail(command.EmailAddress, false),
 		password,
-		[]aggregate.Session{},
-		[]aggregate.Scope{},
+		[]identity.Session{},
+		[]identity.Scope{},
 	)
 	return nil
 }

@@ -1,9 +1,9 @@
-package aggregate
+package identity
 
 import (
 	"errors"
 
-	"github.com/hywmongous/example-service/internal/domain/identity/values"
+	values "github.com/hywmongous/example-service/internal/domain/identity/values"
 )
 
 type Identity struct {

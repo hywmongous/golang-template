@@ -1,4 +1,4 @@
-package values
+package identity
 
 import merr "github.com/hywmongous/example-service/pkg/errors"
 

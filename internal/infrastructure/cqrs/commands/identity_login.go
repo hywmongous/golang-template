@@ -1,14 +1,14 @@
 package commands
 
-import "github.com/hywmongous/example-service/internal/domain/identity/values"
+import identity "github.com/hywmongous/example-service/internal/domain/identity/values"
 
 type IdentityLogin struct {
-	IdentityID values.IdentityID
+	IdentityID identity.IdentityID
 	Password   string
 }
 
 func CreateIdentityLogin(
-	identityId values.IdentityID,
+	identityId identity.IdentityID,
 	password string,
 ) IdentityLogin {
 	return IdentityLogin{

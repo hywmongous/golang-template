@@ -1,4 +1,4 @@
-package aggregate
+package identity
 
 /*
 func Test_HierarchicScopeStrategy_ReturnsTrue_IfHaystackContainsExactMatch(t *testing.T) {

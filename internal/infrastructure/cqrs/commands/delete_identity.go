@@ -1,12 +1,12 @@
 package commands
 
-import "github.com/hywmongous/example-service/internal/domain/identity/values"
+import identity "github.com/hywmongous/example-service/internal/domain/identity/values"
 
 type DeleteIdentity struct {
-	IdentityID values.IdentityID
+	IdentityID identity.IdentityID
 }
 
-func CreateDeleteIdentity(identityID values.IdentityID) DeleteIdentity {
+func CreateDeleteIdentity(identityID identity.IdentityID) DeleteIdentity {
 	return DeleteIdentity{
 		IdentityID: identityID,
 	}

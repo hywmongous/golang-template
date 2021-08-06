@@ -1,7 +1,7 @@
 package visitors
 
 import (
-	"github.com/hywmongous/example-service/internal/domain/identity/values"
+	identity "github.com/hywmongous/example-service/internal/domain/identity/values"
 	"github.com/hywmongous/example-service/internal/infrastructure/cqrs/commands"
 	"github.com/hywmongous/example-service/internal/infrastructure/cqrs/queries/projections"
 )
@@ -35,7 +35,7 @@ func (visitor IdentityCredentialsVisitor) Visit(commands []commands.Command) err
 
 func (visitor IdentityCredentialsVisitor) VisitRegisterIdentity(command commands.RegisterIdentity) error {
 	visitor.credentials.IdentityId = command.IdentityID
-	visitor.credentials.Email = values.RecreateEmail(command.EmailAddress, false)
+	visitor.credentials.Email = identity.RecreateEmail(command.EmailAddress, false)
 	return nil
 }
 

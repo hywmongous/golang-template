@@ -1,15 +1,15 @@
 package commands
 
-import "github.com/hywmongous/example-service/internal/domain/identity/values"
+import identity "github.com/hywmongous/example-service/internal/domain/identity/values"
 
 type RegisterIdentity struct {
-	IdentityID   values.IdentityID
+	IdentityID   identity.IdentityID
 	EmailAddress string
 	Password     string
 }
 
 func CreateRegisterIdentity(
-	identityId values.IdentityID,
+	identityId identity.IdentityID,
 	email string,
 	password string,
 ) RegisterIdentity {

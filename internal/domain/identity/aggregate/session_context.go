@@ -1,7 +1,7 @@
-package aggregate
+package identity
 
 import (
-	"github.com/hywmongous/example-service/internal/domain/identity/values"
+	values "github.com/hywmongous/example-service/internal/domain/identity/values"
 )
 
 type SessionContext struct {

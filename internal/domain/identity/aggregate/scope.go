@@ -1,10 +1,10 @@
-package aggregate
+package identity
 
 import (
 	"errors"
 	"strings"
 
-	"github.com/hywmongous/example-service/internal/domain/identity/values"
+	values "github.com/hywmongous/example-service/internal/domain/identity/values"
 )
 
 // order -> Can read evyerthing regarding the order

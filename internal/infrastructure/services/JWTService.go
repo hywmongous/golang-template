@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hywmongous/example-service/internal/domain/identity/aggregate"
+	identity "github.com/hywmongous/example-service/internal/domain/identity/aggregate"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -67,7 +67,7 @@ func JWTServiceFactory() JWTService {
 	}
 }
 
-func accessTokenFactory(identity aggregate.Identity, context aggregate.SessionContext) Token {
+func accessTokenFactory(identity identity.Identity, context identity.SessionContext) Token {
 	// Access tokens can be used immediately and expires after 30 minutes
 	now := time.Now()
 	return Token{
@@ -79,7 +79,7 @@ func accessTokenFactory(identity aggregate.Identity, context aggregate.SessionCo
 	}
 }
 
-func refreshTokenFactory(identity aggregate.Identity, context aggregate.SessionContext) Token {
+func refreshTokenFactory(identity identity.Identity, context identity.SessionContext) Token {
 	// Refresh tokens can be used after 15 minutes and expires after 30
 	now := time.Now()
 	return Token{
@@ -91,7 +91,7 @@ func refreshTokenFactory(identity aggregate.Identity, context aggregate.SessionC
 	}
 }
 
-func createClaims(context aggregate.SessionContext, token Token) Claims {
+func createClaims(context identity.SessionContext, token Token) Claims {
 	return Claims{
 		SessionId: context.GetId().ToString(),
 		Csrf:      context.GetCsrf().ToString(),
@@ -105,7 +105,7 @@ func createClaims(context aggregate.SessionContext, token Token) Claims {
 	}
 }
 
-func (jwtService JWTService) Sign(identity aggregate.Identity, context aggregate.SessionContext) (TokenPair, error) {
+func (jwtService JWTService) Sign(identity identity.Identity, context identity.SessionContext) (TokenPair, error) {
 	accessToken := jwt.NewWithClaims(
 		jwtService.alg,
 		createClaims(context, accessTokenFactory(identity, context)),
@@ -130,7 +130,7 @@ func (jwtService JWTService) Sign(identity aggregate.Identity, context aggregate
 	}, nil
 }
 
-func (jwtService JWTService) Verify(tokenPair TokenPair, csrf string, session aggregate.Session) error {
+func (jwtService JWTService) Verify(tokenPair TokenPair, csrf string, session identity.Session) error {
 	accessTokenClaims, err := jwtService.parse(tokenPair.AccessToken)
 	if err != nil {
 		session.Revoke()
@@ -146,7 +146,7 @@ func (jwtService JWTService) Verify(tokenPair TokenPair, csrf string, session ag
 	return jwtService.verifyClaims(accessTokenClaims, refreshTokenClaims, csrf, session)
 }
 
-func (JWTService JWTService) verifyClaims(accessToken Claims, refreshToken Claims, csrf string, session aggregate.Session) error {
+func (JWTService JWTService) verifyClaims(accessToken Claims, refreshToken Claims, csrf string, session identity.Session) error {
 	if accessToken.Csrf != csrf ||
 		refreshToken.Csrf != csrf {
 		return ErrVerificationIncorrectCsrf
