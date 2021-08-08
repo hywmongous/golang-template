@@ -23,8 +23,8 @@ import (
  * Perspective = user | admin
  *
  * Example input
- * haystack: [ "order.items:write", "basket.items:write" ]
- * needle: [ "order.items:write" ]
+ * haystack: [ "order.items:write:admin", "basket.items:write:admin" ]
+ * needle: [ "order.items:write:admin" ]
  * HierarchicScopeStrategy: True
  * ExactScopeStrategy: False
  * */
