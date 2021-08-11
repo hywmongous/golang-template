@@ -9,6 +9,8 @@ var (
 	ErrNotFound  = errors.New("not found")
 	ErrDuplicate = errors.New("duplicate")
 
+	ErrNotImplementedYet = errors.New("This function has not been implemented yet")
+
 	ErrDomainConstraintsViolation = errors.New("domain constraints violation")
 
 	ErrMaxRetriesExceeded  = errors.New("max retries exceeded")
@@ -39,4 +41,12 @@ func CreateFailedStructInvocation(structName string, funcName string, err error)
 	return MarkAndWrapError(
 		err, ErrFailedInvocation, structName+funcName,
 	)
+}
+
+func CreateNotImplementedYet(funcName string) error {
+	return CreateFailedInvocation(funcName, ErrNotImplementedYet)
+}
+
+func CreateNotImplementedYetStruct(structName string, funcName string) error {
+	return CreateFailedStructInvocation(structName, funcName, ErrNotImplementedYet)
 }

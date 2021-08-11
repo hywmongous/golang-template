@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	identity "github.com/hywmongous/example-service/internal/domain/identity/aggregate"
+	"github.com/hywmongous/example-service/internal/domain/identity"
 
 	"github.com/dgrijalva/jwt-go"
 )

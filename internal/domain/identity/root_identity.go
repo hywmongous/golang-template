@@ -2,14 +2,12 @@ package identity
 
 import (
 	"errors"
-
-	values "github.com/hywmongous/example-service/internal/domain/identity/values"
 )
 
 type Identity struct {
-	id       values.IdentityID
-	email    values.Email
-	password values.Password
+	id       IdentityID
+	email    Email
+	password Password
 	sessions []Session
 	scopes   []Scope
 }
@@ -22,20 +20,20 @@ var (
 )
 
 func CreateIdentity(
-	email values.Email,
-	password values.Password,
+	email Email,
+	password Password,
 ) (Identity, error) {
 	return Identity{
-		id:       values.GenerateIdentityID(),
+		id:       GenerateIdentityID(),
 		email:    email,
 		password: password,
 	}, nil
 }
 
 func RecreateIdentity(
-	id values.IdentityID,
-	email values.Email,
-	password values.Password,
+	id IdentityID,
+	email Email,
+	password Password,
 	sessions []Session,
 	scopes []Scope,
 ) Identity {
@@ -58,7 +56,7 @@ func (identity *Identity) Login(password string) (Session, error) {
 	return CreateSession, nil
 }
 
-func (identity Identity) Logout(sessionId values.SessionID) error {
+func (identity Identity) Logout(sessionId SessionID) error {
 	var session Session
 	var found bool
 	for _, curr := range identity.sessions {
@@ -97,6 +95,6 @@ func (identity Identity) VerifyScope(scope string) error {
 	return ErrVerifyScopeNoHayMatches
 }
 
-func (identity Identity) GetId() values.IdentityID {
+func (identity Identity) GetId() IdentityID {
 	return identity.id
 }

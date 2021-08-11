@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/hywmongous/example-service/internal/lib"
-	"github.com/hywmongous/example-service/internal/presentation/gin/controllers"
+	"github.com/hywmongous/example-service/internal/presentation/connectors/gin/controllers"
 )
 
 type AccountRoutes struct {

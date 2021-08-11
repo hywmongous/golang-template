@@ -2,12 +2,10 @@ package identity
 
 import (
 	"errors"
-
-	values "github.com/hywmongous/example-service/internal/domain/identity/values"
 )
 
 type Session struct {
-	id       values.SessionID
+	id       SessionID
 	revoked  bool
 	contexts []SessionContext
 }
@@ -19,7 +17,7 @@ var (
 func CreateSession() Session {
 	contexts := [1]SessionContext{CreateSessionContext()}
 	return Session{
-		id:       values.GenerateSessionID(),
+		id:       GenerateSessionID(),
 		revoked:  false,
 		contexts: contexts[:],
 	}
@@ -49,6 +47,6 @@ func (session Session) Context() (SessionContext, error) {
 	return latest, nil
 }
 
-func (session Session) GetId() values.SessionID {
+func (session Session) GetId() SessionID {
 	return session.id
 }

@@ -1,6 +1,6 @@
 package snapshots
 
-import identity "github.com/hywmongous/example-service/internal/domain/identity/aggregate"
+import identity "github.com/hywmongous/example-service/internal/domain/identity"
 
 type Snapshot struct {
 	State identity.Identity

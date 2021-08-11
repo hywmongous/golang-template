@@ -3,8 +3,6 @@ package identity
 import (
 	"errors"
 	"strings"
-
-	values "github.com/hywmongous/example-service/internal/domain/identity/values"
 )
 
 // order -> Can read evyerthing regarding the order
@@ -30,7 +28,7 @@ import (
  * */
 
 type Scope struct {
-	id          values.ScopeID
+	id          ScopeID
 	classes     []string
 	action      string
 	perspective string
@@ -42,7 +40,7 @@ func CreateScope(
 	perspective string,
 ) (Scope, error) {
 	CreateScope := Scope{
-		values.GenerateScopeID(),
+		GenerateScopeID(),
 		classes,
 		action,
 		perspective,
@@ -51,7 +49,7 @@ func CreateScope(
 }
 
 func RecreateScope(
-	id values.ScopeID,
+	id ScopeID,
 	classes []string,
 	action string,
 	perspective string,

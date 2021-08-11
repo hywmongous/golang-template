@@ -2,11 +2,11 @@ package actors
 
 import (
 	"github.com/hywmongous/example-service/internal/application/usecases"
-	"github.com/hywmongous/example-service/internal/domain/identity/values"
+	"github.com/hywmongous/example-service/internal/domain/identity"
 )
 
 type Registered struct {
-	RegisteredIdentity values.IdentityID
+	RegisteredIdentity identity.IdentityID
 
 	unregistered Unregistered
 	login        usecases.Login
@@ -15,7 +15,7 @@ type Registered struct {
 }
 
 func CreateRegistered(
-	registeredIdentity values.IdentityID,
+	registeredIdentity identity.IdentityID,
 	unregistered Unregistered,
 	login usecases.Login,
 	logout usecases.Logout,

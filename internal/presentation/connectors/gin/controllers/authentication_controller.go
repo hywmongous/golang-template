@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	identity_aggregate "github.com/hywmongous/example-service/internal/domain/identity/aggregate"
-	identity_values "github.com/hywmongous/example-service/internal/domain/identity/values"
+	identity_aggregate "github.com/hywmongous/example-service/internal/domain/identity"
+	identity_values "github.com/hywmongous/example-service/internal/domain/identity"
 	infrastructure "github.com/hywmongous/example-service/internal/infrastructure/services"
 )
 

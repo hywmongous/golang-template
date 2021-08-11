@@ -1,9 +1,9 @@
 package usecases
 
-import "github.com/hywmongous/example-service/internal/domain/identity/values"
+import "github.com/hywmongous/example-service/internal/domain/identity"
 
 type LogoutRequest struct {
-	identityID values.IdentityID
+	identityID identity.IdentityID
 	password   string
 }
 

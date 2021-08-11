@@ -1,6 +1,6 @@
 package projections
 
-import identity "github.com/hywmongous/example-service/internal/domain/identity/values"
+import identity "github.com/hywmongous/example-service/internal/domain/identity"
 
 type IdentityCredentials struct {
 	IdentityId identity.IdentityID

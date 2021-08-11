@@ -1,8 +1,7 @@
 package commands
 
+import "github.com/hywmongous/example-service/internal/domain/identity"
+
 type CommandHandler interface {
-	VisitRegisterIdentity(registration RegisterIdentity) error
-	VisitDeleteIdentity(deletion DeleteIdentity) error
-	VisitIdentityLogin(login IdentityLogin) error
-	VisitIdentityLogout(logout IdentityLogout) error
+	VisitRegistered(registration identity.Registered) error
 }

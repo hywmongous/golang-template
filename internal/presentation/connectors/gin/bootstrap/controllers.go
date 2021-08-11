@@ -1,7 +1,7 @@
 package bootstrap
 
 import (
-	"github.com/hywmongous/example-service/internal/presentation/gin/controllers"
+	"github.com/hywmongous/example-service/internal/presentation/connectors/gin/controllers"
 
 	"go.uber.org/fx"
 )

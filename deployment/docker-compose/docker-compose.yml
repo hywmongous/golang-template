@@ -1,52 +1,70 @@
 version: "3.9"
 
 volumes:
-  example-service-postgressql_data:
+  postgressql_data:
+  mongo_data:
 
 networks:
   service_net:
+    driver: bridge
 
 services:
-  example-service-postgressql:
+  ia_postgressql:
     image: postgres
-    container_name: postgres
+    container_name: ia_postgressql
     restart: always
     volumes:
-      - example-service-postgressql_data:/var/lib/postgresql/data:rw
+      - postgressql_data:/var/lib/postgresql/data:rw
     ports:
       - "5432"
     networks:
       - service_net
     env_file:
       - ./environments/postgres.env
-    
-  pulsar:
-    image: apachepulsar/pulsar
-    restart: unless-stopped
-    expose:
-      - 8080
-      - 6650
-    command: >
-      /bin/bash -c
-      "bin/apply-config-from-env.py conf/standalone.conf
-      && bin/pulsar standalone --advertised-address localhost"
 
-  dashboard:
-    image: apachepulsar/pulsar-dashboard
-    depends_on:
-      - pulsar
-    ports:
-      - "5001:80"
+  ia_mongo:
+    image: mongo:latest
+    container_name: ia_mongo
+    restart: always
     environment:
-      - SERVICE_URL=http://localhost:8080
+      - MONGO_INITDB_DATABASE=eventstore
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root
+    volumes:
+      - mongo_data:/data/db
+      - ./confs/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    ports:
+      - 27017:27017
+    networks:
+      - service_net
 
-  example-service:
+  ia_mongo_express:
+    image: mongo-express:latest
+    container_name: ia_mongo_express
+    depends_on:
+      - ia_mongo
+    ports:
+      - 8081:8081
+    restart: always
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=ia_mongo
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=false
+      - ME_CONFIG_MONGODB_AUTH_DATABASE=eventstore
+      - ME_CONFIG_MONGODB_AUTH_USERNAME=root
+      - ME_CONFIG_MONGODB_AUTH_PASSWORD=root
+      - ME_CONFIG_BASICAUTH_USERNAME=root
+      - ME_CONFIG_BASICAUTH_PASSWORD=root
+    networks:
+      - service_net
+
+  ia:
     image: example-service:latest
-    container_name: service
+    container_name: ia_service
     restart: always
     depends_on:
-      - example-service-postgressql
-      - pulsar
+      - ia_postgressql
+      - ia_mongo
     ports:
       - "5000:5000"
     networks:

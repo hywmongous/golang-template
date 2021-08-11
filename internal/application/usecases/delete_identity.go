@@ -1,9 +1,9 @@
 package usecases
 
-import "github.com/hywmongous/example-service/internal/domain/identity/values"
+import "github.com/hywmongous/example-service/internal/domain/identity"
 
 type DeletionRequest struct {
-	IdentityID values.IdentityID
+	IdentityID identity.IdentityID
 }
 
 type DeletionResponse struct {

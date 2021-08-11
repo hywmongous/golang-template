@@ -1,6 +1,6 @@
 package usecases
 
-import "github.com/hywmongous/example-service/internal/domain/identity/values"
+import "github.com/hywmongous/example-service/internal/domain/identity"
 
 type RegistrationRequest struct {
 	Email    string
@@ -8,7 +8,7 @@ type RegistrationRequest struct {
 }
 
 type RegistrationResponse struct {
-	IdentityID values.IdentityID
+	IdentityID identity.IdentityID
 }
 
 type Register interface {
