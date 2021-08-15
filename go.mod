@@ -3,15 +3,16 @@ module github.com/hywmongous/example-service
 go 1.16
 
 require (
+	github.com/DataDog/zstd v1.4.0 // indirect
 	github.com/cockroachdb/errors v1.8.6
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.7.2
 	github.com/go-playground/validator/v10 v10.7.0 // indirect
-	github.com/goccy/go-json v0.7.4
 	github.com/google/uuid v1.3.0
 	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mattn/go-isatty v0.0.13 // indirect
+	github.com/segmentio/kafka-go v0.4.17 // indirect
 	github.com/ugorji/go v1.2.6 // indirect
 	go.mongodb.org/mongo-driver v1.7.1
 	go.uber.org/fx v1.13.1

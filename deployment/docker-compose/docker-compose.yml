@@ -9,18 +9,27 @@ networks:
     driver: bridge
 
 services:
-  ia_postgressql:
-    image: postgres
-    container_name: ia_postgressql
-    restart: always
-    volumes:
-      - postgressql_data:/var/lib/postgresql/data:rw
+  ia_zookeeper:
+    image: wurstmeister/zookeeper:latest
+    container_name: ia_zookeeper
+    env_file:
+      - ./environments/zookeeper.env
     ports:
-      - "5432"
+      - 2181:2181
     networks:
       - service_net
+
+  ia_kafka:
+    image: wurstmeister/kafka:latest
+    container_name: ia_kafka
+    depends_on:
+      - ia_zookeeper
     env_file:
-      - ./environments/postgres.env
+      - ./environments/kafka.env
+    ports:
+      - 9092:9092
+    networks:
+      - service_net
 
   ia_mongo:
     image: mongo:latest
@@ -32,29 +41,9 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=root
     volumes:
       - mongo_data:/data/db
-      - ./confs/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./inits/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     ports:
       - 27017:27017
-    networks:
-      - service_net
-
-  ia_mongo_express:
-    image: mongo-express:latest
-    container_name: ia_mongo_express
-    depends_on:
-      - ia_mongo
-    ports:
-      - 8081:8081
-    restart: always
-    environment:
-      - ME_CONFIG_MONGODB_SERVER=ia_mongo
-      - ME_CONFIG_MONGODB_PORT=27017
-      - ME_CONFIG_MONGODB_ENABLE_ADMIN=false
-      - ME_CONFIG_MONGODB_AUTH_DATABASE=eventstore
-      - ME_CONFIG_MONGODB_AUTH_USERNAME=root
-      - ME_CONFIG_MONGODB_AUTH_PASSWORD=root
-      - ME_CONFIG_BASICAUTH_USERNAME=root
-      - ME_CONFIG_BASICAUTH_PASSWORD=root
     networks:
       - service_net
 
@@ -63,8 +52,8 @@ services:
     container_name: ia_service
     restart: always
     depends_on:
-      - ia_postgressql
       - ia_mongo
+      - ia_kafka
     ports:
       - "5000:5000"
     networks:

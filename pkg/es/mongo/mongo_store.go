@@ -33,8 +33,8 @@ var (
 	ErrInsertion          = errors.New("failed inserting one or more documents into collection")
 )
 
-func CreateMongoEventStore() (MongoEventStore, error) {
-	return MongoEventStore{}, nil
+func CreateMongoEventStore() MongoEventStore {
+	return MongoEventStore{}
 }
 
 func (store MongoEventStore) collection(client *mongo.Client) (*mongo.Collection, error) {
@@ -54,8 +54,16 @@ func (store MongoEventStore) collection(client *mongo.Client) (*mongo.Collection
 }
 
 func (store MongoEventStore) connect(action mongoAction) error {
+	options := options.Client()
+	uri := options.ApplyURI("mongodb://root:root@ia_mongo:27017")
+
+	// Client construction
+	client, err := mongo.NewClient(uri)
+	if err != nil {
+		return merr.CreateFailedStructInvocation("MongoEventStore", "connect", err)
+	}
+
 	// Create the client
-	client, err := store.createClient()
 	if err != nil {
 		return merr.CreateFailedStructInvocation("MongoEventStore", "connect", err)
 	}
@@ -78,18 +86,6 @@ func (store MongoEventStore) connect(action mongoAction) error {
 	}
 
 	return action(ctx, collection)
-}
-
-func (store MongoEventStore) createClient() (*mongo.Client, error) {
-	options := options.Client()
-	uri := options.ApplyURI("mongodb://root:root@ia_mongo:27017")
-
-	client, err := mongo.NewClient(uri)
-	if err != nil {
-		return nil, merr.CreateFailedStructInvocation("MongoEventStore", "createClient", err)
-	}
-
-	return client, nil
 }
 
 func (store MongoEventStore) insertManyDocuments(documents []interface{}) error {
@@ -137,7 +133,7 @@ func (store MongoEventStore) findAll(filter interface{}, factory mongoCallback, 
 	return store.connect(action)
 }
 
-func convertEventsToDocuments(events []es.Event) []interface{} {
+func marshallDocuments(events []es.Event) []interface{} {
 	documents := make([]interface{}, len(events))
 	for idx, event := range events {
 		documents[idx] = bson.D{
@@ -161,8 +157,7 @@ func unmarshalDocument(document bson.M) (es.Event, error) {
 	// This caused issues with the evenData within
 	// the event itself. This is however supported by
 	// the json package, so for Marshalling we use json
-	eventMap := eventDocument
-	obj, err := json.Marshal(eventMap)
+	obj, err := json.Marshal(eventDocument)
 	if err != nil {
 		return es.Event{}, merr.CreateFailedInvocation("unmarshalDocument", err)
 	}
@@ -176,35 +171,34 @@ func unmarshalDocument(document bson.M) (es.Event, error) {
 	return event, nil
 }
 
-func (store MongoEventStore) Stock(producer es.ProducerID, subject es.SubjectID, data []es.EventData) error {
-	events, err := es.CreateEventBatch(producer, subject, data, store)
+func (store MongoEventStore) Stock(producer es.ProducerID, subject es.SubjectID, data []es.EventData) ([]es.Event, error) {
+	events, err := es.CreateEventBatch(producer, subject, es.EventSchemaVersion(1), data, store)
 	if err != nil {
-		return merr.CreateFailedStructInvocation("EventStore", "Send", err)
+		return nil, merr.CreateFailedStructInvocation("EventStore", "Send", err)
 	}
 
-	documents := convertEventsToDocuments(events)
-	return store.insertManyDocuments(documents)
+	documents := marshallDocuments(events)
+	return events, store.insertManyDocuments(documents)
 }
 
-func (store MongoEventStore) Retrieve(subject es.SubjectID, callback es.Callback) ([]es.Event, error) {
+func (store MongoEventStore) Retrieve(subject es.SubjectID) ([]es.Event, error) {
 	filter := bson.D{{Key: "event.subject", Value: subject}}
 	options := options.Find()
 	options.SetSort(bson.D{{Key: "event.version", Value: 1}})
+	var events []es.Event
 
 	loop := func(cursor *mongo.Cursor) error {
 		var document bson.M
 		if err := cursor.Decode(&document); err != nil {
-			return merr.CreateFailedStructInvocation("MongoEventStore", "Retrieve.callback", err)
+			return merr.CreateFailedStructInvocation("MongoEventStore", "Retrieve.loop", err)
 		}
 
 		event, err := unmarshalDocument(document)
 		if err != nil {
-			return merr.CreateFailedStructInvocation("MongoEventStore", "Retrieve.callback", err)
+			return merr.CreateFailedStructInvocation("MongoEventStore", "Retrieve.loop", err)
 		}
 
-		if err = callback(event); err != nil {
-			return err
-		}
+		events = append(events, event)
 
 		return nil
 	}
@@ -214,27 +208,38 @@ func (store MongoEventStore) Retrieve(subject es.SubjectID, callback es.Callback
 		return nil, merr.CreateFailedStructInvocation("MongoEventStore", "Retrieve", err)
 	}
 
-	return nil, merr.CreateNotImplementedYetStruct("MongoEventStore", "Retrieve")
+	return events, nil
 }
 
-func (store MongoEventStore) LatestEvent(subject es.SubjectID, dataType es.EventDataType) (es.Event, error) {
+func (store MongoEventStore) CurrentEventVersion(subject es.SubjectID) es.EventVersion {
+	// TODO: There must be a query where we check whether
+	//   the first event has been published if so then
+	//   we retrieve the latest and return it's version
+	latest, err := store.Latest(subject)
+	if err != nil {
+		return es.InitialEventVersion
+	}
+	return latest.Version
+}
+
+func (store MongoEventStore) Latest(subject es.SubjectID) (es.Event, error) {
 	filter := bson.D{{Key: "event.subject", Value: subject}}
 	options := options.FindOne()
 	options.SetSort(bson.D{{Key: "event.version", Value: -1}})
 
 	result, err := store.findOne(filter, options)
 	if err != nil {
-		return es.Event{}, merr.CreateFailedStructInvocation("MongoEventStore", "LatestEvent", err)
+		return es.Event{}, merr.CreateFailedStructInvocation("MongoEventStore", "Latest", err)
 	}
 
 	var document bson.M
 	if err = result.Decode(&document); err != nil {
-		return es.Event{}, merr.CreateFailedStructInvocation("MongoEventStore", "LatestEvent", err)
+		return es.Event{}, merr.CreateFailedStructInvocation("MongoEventStore", "Latest", err)
 	}
 
 	event, err := unmarshalDocument(document)
 	if err != nil {
-		return es.Event{}, merr.CreateFailedStructInvocation("MongoEventStore", "LatestEvent", err)
+		return es.Event{}, merr.CreateFailedStructInvocation("MongoEventStore", "Latest", err)
 	}
 
 	return event, nil

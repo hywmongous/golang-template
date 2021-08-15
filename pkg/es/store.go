@@ -1,12 +1,9 @@
 package es
 
 type EventStore interface {
-	Stock(producer ProducerID, subject SubjectID, data []EventData) error
-	Retrieve(subject SubjectID, callback Callback) ([]Event, error)
+	Stock(producer ProducerID, subject SubjectID, data []EventData) ([]Event, error)
+	Retrieve(subject SubjectID) ([]Event, error)
 
-	LatestEvent(subject SubjectID, dataType EventDataType) (Event, error)
+	Latest(subject SubjectID) (Event, error)
+	CurrentEventVersion(subject SubjectID) EventVersion
 }
-
-type (
-	Callback func(event Event) error
-)
