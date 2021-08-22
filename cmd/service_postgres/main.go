@@ -39,19 +39,19 @@ func main() {
 	store := mongo.CreateMongoEventStore()
 
 	// Event Stocking
-	events, err := store.Stock(producer, subject, eventData)
+	events, err := store.Send(producer, subject, eventData)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Event Retriving
-	stock, err := store.Retrieve(subject)
+	stock, err := store.After(subject, es.EventTimestamp(time.Now().AddDate(0, 0, -2).Unix()))
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Println("Stock")
 	for _, event := range stock {
-		log.Println(string(event.Id))
+		log.Println(time.Unix(int64(event.Timestamp), 0).String())
 	}
 
 	// Event Streaming

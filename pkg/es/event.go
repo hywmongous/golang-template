@@ -3,6 +3,7 @@ package es
 import (
 	"encoding/json"
 	"errors"
+	"math"
 	"reflect"
 	"strings"
 	"time"
@@ -12,7 +13,7 @@ import (
 )
 
 type (
-	/// UUID for the event
+	// UUID for the event
 	EventId            string
 	ProducerID         string
 	SubjectID          string
@@ -25,39 +26,39 @@ type (
 )
 
 type Event struct {
-	/// UUID for the event
+	// UUID for the event
 	Id EventId
 
-	/// The producer of the event
-	/// This id be the service ID or name
+	// The producer of the event
+	// This id be the service ID or name
 	Producer ProducerID
 
-	/// Who is this event regarding?
-	/// In case of DDD it could be the aggregate root ID
+	// Who is this event regarding?
+	// In case of DDD it could be the aggregate root ID
 	Subject SubjectID
 
-	/// The version of the ID, which is used to
-	/// sort the events in the created order
+	// The version of the ID, which is used to
+	// sort the events in the created order
 	Version EventVersion
 
-	/// The version of the event data
+	// The version of the event data
 	SchemaVersion EventSchemaVersion
 
-	/// The snapshot version which this event is under
+	// The snapshot version which this event is under
 	SnapshotVersion SnapshotVersion
 
-	/// The name of the Event.
-	/// For instance: "IdentityRegistered"
-	/// The name can be generated with "CreateEventName"
+	// The name of the Event.
+	// For instance: "IdentityRegistered"
+	// The name can be generated with "CreateEventName"
 	Name EventName
 
-	/// The time of which the event was created
+	// The time of which the event was created
 	Timestamp EventTimestamp
 
-	/// The data regarding the event
-	/// For isntance, if the event is "IdentityRegistered"
-	/// then the data could be the time of registration
-	/// and the ID of the registrated identity.
+	// The data regarding the event
+	// For isntance, if the event is "IdentityRegistered"
+	// then the data could be the time of registration
+	// and the ID of the registrated identity.
 	Data EventData
 }
 
@@ -70,6 +71,9 @@ const (
 	InitialEventVersion       = EventVersion(0)
 	InitialEventSchemaVersion = EventSchemaVersion(0)
 	InitialSnapshotVersion    = SnapshotVersion(0)
+
+	BeginningOfTime = EventTimestamp(0)
+	EndOfTime       = EventTimestamp(math.MaxInt64)
 )
 
 func CreateEvent(
@@ -102,7 +106,14 @@ func CreateEventBatch(
 		return []Event{}, merr.CreateFailedInvocation("CreateEventBatch", ErrNoEventData)
 	}
 
-	nextEventVersion := store.CurrentEventVersion(subject) + 1
+	latestEvent, err := store.Latest(subject)
+	// TODO: Differentiate between errors, it might be the error is caused
+	//   by the absence of events and the current event version is the initial
+	//   however it could also be a connectivity issue.
+	if err != nil {
+		return nil, err
+	}
+	nextEventVersion := latestEvent.Version + 1
 
 	events := make([]Event, len(data))
 	for idx, elem := range data {
@@ -140,7 +151,7 @@ func createEvent(
 		Subject:         subject,
 		Version:         version,
 		SchemaVersion:   schemaVersion,
-		SnapshotVersion: SnapshotVersion(0),
+		SnapshotVersion: InitialSnapshotVersion,
 		Name:            CreateEventName(data),
 		Timestamp:       EventTimestamp(time.Now().Unix()),
 		Data:            data,
