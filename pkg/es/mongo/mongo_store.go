@@ -66,10 +66,9 @@ func (store *MongoEventStore) stage(event es.Event) {
 	store.commit = append(store.commit, event)
 }
 
-// This code is unused; maybe it will be useful in the future.
-// func (store *MongoEventStore) clearStage() {
-// 	store.commit = make([]es.Event, 0, commitCap)
-// }
+func (store *MongoEventStore) clearStage() {
+	store.commit = make([]es.Event, 0, commitCapacity)
+}
 
 func (store *MongoEventStore) unstage(lookup es.Ident) (es.Event, error) {
 	for idx, event := range store.commit {
@@ -278,11 +277,12 @@ func (store *MongoEventStore) Unload(lookup es.Ident) (es.Event, error) {
 }
 
 func (store *MongoEventStore) Ship() ([]es.Event, error) {
-	err := store.sendEvents(store.commit)
-	if err != nil {
+	if err := store.sendEvents(store.commit); err != nil {
 		return nil, err
 	}
-	return nil, err
+	shipment := store.commit
+	store.clearStage()
+	return shipment, nil
 }
 
 func (store *MongoEventStore) Snapshot(producer es.ProducerID, subject es.SubjectID, data es.Data) (es.Snapshot, error) {

@@ -22,11 +22,9 @@ func main() {
 	log.Print("Event creation")
 	producer := es.ProducerID("Producer")
 	subject := es.SubjectID("Subject")
-	eventData := []es.Data{
-		Transaction{
-			AggregateId: string(subject),
-			Amount:      rand.Intn(100),
-		},
+	eventData := Transaction{
+		AggregateId: string(subject),
+		Amount:      rand.Intn(100),
 	}
 
 	log.Print("Event store")
