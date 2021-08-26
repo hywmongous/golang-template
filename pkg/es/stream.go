@@ -23,7 +23,7 @@ type EventStream interface {
 	//     2. Merge the above mentioned idea into a channel returning a struct
 	//     3. Ignore the client close. What can we do about it? I think: Nothing.
 	Publish(topic Topic, events chan Event, errors chan error) context.CancelFunc
-	Subscribe(topic Topic, events chan Event, errors chan error) context.CancelFunc
+	Subscribe(topic Topic, errors chan error) (chan Event, context.CancelFunc)
 }
 
 type (

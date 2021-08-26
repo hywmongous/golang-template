@@ -6,7 +6,6 @@ import (
 	"errors"
 	"time"
 
-	merr "github.com/hywmongous/example-service/pkg/errors"
 	"github.com/hywmongous/example-service/pkg/es"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -15,7 +14,7 @@ import (
 )
 
 type (
-	mongoAction func(context context.Context, collection *mongo.Collection) error
+	mongoConnectionAction func(context context.Context, collection *mongo.Collection) error
 )
 
 type MongoEventStore struct {
@@ -23,25 +22,27 @@ type MongoEventStore struct {
 }
 
 const (
-	initialCommitLength = 0 // We append each time an event is added
-	timeoutDuration     = 10 * time.Second
+	commitCapacity  = 1 // We append each time an event is added
+	timeoutDuration = 10 * time.Second
+
 	databaseName        = "eventstore"
-	collectionName      = "events"
+	eventsCollection    = "events"
+	snapshotsCollection = "snapshots"
 )
 
 const (
-	EventIdKey              = "event.id"
-	EventProducerKey        = "event.producer"
-	EventSubjectKey         = "event.subject"
-	EventVersionKey         = "event.version"
-	EventSchemaVersionKey   = "event.schemaversion"
-	EventSnapShotVersionKey = "event.snapshotversion"
-	EventNameKey            = "event.name"
-	EventTimestampKey       = "event.timestamp"
-	EventDataKey            = "event.data"
+	eventIdKey              = "event.id"
+	eventProducerKey        = "event.producer"
+	eventSubjectKey         = "event.subject"
+	eventVersionKey         = "event.version"
+	eventSchemaVersionKey   = "event.schemaversion"
+	eventSnapShotVersionKey = "event.snapshotversion"
+	eventNameKey            = "event.name"
+	eventTimestampKey       = "event.timestamp"
+	eventDataKey            = "event.data"
 
-	MongoLessThan    = "$lt"
-	MongoGreaterThan = "$gt"
+	mongoLessThan    = "$lt"
+	mongoGreaterThan = "$gt"
 )
 
 var (
@@ -53,39 +54,57 @@ var (
 
 func CreateMongoEventStore() MongoEventStore {
 	return MongoEventStore{
-		commit: make([]es.Event, initialCommitLength),
+		commit: make([]es.Event, 0, commitCapacity),
 	}
 }
 
-func (store MongoEventStore) collection(client *mongo.Client) (*mongo.Collection, error) {
+func (store *MongoEventStore) Commit() []es.Event {
+	return store.commit
+}
+
+func (store *MongoEventStore) stage(event es.Event) {
+	store.commit = append(store.commit, event)
+}
+
+// This code is unused; maybe it will be useful in the future.
+// func (store *MongoEventStore) clearStage() {
+// 	store.commit = make([]es.Event, 0, commitCap)
+// }
+
+func (store *MongoEventStore) unstage(lookup es.Ident) (es.Event, error) {
+	for idx, event := range store.commit {
+		if event.Id == lookup {
+			store.commit = append(store.commit[:idx], store.commit[idx+1:]...)
+			return event, nil
+		}
+	}
+	return es.Event{}, ErrEventNotFound
+}
+
+func (store *MongoEventStore) collection(client *mongo.Client, collectionName string) (*mongo.Collection, error) {
 	// Establish database connection
 	database := client.Database(databaseName)
 	if database == nil {
-		return nil, merr.CreateFailedStructInvocation("MongoEventStore", "collection", ErrDatabaseNotFound)
+		return nil, ErrDatabaseNotFound
 	}
 
 	// Establish collection connection
 	collection := database.Collection(collectionName)
 	if collection == nil {
-		return nil, merr.CreateFailedStructInvocation("MongoEventStore", "collection", ErrCollectionNotFound)
+		return nil, ErrCollectionNotFound
 	}
 
 	return collection, nil
 }
 
-func (store MongoEventStore) connect(action mongoAction) error {
+func (store *MongoEventStore) connect(action mongoConnectionAction, collectionName string) error {
 	options := options.Client()
 	uri := options.ApplyURI("mongodb://root:root@ia_mongo:27017")
 
 	// Client construction
 	client, err := mongo.NewClient(uri)
 	if err != nil {
-		return merr.CreateFailedStructInvocation("MongoEventStore", "connect", err)
-	}
-
-	// Create the client
-	if err != nil {
-		return merr.CreateFailedStructInvocation("MongoEventStore", "connect", err)
+		return err
 	}
 
 	// Create the context
@@ -93,109 +112,80 @@ func (store MongoEventStore) connect(action mongoAction) error {
 	defer cancel()
 
 	// Construct the connected client
-	err = client.Connect(ctx)
-	if err != nil {
-		return merr.CreateFailedStructInvocation("MongoEventStore", "connect", err)
+	if err = client.Connect(ctx); err != nil {
+		return err
 	}
 	defer client.Disconnect(ctx)
 
 	// Connect to the collection
-	collection, err := store.collection(client)
+	collection, err := store.collection(client, collectionName)
 	if err != nil {
-		return merr.CreateFailedStructInvocation("MongoEventStore", "connect", err)
+		return err
 	}
 
 	return action(ctx, collection)
 }
 
-func (store MongoEventStore) insertManyDocuments(documents []interface{}) error {
+func (store *MongoEventStore) insertManyDocuments(documents []interface{}, collectionName string) error {
 	action := func(ctx context.Context, collection *mongo.Collection) error {
 		_, err := collection.InsertMany(ctx, documents)
-		if err != nil {
-			return merr.CreateFailedStructInvocation("MongoEventStore", "action", err)
-		}
-		return nil
+		return err
 	}
 
-	return store.connect(action)
+	return store.connect(action, collectionName)
 }
 
-func (store MongoEventStore) findOne(filter interface{}, options ...*options.FindOneOptions) (es.Event, error) {
-	var event es.Event
-	var result *mongo.SingleResult
+func (store *MongoEventStore) insertDocument(document interface{}, collectionName string) error {
 	action := func(ctx context.Context, collection *mongo.Collection) error {
-		result = collection.FindOne(ctx, filter, options...)
-		if result == nil {
-			return merr.CreateFailedStructInvocation("MongoEventStore", "findOne.action", result.Err())
-		}
-
-		var document bson.M
-		if err := result.Decode(&document); err != nil {
-			return merr.CreateFailedStructInvocation("MongoEventStore", "findOne.action", err)
-		}
-
-		unmarshaledEvent, err := unmarshalDocument(document)
-		if err != nil {
-			return merr.CreateFailedStructInvocation("MongoEventStore", "findOne.action", err)
-		}
-		event = unmarshaledEvent
-
-		return nil
+		_, err := collection.InsertOne(ctx, document)
+		return err
 	}
-	return event, store.connect(action)
+
+	return store.connect(action, collectionName)
 }
 
-func (store MongoEventStore) findAll(filter interface{}, options ...*options.FindOptions) ([]es.Event, error) {
-	var events []es.Event
-	var cursor *mongo.Cursor
-	action := func(ctx context.Context, collection *mongo.Collection) error {
-		result, err := collection.Find(ctx, filter, options...)
-		if err != nil {
-			return merr.CreateFailedStructInvocation("MongoEventStore", "findAll.action", err)
-		}
-		cursor = result
-		defer cursor.Close(ctx)
-
-		for cursor.Next(ctx) {
-			var document bson.M
-			if err := cursor.Decode(&document); err != nil {
-				return merr.CreateFailedStructInvocation("MongoEventStore", "For.loop", err)
-			}
-
-			event, err := unmarshalDocument(document)
-			if err != nil {
-				return merr.CreateFailedStructInvocation("MongoEventStore", "For.loop", err)
-			}
-
-			events = append(events, event)
-		}
-
-		return nil
+func decode(
+	decoder interface{ Decode(interface{}) error },
+	value interface{},
+) error {
+	var document bson.M
+	if err := decoder.Decode(&document); err != nil {
+		return err
 	}
 
-	if err := store.connect(action); err != nil {
-		return nil, err
+	if err := unmarshalDocument(document, value); err != nil {
+		return err
 	}
-	return events, nil
+
+	return nil
 }
 
-func marshallDocuments(events []es.Event) []interface{} {
+func marshallEventDocument(event es.Event) interface{} {
+	return bson.D{{
+		Key:   "event",
+		Value: event,
+	}}
+}
+
+func marshallEventDocuments(events []es.Event) []interface{} {
 	documents := make([]interface{}, len(events))
 	for idx, event := range events {
-		documents[idx] = bson.D{
-			bson.E{
-				Key:   "event",
-				Value: event,
-			},
-		}
+		documents[idx] = marshallEventDocument(event)
 	}
 	return documents
 }
 
-func unmarshalDocument(document bson.M) (es.Event, error) {
+func marshallSnapshotDocument(snapshot es.Snapshot) interface{} {
+	return bson.D{{
+		Key:   "snapshot",
+		Value: snapshot,
+	}}
+}
+
+func unmarshalDocument(document bson.M, value interface{}) error {
 	eventDocument, ok := document["event"].(bson.M)
 	if !ok {
-		return es.Event{}, merr.ErrTechnical
+		return errors.New("document with key 'event' could not be converted to a bson map")
 	}
 
 	// The following is a JSON work around golang mongodb
@@ -205,150 +195,204 @@ func unmarshalDocument(document bson.M) (es.Event, error) {
 	// the json package, so for Marshalling we use json
 	obj, err := json.Marshal(eventDocument)
 	if err != nil {
-		return es.Event{}, merr.CreateFailedInvocation("unmarshalDocument", err)
+		return err
 	}
 
-	var event es.Event
-	err = json.Unmarshal(obj, &event)
-	if err != nil {
-		return es.Event{}, merr.CreateFailedInvocation("unmarshalDocument", err)
+	if err = json.Unmarshal(obj, &value); err != nil {
+		return err
 	}
 
-	return event, nil
+	return nil
 }
 
-func (store MongoEventStore) Send(producer es.ProducerID, subject es.SubjectID, data []es.EventData) ([]es.Event, error) {
-	events, err := es.CreateEventBatch(producer, subject, es.EventSchemaVersion(1), data, store)
-	if err != nil {
-		return nil, merr.CreateFailedStructInvocation("EventStore", "Send", err)
-	}
-	return events, store.SendEvents(events)
-}
-
-func (store MongoEventStore) SendEvents(events []es.Event) error {
-	documents := marshallDocuments(events)
-	return store.insertManyDocuments(documents)
-}
-
-func (store MongoEventStore) Load(producer es.ProducerID, subject es.SubjectID, data es.EventData) (es.Event, error) {
-	event, err := es.CreateEvent(producer, subject, es.EventSchemaVersion(1), data, store)
-	if err != nil {
-		return es.Event{}, merr.CreateFailedStructInvocation("EventStore", "Load", err)
-	}
-	(&store).commit = append(store.commit, event)
-	return event, nil
-}
-
-func (store MongoEventStore) Unload(eventId es.EventId) (es.Event, error) {
-	for idx, event := range store.commit {
-		if event.Id == eventId {
-			(&store).commit = append(store.commit[:idx], store.commit[idx+1:]...)
-			return event, nil
+func (store *MongoEventStore) findOne(collectionName string, filter interface{}, options ...*options.FindOneOptions) (es.Event, error) {
+	var resultantEvent es.Event
+	action := func(ctx context.Context, collection *mongo.Collection) error {
+		result := collection.FindOne(ctx, filter, options...)
+		if result == nil {
+			return result.Err()
 		}
+
+		if conErr := decode(result, &resultantEvent); conErr != nil {
+			return conErr
+		}
+
+		return nil
 	}
-	return es.Event{}, ErrEventNotFound
+	return resultantEvent, store.connect(action, collectionName)
 }
 
-func (store MongoEventStore) Ship() ([]es.Event, error) {
-	return store.commit, store.SendEvents(store.commit)
+func (store *MongoEventStore) findAll(collectionName string, filter interface{}, options ...*options.FindOptions) ([]es.Event, error) {
+	var events []es.Event
+	action := func(ctx context.Context, collection *mongo.Collection) error {
+		cursor, err := collection.Find(ctx, filter, options...)
+		if err != nil {
+			return err
+		}
+		defer cursor.Close(ctx)
+
+		for cursor.Next(ctx) {
+			var event es.Event
+			conErr := decode(cursor, &event)
+			if conErr != nil {
+				return conErr
+			}
+			events = append(events, event)
+		}
+
+		return nil
+	}
+
+	return events, store.connect(action, collectionName)
 }
 
-func (store MongoEventStore) Concerning(subject es.SubjectID) ([]es.Event, error) {
-	filter := bson.D{{Key: EventSubjectKey, Value: subject}}
-	options := options.Find()
-	options.SetSort(bson.D{{Key: EventVersionKey, Value: -1}})
-
-	events, err := store.findAll(filter, options)
+func (store *MongoEventStore) Send(producer es.ProducerID, subject es.SubjectID, data []es.Data) ([]es.Event, error) {
+	events, err := es.CreateEventBatch(producer, subject, es.Version(1), data, store)
 	if err != nil {
-		return nil, merr.CreateFailedStructInvocation("MongoEventStore", "Concerning", err)
+		return nil, err
+	}
+	return events, store.sendEvents(events)
+}
+
+func (store *MongoEventStore) sendEvents(events []es.Event) error {
+	documents := marshallEventDocuments(events)
+	return store.insertManyDocuments(documents, eventsCollection)
+}
+
+func (store *MongoEventStore) sendSnapshot(snapshot es.Snapshot) error {
+	document := marshallSnapshotDocument(snapshot)
+	return store.insertDocument(document, snapshotsCollection)
+}
+
+func (store *MongoEventStore) Load(producer es.ProducerID, subject es.SubjectID, data es.Data) (es.Event, error) {
+	event, err := es.CreateEvent(producer, subject, es.Version(1), data, store)
+	if err != nil {
+		return event, err
+	}
+	store.stage(event)
+	return event, nil
+}
+
+func (store *MongoEventStore) Unload(lookup es.Ident) (es.Event, error) {
+	return store.unstage(lookup)
+}
+
+func (store *MongoEventStore) Ship() ([]es.Event, error) {
+	err := store.sendEvents(store.commit)
+	if err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
+func (store *MongoEventStore) Snapshot(producer es.ProducerID, subject es.SubjectID, data es.Data) (es.Snapshot, error) {
+	snapshot, err := es.CreateSnapshot(producer, subject, es.Version(1), data, store)
+	if err != nil {
+		return es.Snapshot{}, err
+	}
+	return snapshot, store.sendSnapshot(snapshot)
+}
+
+func (store *MongoEventStore) Concerning(subject es.SubjectID) ([]es.Event, error) {
+	filter := bson.D{{Key: eventSubjectKey, Value: subject}}
+	options := options.Find()
+	options.SetSort(bson.D{{Key: eventVersionKey, Value: -1}})
+
+	events, err := store.findAll(eventsCollection, filter, options)
+	if err != nil {
+		return nil, err
 	}
 
 	return events, nil
 }
 
-func (store MongoEventStore) By(producer es.ProducerID) ([]es.Event, error) {
-	filter := bson.D{{Key: EventProducerKey, Value: producer}}
+func (store *MongoEventStore) By(producer es.ProducerID) ([]es.Event, error) {
+	filter := bson.D{{Key: eventProducerKey, Value: producer}}
 	options := options.Find()
-	options.SetSort(bson.D{{Key: EventVersionKey, Value: -1}})
+	options.SetSort(bson.D{{Key: eventVersionKey, Value: -1}})
 
-	events, err := store.findAll(filter, options)
+	events, err := store.findAll(eventsCollection, filter, options)
 	if err != nil {
-		return nil, merr.CreateFailedStructInvocation("MongoEventStore", "By", err)
+		return nil, err
 	}
 
 	return events, nil
 }
 
-func (store MongoEventStore) Between(subject es.SubjectID, from es.EventVersion, to es.EventVersion) ([]es.Event, error) {
+func (store *MongoEventStore) Between(subject es.SubjectID, from es.Version, to es.Version) ([]es.Event, error) {
 	filter := bson.D{
-		{Key: EventSubjectKey, Value: subject},
-		{Key: EventVersionKey, Value: bson.D{
-			{Key: MongoLessThan, Value: to},
-			{Key: MongoGreaterThan, Value: from},
+		{Key: eventSubjectKey, Value: subject},
+		{Key: eventVersionKey, Value: bson.D{
+			{Key: mongoLessThan, Value: to},
+			{Key: mongoGreaterThan, Value: from},
 		}},
 	}
 	options := options.Find()
-	options.SetSort(bson.D{{Key: EventVersionKey, Value: -1}})
+	options.SetSort(bson.D{{Key: eventVersionKey, Value: -1}})
 
-	events, err := store.findAll(filter, options)
+	events, err := store.findAll(eventsCollection, filter, options)
 	if err != nil {
-		return nil, merr.CreateFailedStructInvocation("MongoEventStore", "By", err)
+		return nil, err
 	}
 
 	return events, nil
 }
 
-func (store MongoEventStore) With(subject es.SubjectID, snapshot es.SnapshotVersion) ([]es.Event, error) {
+func (store *MongoEventStore) With(subject es.SubjectID, snapshot es.Version) ([]es.Event, error) {
 	filter := bson.D{
-		{Key: EventSubjectKey, Value: subject},
-		{Key: EventSnapShotVersionKey, Value: snapshot},
+		{Key: eventSubjectKey, Value: subject},
+		{Key: eventSnapShotVersionKey, Value: snapshot},
 	}
 	options := options.Find()
-	options.SetSort(bson.D{{Key: EventVersionKey, Value: -1}})
+	options.SetSort(bson.D{{Key: eventVersionKey, Value: -1}})
 
-	events, err := store.findAll(filter, options)
+	events, err := store.findAll(eventsCollection, filter, options)
 	if err != nil {
-		return nil, merr.CreateFailedStructInvocation("MongoEventStore", "In", err)
+		return nil, err
 	}
 
 	return events, nil
 }
 
-func (store MongoEventStore) After(subject es.SubjectID, pointInTime es.EventTimestamp) ([]es.Event, error) {
+func (store *MongoEventStore) After(subject es.SubjectID, pointInTime es.Timestamp) ([]es.Event, error) {
 	return store.Temporal(subject, pointInTime, es.EndOfTime)
 }
 
-func (store MongoEventStore) Before(subject es.SubjectID, pointInTime es.EventTimestamp) ([]es.Event, error) {
+func (store *MongoEventStore) Before(subject es.SubjectID, pointInTime es.Timestamp) ([]es.Event, error) {
 	return store.Temporal(subject, pointInTime, es.BeginningOfTime)
 }
 
-func (store MongoEventStore) Temporal(subject es.SubjectID, from es.EventTimestamp, to es.EventTimestamp) ([]es.Event, error) {
+func (store *MongoEventStore) Temporal(subject es.SubjectID, from es.Timestamp, to es.Timestamp) ([]es.Event, error) {
 	filter := bson.D{
-		{Key: EventSubjectKey, Value: subject},
-		{Key: EventTimestampKey, Value: bson.D{
-			{Key: MongoLessThan, Value: to},
-			{Key: MongoGreaterThan, Value: from},
+		{Key: eventSubjectKey, Value: subject},
+		{Key: eventTimestampKey, Value: bson.D{
+			{Key: mongoLessThan, Value: to},
+			{Key: mongoGreaterThan, Value: from},
 		}},
 	}
 	options := options.Find()
-	options.SetSort(bson.D{{Key: EventVersionKey, Value: -1}})
+	options.SetSort(bson.D{{Key: eventVersionKey, Value: -1}})
 
-	events, err := store.findAll(filter, options)
+	events, err := store.findAll(eventsCollection, filter, options)
 	if err != nil {
-		return nil, merr.CreateFailedStructInvocation("MongoEventStore", "Temporal", err)
+		return nil, err
 	}
 
 	return events, nil
 }
 
-func (store MongoEventStore) Latest(subject es.SubjectID) (es.Event, error) {
-	filter := bson.D{{Key: EventSubjectKey, Value: subject}}
+func (store *MongoEventStore) LatestEvent(subject es.SubjectID) (es.Event, error) {
+	filter := bson.D{{Key: eventSubjectKey, Value: subject}}
 	options := options.FindOne()
-	options.SetSort(bson.D{{Key: EventVersionKey, Value: -1}})
+	options.SetSort(bson.D{{Key: eventVersionKey, Value: -1}})
 
-	event, err := store.findOne(filter, options)
+	event, err := store.findOne(eventsCollection, filter, options)
 	if err != nil {
-		return es.Event{}, merr.CreateFailedStructInvocation("MongoEventStore", "Latest", err)
+		return es.Event{}, err
 	}
 	return event, nil
+}
+
+func (store *MongoEventStore) LatestSnapshot(subject es.SubjectID) (es.Snapshot, error) {
+	return es.Snapshot{}, nil
 }

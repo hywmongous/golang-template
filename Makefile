@@ -66,6 +66,9 @@ dist_clean:
 		$(eval deployment=$(word 1, $(argv))) \
 		$(eval target=$(word 2, $(argv))) \
 
+# TODO: Only build docker image if we deploy.
+#   Right now we always do it, even on "docker-compose_down"
+		$(MAKE) docker_build
 		$(info Deploying: $(deployment)) \
 		$(info Target: $(target)) \
 

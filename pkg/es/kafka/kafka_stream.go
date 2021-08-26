@@ -87,18 +87,19 @@ func (stream KafkaStream) read(ctx context.Context, config kafka.ReaderConfig, e
 	}
 }
 
-func (stream KafkaStream) Subscribe(topic es.Topic, events chan es.Event, errors chan error) context.CancelFunc {
+func (stream KafkaStream) Subscribe(topic es.Topic, errors chan error) (chan es.Event, context.CancelFunc) {
 	config := kafka.ReaderConfig{
 		Brokers: []string{broker},
 		Topic:   string(topic),
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	go stream.read(ctx, config, events, errors)
-	return cancel
+	subscriptions := make(chan es.Event)
+	go stream.read(ctx, config, subscriptions, errors)
+	return subscriptions, cancel
 }
 
-func (stream KafkaStream) PrintErrors() chan error {
+func (stream KafkaStream) CreateErrorPrinter() chan error {
 	errors := make(chan error)
 	go func() {
 		for {
