@@ -11,7 +11,7 @@ help:
 	$(MAKE) help-k6
 
 help-k6:
-	@echo '  eg. k6_account-login_load'
+	@echo '  eg. k6_identity-login_load'
 
 help-features:
 	echo -n '  ' $(FEATURES)
@@ -32,7 +32,6 @@ help-features:
 		$(info Type: $(type)) \
 
 		$(if $(filter $(word 1, $(test)),$(K6)),
-			$(K6) run $(FEATURESPATH)/$(feature)/$(type)_test.js
 			$(K6) run $(FEATURESPATH)/$(feature)/$(type)_test.js
 		)
 	)

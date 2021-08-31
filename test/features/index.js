@@ -1,6 +1,6 @@
 import { Counter } from 'k6/metrics'
 
-export const PORT = '8080';
+export const PORT = '5000';
 export const PROTOCOL = 'http://';
 export const SUBDOMAIN = ''; // eg. 'www.'
 export const ROOT_DOMAIN = 'localhost';

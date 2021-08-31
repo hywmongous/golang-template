@@ -1,8 +1,12 @@
 package identity
 
-import merr "github.com/hywmongous/example-service/pkg/errors"
+import "github.com/cockroachdb/errors"
 
 type Csrf string
+
+var (
+	emptyCsrf = Csrf("")
+)
 
 func GenerateCsrf() Csrf {
 	return Csrf(generateUuidValue())
@@ -10,10 +14,7 @@ func GenerateCsrf() Csrf {
 
 func CreateCsrf(value string) (Csrf, error) {
 	uuid, err := createUuidValue(value)
-	if err != nil {
-		return Csrf(""), merr.CreateFailedInvocation("CreateCsrf", err)
-	}
-	return Csrf(uuid), nil
+	return Csrf(uuid), errors.Wrap(err, "createUuidValue")
 }
 
 func RecreateCsrf(value string) Csrf {

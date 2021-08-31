@@ -12,6 +12,7 @@ services:
   ia_zookeeper:
     image: wurstmeister/zookeeper:latest
     container_name: ia_zookeeper
+    restart: always
     env_file:
       - ./environments/zookeeper.env
     ports:
@@ -22,6 +23,7 @@ services:
   ia_kafka:
     image: wurstmeister/kafka:latest
     container_name: ia_kafka
+    restart: always
     depends_on:
       - ia_zookeeper
     env_file:

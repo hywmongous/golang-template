@@ -1,8 +1,12 @@
 package identity
 
-import merr "github.com/hywmongous/example-service/pkg/errors"
+import "github.com/cockroachdb/errors"
 
 type RefreshTokenID string
+
+var (
+	emptyRefreshTokenID = RefreshTokenID("")
+)
 
 func GenerateRefreshTokenID() RefreshTokenID {
 	return RefreshTokenID(generateUuidValue())
@@ -10,10 +14,7 @@ func GenerateRefreshTokenID() RefreshTokenID {
 
 func CreateRefreshTokenID(value string) (RefreshTokenID, error) {
 	uuid, err := createUuidValue(value)
-	if err != nil {
-		return RefreshTokenID(""), merr.CreateFailedInvocation("CreateRefreshTokenID", err)
-	}
-	return RefreshTokenID(uuid), nil
+	return RefreshTokenID(uuid), errors.Wrap(err, "createUuidValue")
 }
 
 func RecreateRefreshTokenID(value string) RefreshTokenID {

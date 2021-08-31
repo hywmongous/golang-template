@@ -3,8 +3,9 @@ package mongo
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"time"
+
+	"github.com/cockroachdb/errors"
 
 	"github.com/hywmongous/example-service/pkg/es"
 
@@ -56,10 +57,6 @@ func CreateMongoEventStore() MongoEventStore {
 	return MongoEventStore{
 		commit: make([]es.Event, 0, commitCapacity),
 	}
-}
-
-func (store *MongoEventStore) Commit() []es.Event {
-	return store.commit
 }
 
 func (store *MongoEventStore) stage(event es.Event) {
@@ -274,6 +271,18 @@ func (store *MongoEventStore) Load(producer es.ProducerID, subject es.SubjectID,
 
 func (store *MongoEventStore) Unload(lookup es.Ident) (es.Event, error) {
 	return store.unstage(lookup)
+}
+
+func (store *MongoEventStore) Flush() ([]es.Event, error) {
+	unstages := make([]es.Event, len(store.commit))
+	for _, event := range store.commit {
+		unstaged, err := store.unstage(event.Id)
+		if err != nil {
+			return unstages, errors.Wrap(err, "Something went wrong when flushing the store")
+		}
+		unstages = append(unstages, unstaged)
+	}
+	return unstages, nil
 }
 
 func (store *MongoEventStore) Ship() ([]es.Event, error) {

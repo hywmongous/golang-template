@@ -2,13 +2,11 @@ package usecases
 
 import "github.com/hywmongous/example-service/internal/domain/identity"
 
-type DeletionRequest struct {
+type DeleteIdentityRequest struct {
 	IdentityID identity.IdentityID
 }
 
-type DeletionResponse struct {
+type DeleteIdentityResponse struct {
 }
 
-type Delete interface {
-	DoDelete(request DeletionRequest) (DeletionResponse, error)
-}
+type DeleteIdentityUseCase func(request DeleteIdentityRequest) (DeleteIdentityResponse, error)

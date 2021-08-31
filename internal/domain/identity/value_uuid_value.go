@@ -3,13 +3,18 @@ package identity
 import (
 	"github.com/cockroachdb/errors"
 	"github.com/google/uuid"
-	merr "github.com/hywmongous/example-service/pkg/errors"
 )
 
 type uuidValue string
 
 var (
-	ErrUuidStringIsEmpty = errors.New("cannot be empty")
+	emptyUuidValue = uuidValue("")
+
+	// ErrWrongFormat is returned when the creation of a uuid based on a value does not follow the format of uuids's
+	ErrWrongFormat = errors.New("format is not a uuid")
+
+	// ErrEmptyString is returned when the creation of uuid based on a value is the empty string
+	ErrEmptyString = errors.New("value string is empty")
 )
 
 func generateUuidValue() uuidValue {
@@ -18,12 +23,10 @@ func generateUuidValue() uuidValue {
 
 func createUuidValue(value string) (uuidValue, error) {
 	if value == "" {
-		return "", merr.CreateInvalidInputError(
-			"createUuidValue", "value", ErrUuidStringIsEmpty,
-		)
+		return emptyUuidValue, ErrEmptyString
 	}
-	// TODO: Verify format of uuid string value (Maybe by attempting a parse?)
-	return uuidValue(value), nil
+	parsedUuid, err := uuid.Parse(value)
+	return uuidValue(string(parsedUuid[:])), errors.Wrap(err, "uuid parsing failed")
 }
 
 func recreateUuidValue(value string) uuidValue {

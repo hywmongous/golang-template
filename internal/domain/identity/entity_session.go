@@ -1,7 +1,7 @@
 package identity
 
 import (
-	"errors"
+	"github.com/cockroachdb/errors"
 )
 
 type Session struct {

@@ -3,13 +3,12 @@ package identity
 import (
 	"github.com/cockroachdb/errors"
 	"github.com/hywmongous/example-service/pkg/crypto"
-	merr "github.com/hywmongous/example-service/pkg/errors"
 )
 
 type ConfirmationHash string
 
 var (
-	ErrHashEmpty = errors.New("hash string value is empty")
+	ErrEmptyHash = errors.New("confirmation hash could not be create because the input value is empty")
 )
 
 func GenerateConfirmationHash() (ConfirmationHash, error) {
@@ -19,9 +18,7 @@ func GenerateConfirmationHash() (ConfirmationHash, error) {
 
 func CreateConfirmationHash(value string) (ConfirmationHash, error) {
 	if value == "" {
-		return "", merr.CreateInvalidInputError(
-			"CreateConfirmationHash", "value", ErrHashEmpty,
-		)
+		return "", ErrEmptyHash
 	}
 	return ConfirmationHash(value), nil
 }

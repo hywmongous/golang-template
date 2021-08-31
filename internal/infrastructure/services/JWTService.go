@@ -5,9 +5,10 @@ package services
 // https://curity.io/resources/learn/scopes-vs-claims/
 
 import (
-	"errors"
 	"strings"
 	"time"
+
+	"github.com/cockroachdb/errors"
 
 	"github.com/hywmongous/example-service/internal/domain/identity"
 

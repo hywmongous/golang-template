@@ -1,8 +1,9 @@
 package es
 
 import (
-	"errors"
 	"time"
+
+	"github.com/cockroachdb/errors"
 
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -75,10 +76,10 @@ func RecreateSnapshot(
 
 func nextSnapshotVersion(subject SubjectID, store EventStore) (Version, error) {
 	latestSnapshot, err := store.LatestSnapshot(subject)
-	if err == mongo.ErrNoDocuments {
+	if errors.Is(err, mongo.ErrNoDocuments) {
 		return InitialSnapshotVersion, nil
 	} else if err != nil {
-		return InitialSnapshotVersion, err
+		return InitialSnapshotVersion, errors.Wrap(err, "could not retrieve the latests snapshot")
 	}
 	return latestSnapshot.Version + 1, nil
 }

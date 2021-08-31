@@ -31,3 +31,7 @@ func CreateTitleForData(data Data) Title {
 	eventName := eventTypeParts[len(eventTypeParts)-1]
 	return Title(eventName)
 }
+
+func CreateTopicForData(data Data) Topic {
+	return Topic(CreateTitleForData(data))
+}

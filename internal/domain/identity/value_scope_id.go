@@ -1,6 +1,6 @@
 package identity
 
-import merr "github.com/hywmongous/example-service/pkg/errors"
+import "github.com/cockroachdb/errors"
 
 type ScopeID string
 
@@ -10,10 +10,7 @@ func GenerateScopeID() ScopeID {
 
 func CreateScopeID(value string) (ScopeID, error) {
 	uuid, err := createUuidValue(value)
-	if err != nil {
-		return ScopeID(""), merr.CreateFailedInvocation("CreateScopeID", err)
-	}
-	return ScopeID(uuid), nil
+	return ScopeID(uuid), errors.Wrap(err, "createUuidValue")
 }
 
 func RecreateScopeID(value string) ScopeID {

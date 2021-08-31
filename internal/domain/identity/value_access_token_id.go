@@ -1,6 +1,8 @@
 package identity
 
-import merr "github.com/hywmongous/example-service/pkg/errors"
+import (
+	"fmt"
+)
 
 type AccessTokenID string
 
@@ -11,7 +13,7 @@ func GenerateAccessTokenID() AccessTokenID {
 func CreateAccessTokenID(value string) (AccessTokenID, error) {
 	uuid, err := createUuidValue(value)
 	if err != nil {
-		return AccessTokenID(""), merr.CreateFailedInvocation("CreateAccessTokenID", err)
+		return AccessTokenID(""), fmt.Errorf("AccessTokenID creation failed: %w", err)
 	}
 	return AccessTokenID(uuid), nil
 }

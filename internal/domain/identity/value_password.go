@@ -38,3 +38,7 @@ func (password *Password) Set(input string) error {
 func (password Password) Verify(input string) error {
 	return bcrypt.CompareHashAndPassword([]byte(password.hashedPassword), []byte(input))
 }
+
+func (password Password) GetHash() string {
+	return password.hashedPassword
+}

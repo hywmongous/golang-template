@@ -37,7 +37,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Print("Event shipping ", len(store.Commit()))
+	log.Print("Event shipping")
 	events, err := store.Ship()
 	if err != nil {
 		log.Fatal(err)
@@ -50,7 +50,7 @@ func main() {
 	}
 	log.Println("Stock")
 	for _, event := range stock {
-		log.Println(time.Unix(int64(event.Timestamp), 0).String())
+		log.Println(event.Id)
 	}
 
 	log.Print("Event streaming")
@@ -63,7 +63,7 @@ func main() {
 	stream.Publish(topic, publications, errors)
 
 	log.Print("Event subscription")
-	subscriptions, _ := stream.Subscribe(topic, errors)
+	subscriptions, cancel := stream.Subscribe(topic, errors)
 	go func() {
 		log.Println("Subscription")
 		for {
@@ -73,6 +73,7 @@ func main() {
 			}
 			log.Println(event.Id)
 		}
+		cancel()
 	}()
 
 	// We do this because we have to ensure we have received the

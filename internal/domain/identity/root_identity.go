@@ -1,7 +1,7 @@
 package identity
 
 import (
-	"errors"
+	"github.com/cockroachdb/errors"
 )
 
 type Identity struct {
@@ -13,8 +13,7 @@ type Identity struct {
 }
 
 var (
-	ErrVerifyScopeNoHayMatches = errors.New("needle did not have a match in the haystack")
-
+	ErrVerifyScopeNoHayMatches     = errors.New("needle did not have a match in the haystack")
 	ErrLogoutSessionNotFound       = errors.New("session id did not match any session")
 	ErrLogoutSessionAlreadyRevoked = errors.New("attempted to logout from a revoked session")
 )

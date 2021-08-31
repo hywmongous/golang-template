@@ -1,8 +1,9 @@
 package identity
 
 import (
-	"errors"
 	"strings"
+
+	"github.com/cockroachdb/errors"
 )
 
 // order -> Can read evyerthing regarding the order

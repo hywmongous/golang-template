@@ -1,8 +1,9 @@
 package es
 
 import (
-	"errors"
 	"time"
+
+	"github.com/cockroachdb/errors"
 
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -63,12 +64,12 @@ func CreateEvent(
 
 	nextVersion, err := nextEventVersion(subject, store)
 	if err != nil {
-		return Event{}, err
+		return Event{}, errors.Wrap(err, "could not get event next event version")
 	}
 
 	snapshotVersion, err := currentSnapshotVersion(subject, store)
 	if err != nil {
-		return Event{}, err
+		return Event{}, errors.Wrap(err, "could not get current snapshot version")
 	}
 
 	return createEvent(

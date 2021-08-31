@@ -1,6 +1,6 @@
 package identity
 
-import merr "github.com/hywmongous/example-service/pkg/errors"
+import "github.com/cockroachdb/errors"
 
 type SessionContextID string
 
@@ -10,10 +10,7 @@ func GenerateSessionContextID() SessionContextID {
 
 func CreateSessionContextID(value string) (SessionContextID, error) {
 	uuid, err := createUuidValue(value)
-	if err != nil {
-		return SessionContextID(""), merr.CreateFailedInvocation("CreateSessionContextID", err)
-	}
-	return SessionContextID(uuid), nil
+	return SessionContextID(uuid), errors.Wrap(err, "createUuidValue")
 }
 
 func RecreateSessionContextID(value string) SessionContextID {

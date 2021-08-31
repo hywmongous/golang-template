@@ -2,15 +2,13 @@ package usecases
 
 import "github.com/hywmongous/example-service/internal/domain/identity"
 
-type RegistrationRequest struct {
-	Email    string
-	Password string
+type RegisterIdentityRequest struct {
+	Email    identity.Email
+	Password identity.Password
 }
 
-type RegistrationResponse struct {
+type RegisterIdentityResponse struct {
 	IdentityID identity.IdentityID
 }
 
-type Register interface {
-	DoRegister(request RegistrationRequest) (RegistrationResponse, error)
-}
+type RegisterIdentityUseCase func(request RegisterIdentityRequest) (RegisterIdentityResponse, error)
