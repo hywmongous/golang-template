@@ -2,6 +2,7 @@ package es
 
 import (
 	"context"
+	"log"
 )
 
 type EventStream interface {
@@ -22,8 +23,13 @@ type EventStream interface {
 	//          one to return the failed publication
 	//     2. Merge the above mentioned idea into a channel returning a struct
 	//     3. Ignore the client close. What can we do about it? I think: Nothing.
-	Publish(topic Topic, events chan Event, errors chan error) context.CancelFunc
-	Subscribe(topic Topic, errors chan error) (chan Event, context.CancelFunc)
+	// This discussion is closed, on the realisation that we should stop streaming
+	//   when an error occurs because we are required to publish them in a sequential order
+	//   this simplifies the whole process of commiting the changes to topics.
+	Publish(events []Event) error
+	Subscribe(topic Topic, ctx context.Context) (chan Event, chan error)
+	// Publish(events chan Event, errors chan error) context.CancelFunc
+	// Subscribe(topic Topic, errors chan error) (chan Event, context.CancelFunc)
 }
 
 type (
@@ -38,4 +44,18 @@ func CreateEventStream(events []Event) chan Event {
 		channel <- event
 	}
 	return channel
+}
+
+func CreateErrorPrinter() chan error {
+	errors := make(chan error)
+	go func() {
+		for {
+			err, ok := <-errors
+			if !ok {
+				break
+			}
+			log.Println(err)
+		}
+	}()
+	return errors
 }

@@ -103,6 +103,17 @@ func (store *MongoEventStore) connect(action mongoConnectionAction, collectionNa
 		return err
 	}
 
+	// create session
+	session, err := client.StartSession()
+	if err != nil {
+		return err
+	}
+
+	// begin transaction to ensure rollbacks on errors
+	if err = session.StartTransaction(); err != nil {
+		return err
+	}
+
 	// Create the context
 	ctx, cancel := context.WithTimeout(context.Background(), timeoutDuration)
 	defer cancel()
@@ -119,7 +130,19 @@ func (store *MongoEventStore) connect(action mongoConnectionAction, collectionNa
 		return err
 	}
 
-	return action(ctx, collection)
+	// Do action encapsulated in the transaction (session)
+	err = mongo.WithSession(ctx, session, func(sc mongo.SessionContext) error {
+		if err = action(sc, collection); err != nil {
+			sc.AbortTransaction(sc)
+			return err
+		}
+		if err = sc.CommitTransaction(sc); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	return err
 }
 
 func (store *MongoEventStore) insertManyDocuments(documents []interface{}, collectionName string) error {
@@ -273,7 +296,7 @@ func (store *MongoEventStore) Unload(lookup es.Ident) (es.Event, error) {
 	return store.unstage(lookup)
 }
 
-func (store *MongoEventStore) Flush() ([]es.Event, error) {
+func (store *MongoEventStore) Clear() ([]es.Event, error) {
 	unstages := make([]es.Event, len(store.commit))
 	for _, event := range store.commit {
 		unstaged, err := store.unstage(event.Id)

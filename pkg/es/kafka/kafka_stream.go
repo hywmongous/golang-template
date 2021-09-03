@@ -2,37 +2,35 @@ package kafka
 
 import (
 	"context"
-	"log"
 
 	"github.com/hywmongous/example-service/pkg/es"
 	"github.com/segmentio/kafka-go"
 )
 
-type KafkaStream struct{}
+type KafkaStream struct {
+	// We only use a single topic per "bounded context"
+	// For this reason it fits the "topic" to be a field
+	// within the kafka stream struct instance
+	// https://www.confluent.io/blog/put-several-event-types-kafka-topic/
+	topic es.Topic
+}
 
 const (
 	broker = "ia_kafka:9092"
 )
 
-func CreateKafkaStream() KafkaStream {
-	return KafkaStream{}
+func CreateKafkaStream(topic es.Topic) KafkaStream {
+	return KafkaStream{
+		topic: topic,
+	}
 }
 
-func (stream KafkaStream) write(ctx context.Context, config kafka.WriterConfig, events chan es.Event, errors chan error) {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
+func (stream KafkaStream) write(ctx context.Context, config kafka.WriterConfig, events []es.Event) error {
 	writer := kafka.NewWriter(config)
-	for {
-		event, ok := <-events
-		if !ok {
-			break
-		}
-
+	for _, event := range events {
 		value, err := event.Marshall()
 		if err != nil {
-			errors <- err
-			break
+			return err
 		}
 
 		message := kafka.Message{
@@ -41,74 +39,55 @@ func (stream KafkaStream) write(ctx context.Context, config kafka.WriterConfig, 
 		}
 
 		if err := writer.WriteMessages(ctx, message); err != nil {
-			errors <- err
-			break
+			return err
 		}
 	}
 
-	if err := writer.Close(); err != nil {
-		errors <- err
-	}
+	return writer.Close()
 }
 
-func (stream KafkaStream) Publish(topic es.Topic, events chan es.Event, errors chan error) context.CancelFunc {
+func (stream KafkaStream) Publish(events []es.Event) error {
 	config := kafka.WriterConfig{
 		Brokers: []string{broker},
-		Topic:   string(topic),
+		Topic:   string(stream.topic),
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	go stream.write(ctx, config, events, errors)
-	return cancel
+	defer cancel()
+	return stream.write(ctx, config, events)
 }
 
 func (stream KafkaStream) read(ctx context.Context, config kafka.ReaderConfig, events chan es.Event, errors chan error) {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
 	reader := kafka.NewReader(config)
+	defer reader.Close() // TODO: What if closing the reader fails?
 	for {
 		msg, err := reader.ReadMessage(ctx)
 		if err != nil {
 			errors <- err
-			break
 		}
 
 		event, err := es.Unmarshal(msg.Value)
 		if err != nil {
 			errors <- err
-			break
 		}
 		events <- event
 	}
-
-	if err := reader.Close(); err != nil {
-		errors <- err
-	}
 }
 
-func (stream KafkaStream) Subscribe(topic es.Topic, errors chan error) (chan es.Event, context.CancelFunc) {
+type ReadResult struct {
+	Event es.Event
+	Error error
+}
+
+func (stream KafkaStream) Subscribe(topic es.Topic, ctx context.Context) (chan es.Event, chan error) {
 	config := kafka.ReaderConfig{
 		Brokers: []string{broker},
 		Topic:   string(topic),
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	subscriptions := make(chan es.Event)
-	go stream.read(ctx, config, subscriptions, errors)
-	return subscriptions, cancel
-}
-
-func (stream KafkaStream) CreateErrorPrinter() chan error {
+	events := make(chan es.Event)
 	errors := make(chan error)
-	go func() {
-		for {
-			err, ok := <-errors
-			if !ok {
-				break
-			}
-			log.Println(err)
-		}
-	}()
-	return errors
+
+	go stream.read(ctx, config, events, errors)
+	return events, errors
 }

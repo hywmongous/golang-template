@@ -62,7 +62,9 @@ func main() {
 
 	// Step 1: Create the unit of work
 	mongoStore := mongo.CreateMongoEventStore()
-	kafkaStram := kafka.CreateKafkaStream()
+	kafkaStram := kafka.CreateKafkaStream(
+		es.Topic("ia"),
+	)
 	uow := UnitOfWork{
 		store:  &mongoStore,
 		stream: kafkaStram,
@@ -157,14 +159,16 @@ func (uow *UnitOfWork) receiveEvent(subject es.SubjectID, data es.Data) {
 }
 
 func (uow *UnitOfWork) Commit() error {
-	if _, err := uow.store.Ship(); err != nil {
+	events, err := uow.store.Ship()
+	if err != nil {
 		log.Panicln("UnitOfWork store failed shipping the events")
 		return errors.Wrap(err, "UnitOfWork Commiting failed")
 	}
-	// TODO: Stream the committed events
+	uow.stream.Publish(events)
 	return nil
 }
 
 func (uow *UnitOfWork) Rollback() error {
+	uow.store.Clear()
 	return nil
 }

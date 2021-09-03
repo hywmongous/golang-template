@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"math/rand"
 	"time"
@@ -54,16 +55,17 @@ func main() {
 	}
 
 	log.Print("Event streaming")
-	stream := kafka.CreateKafkaStream()
-	errors := stream.CreateErrorPrinter()
-	topic := es.Topic("ia.identity")
+	topic := es.Topic("ia")
+	stream := kafka.CreateKafkaStream(topic)
 
 	log.Print("Event publications")
-	publications := es.CreateEventStream(events)
-	stream.Publish(topic, publications, errors)
+	if err = stream.Publish(events); err != nil {
+		log.Fatal(err)
+	}
 
 	log.Print("Event subscription")
-	subscriptions, cancel := stream.Subscribe(topic, errors)
+	ctx := context.Background()
+	subscriptions, errors := stream.Subscribe(topic, ctx)
 	go func() {
 		log.Println("Subscription")
 		for {
