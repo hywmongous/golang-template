@@ -26,6 +26,14 @@ type Identity struct {
 	Email string
 }
 
+// Snapshot(s)
+type IdentitySnapshotV1 struct {
+	Id    string
+	Name  string
+	Age   int
+	Email string
+}
+
 // Actors
 type UnregisteredUser struct{}
 
@@ -36,15 +44,51 @@ type IdentityRegistrationRequest struct {
 	Email string
 }
 type IdentityRegistrationResponse struct {
-	id string
+	Id string
 }
 type RegisterIdentityUseCase func(request IdentityRegistrationRequest) (IdentityRegistrationResponse, error)
+
+type IdentityChangeNameRequest struct {
+	Id   string
+	Name string
+}
+type IdentityChangeNameResponse struct {
+	Success bool
+}
+type ChangeIdentityNameUseCase func(request IdentityChangeNameRequest) (IdentityChangeNameResponse, error)
+
+type IdentityChangeAgeRequest struct {
+	Id  string
+	Age int
+}
+type IdentityChangeAgeResponse struct {
+	Success bool
+}
+type ChangeIdentityAgeUseCase func(request IdentityChangeNameRequest) (IdentityChangeNameResponse, error)
+
+type IdentityChangeEmailRequest struct {
+	Id    string
+	Email string
+}
+type IdentityChangeEmailResponse struct {
+	Success bool
+}
+type ChangeIdentityEmailUseCase func(request IdentityChangeNameRequest) (IdentityChangeNameResponse, error)
 
 // Events
 type IdentityRegistered struct {
 	Id    string
 	Name  string
 	Age   int
+	Email string
+}
+type IdentityChangedName struct {
+	Name string
+}
+type IdentityChangedAge struct {
+	Age int
+}
+type IdentityChangedEmail struct {
 	Email string
 }
 
@@ -76,31 +120,44 @@ func main() {
 
 	// Do registration
 	var registrationUseCase RegisterIdentityUseCase = unregisterUser.Register
-	request := IdentityRegistrationRequest{
+	registrationRequest := IdentityRegistrationRequest{
 		Name:  "Andreas",
 		Age:   22,
 		Email: "andreasbrandhoej@hotmail.com",
 	}
-	response, err := registrationUseCase(request)
+	registrationResponse, err := registrationUseCase(registrationRequest)
 	if err != nil {
 		uow.Rollback()
-		log.Panicln("Registration use case failed")
+		log.Fatal("Registration use case failed")
 	}
-	log.Println("Identity:", response.id, "was registered")
+	log.Println("Identity:", registrationResponse.Id, "was registered")
+
+	// Change name
+	var changeNameUseCase ChangeIdentityNameUseCase = unregisterUser.ChangeName
+	nameChangeRequest := IdentityChangeNameRequest{
+		Id:   registrationResponse.Id,
+		Name: "Andreas K. Brandhøj",
+	}
+	_, err = changeNameUseCase(nameChangeRequest)
+	if err != nil {
+		uow.Rollback()
+		log.Fatal("Name change of identity failed")
+	}
+	log.Println("Identity:", registrationResponse.Id, "changed name to '"+nameChangeRequest.Name+"'")
 
 	// Commit changes
 	if err = uow.Commit(); err != nil {
 		uow.Rollback()
-		log.Panicln(err)
+		log.Fatal(err)
 	}
 
 	// For this example we wait a bit after the registration
 	time.Sleep(2 * time.Second)
 
 	// Query all the events for the aggregate
-	events, err := uow.store.Concerning(es.SubjectID(response.id))
+	events, err := uow.store.Concerning(es.SubjectID(registrationResponse.Id))
 	if err != nil {
-		log.Panic(err)
+		log.Fatal(err)
 	}
 
 	// Construct the aggregate
@@ -136,14 +193,53 @@ func VisitIdentityRegistered(identity *Identity, event IdentityRegistered) {
 
 func (unregisteredUser UnregisteredUser) Register(request IdentityRegistrationRequest) (IdentityRegistrationResponse, error) {
 	response := IdentityRegistrationResponse{
-		id: uuid.New().String(),
+		Id: uuid.New().String(),
 	}
 	mediator.Publish(
-		es.SubjectID(response.id),
+		es.SubjectID(response.Id),
 		IdentityRegistered{
-			Id:    response.id,
+			Id:    response.Id,
 			Name:  request.Name,
 			Age:   request.Age,
+			Email: request.Email,
+		},
+	)
+	return response, nil
+}
+
+func (unregisteredUser UnregisteredUser) ChangeName(request IdentityChangeNameRequest) (IdentityChangeNameResponse, error) {
+	response := IdentityChangeNameResponse{
+		Success: true,
+	}
+	mediator.Publish(
+		es.SubjectID(request.Id),
+		IdentityChangedName{
+			Name: request.Name,
+		},
+	)
+	return response, nil
+}
+
+func (unregisteredUser UnregisteredUser) ChangeAge(request IdentityChangeAgeRequest) (IdentityChangeAgeResponse, error) {
+	response := IdentityChangeAgeResponse{
+		Success: true,
+	}
+	mediator.Publish(
+		es.SubjectID(request.Id),
+		IdentityChangedAge{
+			Age: request.Age,
+		},
+	)
+	return response, nil
+}
+
+func (unregisteredUser UnregisteredUser) ChangeEmail(request IdentityChangeEmailRequest) (IdentityChangeEmailResponse, error) {
+	response := IdentityChangeEmailResponse{
+		Success: true,
+	}
+	mediator.Publish(
+		es.SubjectID(request.Id),
+		IdentityChangedEmail{
 			Email: request.Email,
 		},
 	)

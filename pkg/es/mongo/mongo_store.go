@@ -18,12 +18,16 @@ type (
 	mongoConnectionAction func(context context.Context, collection *mongo.Collection) error
 )
 
+type stage struct {
+	events   []es.Event
+	snapshot es.Snapshot
+}
+
 type MongoEventStore struct {
-	commit []es.Event
+	stages []stage
 }
 
 const (
-	commitCapacity  = 1 // We append each time an event is added
 	timeoutDuration = 10 * time.Second
 
 	databaseName        = "eventstore"
@@ -54,26 +58,38 @@ var (
 )
 
 func CreateMongoEventStore() MongoEventStore {
-	return MongoEventStore{
-		commit: make([]es.Event, 0, commitCapacity),
+	store := MongoEventStore{
+		stages: make([]stage, 1),
+	}
+	store.stages[0] = createStage()
+	return store
+}
+
+func createStage() stage {
+	return stage{
+		events: make([]es.Event, 0),
 	}
 }
 
 func (store *MongoEventStore) stage(event es.Event) {
-	store.commit = append(store.commit, event)
+	last := len(store.stages) - 1
+	store.stages[last].events = append(store.stages[last].events, event)
 }
 
 func (store *MongoEventStore) clearStage() {
-	store.commit = make([]es.Event, 0, commitCapacity)
+	store.stages = make([]stage, 0)
 }
 
 func (store *MongoEventStore) unstage(lookup es.Ident) (es.Event, error) {
-	for idx, event := range store.commit {
-		if event.Id == lookup {
-			store.commit = append(store.commit[:idx], store.commit[idx+1:]...)
-			return event, nil
+	for stageIdx, stage := range store.stages {
+		for eventIdx, event := range stage.events {
+			if event.Id == lookup {
+				store.stages[stageIdx].events = append(stage.events[:eventIdx], stage.events[eventIdx+1:]...)
+				return event, nil
+			}
 		}
 	}
+
 	return es.Event{}, ErrEventNotFound
 }
 
@@ -103,17 +119,6 @@ func (store *MongoEventStore) connect(action mongoConnectionAction, collectionNa
 		return err
 	}
 
-	// create session
-	session, err := client.StartSession()
-	if err != nil {
-		return err
-	}
-
-	// begin transaction to ensure rollbacks on errors
-	if err = session.StartTransaction(); err != nil {
-		return err
-	}
-
 	// Create the context
 	ctx, cancel := context.WithTimeout(context.Background(), timeoutDuration)
 	defer cancel()
@@ -124,6 +129,18 @@ func (store *MongoEventStore) connect(action mongoConnectionAction, collectionNa
 	}
 	defer client.Disconnect(ctx)
 
+	// create session
+	session, err := client.StartSession()
+	if err != nil {
+		return err
+	}
+	defer session.EndSession(ctx)
+
+	// begin transaction to ensure rollbacks on errors
+	// if err = session.StartTransaction(); err != nil {
+	// 	return err
+	// }
+
 	// Connect to the collection
 	collection, err := store.collection(client, collectionName)
 	if err != nil {
@@ -133,12 +150,13 @@ func (store *MongoEventStore) connect(action mongoConnectionAction, collectionNa
 	// Do action encapsulated in the transaction (session)
 	err = mongo.WithSession(ctx, session, func(sc mongo.SessionContext) error {
 		if err = action(sc, collection); err != nil {
-			sc.AbortTransaction(sc)
+			// sc.AbortTransaction(sc)
 			return err
 		}
-		if err = sc.CommitTransaction(sc); err != nil {
-			return err
-		}
+		// if err = sc.CommitTransaction(sc); err != nil {
+		// 	log.Println("Step 9")
+		// 	return err
+		// }
 		return nil
 	})
 
@@ -296,33 +314,31 @@ func (store *MongoEventStore) Unload(lookup es.Ident) (es.Event, error) {
 	return store.unstage(lookup)
 }
 
-func (store *MongoEventStore) Clear() ([]es.Event, error) {
-	unstages := make([]es.Event, len(store.commit))
-	for _, event := range store.commit {
-		unstaged, err := store.unstage(event.Id)
-		if err != nil {
-			return unstages, errors.Wrap(err, "Something went wrong when flushing the store")
-		}
-		unstages = append(unstages, unstaged)
-	}
-	return unstages, nil
+func (store *MongoEventStore) Clear() error {
+	store.clearStage()
+	return nil
 }
 
-func (store *MongoEventStore) Ship() ([]es.Event, error) {
-	if err := store.sendEvents(store.commit); err != nil {
-		return nil, err
+func (store *MongoEventStore) Ship() error {
+	for _, stage := range store.stages {
+		if err := store.sendEvents(stage.events); err != nil {
+			return errors.Wrap(err, "shipping the events failed")
+		}
+		if err := store.sendSnapshot(stage.snapshot); err != nil {
+			return errors.Wrap(err, "shipping the snapshot failed")
+		}
 	}
-	shipment := store.commit
 	store.clearStage()
-	return shipment, nil
+	return nil
 }
 
 func (store *MongoEventStore) Snapshot(producer es.ProducerID, subject es.SubjectID, data es.Data) (es.Snapshot, error) {
-	snapshot, err := es.CreateSnapshot(producer, subject, es.Version(1), data, store)
+	/*snapshot, err := es.CreateSnapshot(producer, subject, es.Version(1), data, store)
 	if err != nil {
 		return es.Snapshot{}, err
 	}
-	return snapshot, store.sendSnapshot(snapshot)
+	return snapshot, store.sendSnapshot(snapshot)*/
+	snapshot, err := es.CreateSnapshot(producer, subject, es.Version(1), data, store)
 }
 
 func (store *MongoEventStore) Concerning(subject es.SubjectID) ([]es.Event, error) {

@@ -17,6 +17,7 @@ type KafkaStream struct {
 
 const (
 	broker = "ia_kafka:9092"
+	group  = "ia"
 )
 
 func CreateKafkaStream(topic es.Topic) KafkaStream {
@@ -65,7 +66,6 @@ func (stream KafkaStream) read(ctx context.Context, config kafka.ReaderConfig, e
 		if err != nil {
 			errors <- err
 		}
-
 		event, err := es.Unmarshal(msg.Value)
 		if err != nil {
 			errors <- err
@@ -74,15 +74,11 @@ func (stream KafkaStream) read(ctx context.Context, config kafka.ReaderConfig, e
 	}
 }
 
-type ReadResult struct {
-	Event es.Event
-	Error error
-}
-
 func (stream KafkaStream) Subscribe(topic es.Topic, ctx context.Context) (chan es.Event, chan error) {
 	config := kafka.ReaderConfig{
 		Brokers: []string{broker},
 		Topic:   string(topic),
+		GroupID: group,
 	}
 
 	events := make(chan es.Event)

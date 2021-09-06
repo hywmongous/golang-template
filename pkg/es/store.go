@@ -8,9 +8,9 @@ type EventStore interface {
 	// The same as removing the current EventData in the commit
 	Unload(eventId Ident) (Event, error)
 	// The same as removing all the events loaded
-	Clear() ([]Event, error)
+	Clear() error
 	// Ships the EventData to the Database
-	Ship() ([]Event, error)
+	Ship() error
 
 	// Creates a new snapshot
 	Snapshot(producer ProducerID, subject SubjectID, data Data) (Snapshot, error)

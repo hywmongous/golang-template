@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/cockroachdb/errors"
 	"github.com/hywmongous/example-service/pkg/es"
 	"github.com/hywmongous/example-service/pkg/es/kafka"
 	"github.com/hywmongous/example-service/pkg/es/mongo"
@@ -33,9 +34,10 @@ func main() {
 
 	log.Print("Commit event data")
 	ware, err := store.Load(producer, subject, eventData)
-	log.Print("Loaded: ", ware.Id)
 	if err != nil {
 		log.Fatal(err)
+	} else {
+		log.Print("Loaded: ", ware.Id)
 	}
 
 	log.Print("Event shipping")
@@ -65,17 +67,34 @@ func main() {
 
 	log.Print("Event subscription")
 	ctx := context.Background()
-	subscriptions, errors := stream.Subscribe(topic, ctx)
+	subscriptions, errs := stream.Subscribe(topic, ctx)
 	go func() {
 		log.Println("Subscription")
 		for {
-			event, ok := <-subscriptions
-			if !ok {
-				break
+			select {
+			case event, ok := <-subscriptions:
+				if !ok {
+					break
+				}
+				log.Println(event.Id)
+			case err, ok := <-errs:
+				if !ok {
+					break
+				}
+				log.Fatal(err)
+			case <-ctx.Done():
+				err := ctx.Err()
+				// this if/else displays the different reasons for Done
+				if errors.Is(err, context.Canceled) {
+					log.Fatal(err)
+				} else if errors.Is(err, context.DeadlineExceeded) {
+					log.Fatal(err)
+				} else {
+					log.Fatal(err)
+				}
+				return
 			}
-			log.Println(event.Id)
 		}
-		cancel()
 	}()
 
 	// We do this because we have to ensure we have received the
