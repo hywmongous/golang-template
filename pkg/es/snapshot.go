@@ -6,7 +6,6 @@ import (
 	"github.com/cockroachdb/errors"
 
 	"github.com/google/uuid"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Snapshot struct {
@@ -76,7 +75,7 @@ func RecreateSnapshot(
 
 func nextSnapshotVersion(subject SubjectID, store EventStore) (Version, error) {
 	latestSnapshot, err := store.LatestSnapshot(subject)
-	if errors.Is(err, mongo.ErrNoDocuments) {
+	if errors.Is(err, ErrNoSnapshots) {
 		return InitialSnapshotVersion, nil
 	} else if err != nil {
 		return InitialSnapshotVersion, errors.Wrap(err, "could not retrieve the latests snapshot")

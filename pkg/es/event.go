@@ -6,7 +6,6 @@ import (
 	"github.com/cockroachdb/errors"
 
 	"github.com/google/uuid"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Event struct {
@@ -165,7 +164,7 @@ func RecreateEvent(
 
 func nextEventVersion(subject SubjectID, store EventStore) (Version, error) {
 	latestEvent, err := store.LatestEvent(subject)
-	if err == mongo.ErrNoDocuments {
+	if errors.Is(err, ErrNoEvents) {
 		return InitialEventVersion, nil
 	} else if err != nil {
 		return InitialEventVersion, err
@@ -175,7 +174,7 @@ func nextEventVersion(subject SubjectID, store EventStore) (Version, error) {
 
 func currentSnapshotVersion(subject SubjectID, store EventStore) (Version, error) {
 	latestSnapshot, err := store.LatestSnapshot(subject)
-	if err == mongo.ErrNoDocuments {
+	if errors.Is(err, ErrNoSnapshots) {
 		return InitialSnapshotVersion, nil
 	} else if err != nil {
 		return InitialSnapshotVersion, err

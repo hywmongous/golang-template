@@ -1,5 +1,7 @@
 package es
 
+import "errors"
+
 type EventStore interface {
 	// Immediately sends an Event to the warehouse
 	Send(producer ProducerID, subject SubjectID, data []Data) ([]Event, error)
@@ -10,7 +12,7 @@ type EventStore interface {
 	// The same as removing all the events loaded
 	Clear() error
 	// Ships the EventData to the Database
-	Ship() error
+	Ship() ([]Event, error)
 
 	// Creates a new snapshot
 	Snapshot(producer ProducerID, subject SubjectID, data Data) (Snapshot, error)
@@ -45,3 +47,8 @@ type EventStore interface {
 	// Returns the latest snapshot for a given subject
 	LatestSnapshot(subject SubjectID) (Snapshot, error)
 }
+
+var (
+	ErrNoEvents    = errors.New("event store does not have any events for the given subject")
+	ErrNoSnapshots = errors.New("event store does not have any snapshots for the given subject")
+)

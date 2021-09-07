@@ -145,9 +145,8 @@ func main() {
 	}
 	log.Println("Identity:", registrationResponse.Id, "changed name to '"+nameChangeRequest.Name+"'")
 
-	// Commit changes
+	// Commit changes made through the use cases
 	if err = uow.Commit(); err != nil {
-		uow.Rollback()
 		log.Fatal(err)
 	}
 
@@ -162,6 +161,24 @@ func main() {
 
 	// Construct the aggregate
 	identity := Visit(events)
+
+	// Snapshot the aggregate
+	snapshotData := IdentitySnapshotV1{
+		Id:    identity.Id,
+		Name:  identity.Name,
+		Age:   identity.Age,
+		Email: identity.Email,
+	}
+	snapshot, err := uow.store.Snapshot(Producer, es.SubjectID(identity.Id), snapshotData)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Snapshot", snapshot)
+
+	// Commit with the snapshot
+	if err = uow.Commit(); err != nil {
+		log.Fatal(err)
+	}
 
 	// print the final identity
 	log.Println(identity.Id, identity.Name, identity.Age, identity.Email)
@@ -178,17 +195,25 @@ func Visit(events []es.Event) Identity {
 		case "IdentityRegistered":
 			var data IdentityRegistered
 			event.Unmarshal(&data)
-			VisitIdentityRegistered(&identity, data)
+			identity.Id = data.Id
+			identity.Age = data.Age
+			identity.Email = data.Email
+			identity.Name = data.Name
+		case "IdentityChangedName":
+			var data IdentityChangedName
+			event.Unmarshal(&data)
+			identity.Name = data.Name
+		case "IdentityChangedAge":
+			var data IdentityChangedAge
+			event.Unmarshal(&data)
+			identity.Age = data.Age
+		case "IdentityChangedEmail":
+			var data IdentityChangedEmail
+			event.Unmarshal(&data)
+			identity.Email = data.Email
 		}
 	}
 	return identity
-}
-
-func VisitIdentityRegistered(identity *Identity, event IdentityRegistered) {
-	identity.Id = event.Id
-	identity.Age = event.Age
-	identity.Email = event.Email
-	identity.Name = event.Name
 }
 
 func (unregisteredUser UnregisteredUser) Register(request IdentityRegistrationRequest) (IdentityRegistrationResponse, error) {

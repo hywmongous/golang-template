@@ -1,5 +1,5 @@
 ROOTPATH=./../..
-CMDNAME=snapshotting
+CMDNAME=event_sourcing
 BASEPATH=$(ROOTPATH)/cmd/$(CMDNAME)
 MAINPATH=$(BASEPATH)/main.go
 
