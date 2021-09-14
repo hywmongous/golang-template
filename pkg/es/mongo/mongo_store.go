@@ -63,6 +63,9 @@ var (
 	ErrCollectionNotFound = errors.New("events collection could not be found")
 	ErrInsertion          = errors.New("failed inserting one or more documents into collection")
 	ErrEventNotFound      = errors.New("event not found")
+	ErrMissingEventKey    = errors.New("document does not have event key")
+	ErrMissingSnapshotKey = errors.New("document does not have snapshot key")
+	ErrStageOutOfSync     = errors.New("stage is out of sync with remote")
 )
 
 func CreateMongoEventStore() MongoEventStore {
@@ -171,7 +174,7 @@ func decodeEvent(
 
 	eventDocument, ok := document["event"].(bson.M)
 	if !ok {
-		return errors.New("document does not have event key")
+		return ErrMissingEventKey
 	}
 
 	if err := unmarshalDocument(eventDocument, value); err != nil {
@@ -192,7 +195,7 @@ func decodeSnapshot(
 
 	snapshotDocument, ok := document["snapshot"].(bson.M)
 	if !ok {
-		return errors.New("document does not have snapshot key")
+		return ErrMissingSnapshotKey
 	}
 
 	if err := unmarshalDocument(snapshotDocument, value); err != nil {
@@ -357,7 +360,7 @@ func (store *MongoEventStore) isStageInSync(subject es.SubjectID) bool {
 
 func (store *MongoEventStore) shipSubject(subject es.SubjectID) ([]es.Event, error) {
 	if !store.isStageInSync(subject) {
-		return nil, errors.New("stage is out of sync with remote")
+		return nil, ErrStageOutOfSync
 	}
 
 	stages := store.stage.EventStages(subject)
