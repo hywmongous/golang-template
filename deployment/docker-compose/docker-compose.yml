@@ -19,6 +19,8 @@ services:
       - 2181:2181
     networks:
       - service_net
+    logging:
+      driver: "none"
 
   ia_kafka:
     image: wurstmeister/kafka:latest
@@ -32,6 +34,8 @@ services:
       - 9092:9092
     networks:
       - service_net
+    logging:
+      driver: "none"
 
   ia_mongo:
     image: mongo:latest
@@ -48,6 +52,8 @@ services:
       - 27017:27017
     networks:
       - service_net
+    logging:
+      driver: "none"
 
   ia:
     image: example-service:latest

@@ -76,7 +76,11 @@ func RecreateSnapshot(
 func nextSnapshotVersion(subject SubjectID, store EventStore) (Version, error) {
 	latestSnapshot, err := store.LatestSnapshot(subject)
 	if errors.Is(err, ErrNoSnapshots) {
-		return InitialSnapshotVersion, nil
+		// We also incremente by one if no snapshots have been made
+		// The reason for this is that version = 0 is seen kinda like
+		// a snapshot or epoch of all events. meaning the first events
+		// will use snapshot version 0
+		return InitialSnapshotVersion + 1, nil
 	} else if err != nil {
 		return InitialSnapshotVersion, errors.Wrap(err, "could not retrieve the latests snapshot")
 	}

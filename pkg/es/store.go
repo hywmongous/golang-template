@@ -7,10 +7,8 @@ type EventStore interface {
 	Send(producer ProducerID, subject SubjectID, data []Data) ([]Event, error)
 	// The same as "begin commit"
 	Load(producer ProducerID, subject SubjectID, data Data) (Event, error)
-	// The same as removing the current EventData in the commit
-	Unload(eventId Ident) (Event, error)
 	// The same as removing all the events loaded
-	Clear() error
+	Clear()
 	// Ships the EventData to the Database
 	Ship() ([]Event, error)
 

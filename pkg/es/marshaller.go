@@ -1,6 +1,10 @@
 package es
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/cockroachdb/errors"
+)
 
 func (event Event) Marshall() ([]byte, error) {
 	return json.Marshal(event)
@@ -14,10 +18,18 @@ func Unmarshal(data []byte) (Event, error) {
 	return event, nil
 }
 
-func (event Event) Unmarshal(data Data) error {
-	bytes, err := json.Marshal(event.Data)
+func (event Event) Unmarshal(receiver Data) error {
+	return unmarshal(event.Data, receiver)
+}
+
+func (snapshot Snapshot) Unmarshal(receiver Data) error {
+	return unmarshal(snapshot.Data, receiver)
+}
+
+func unmarshal(from interface{}, to interface{}) error {
+	bytes, err := json.Marshal(from)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "unmarshalling within es failed")
 	}
-	return json.Unmarshal(bytes, data)
+	return json.Unmarshal(bytes, to)
 }

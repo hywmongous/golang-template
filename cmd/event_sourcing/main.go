@@ -130,7 +130,7 @@ func main() {
 		uow.Rollback()
 		log.Fatal("Registration use case failed")
 	}
-	log.Println("Identity:", registrationResponse.Id, "was registered")
+	// log.Println("Identity:", registrationResponse.Id, "was registered")
 
 	// Change name
 	var changeNameUseCase ChangeIdentityNameUseCase = unregisterUser.ChangeName
@@ -143,7 +143,7 @@ func main() {
 		uow.Rollback()
 		log.Fatal("Name change of identity failed")
 	}
-	log.Println("Identity:", registrationResponse.Id, "changed name to '"+nameChangeRequest.Name+"'")
+	// log.Println("Identity:", registrationResponse.Id, "changed name to '"+nameChangeRequest.Name+"'")
 
 	// Commit changes made through the use cases
 	if err = uow.Commit(); err != nil {
@@ -160,37 +160,132 @@ func main() {
 	}
 
 	// Construct the aggregate
-	identity := Visit(events)
+	var identity Identity
+	identity = VisitEvents(identity, events)
 
 	// Snapshot the aggregate
-	snapshotData := IdentitySnapshotV1{
+	snapshotData1 := IdentitySnapshotV1{
 		Id:    identity.Id,
 		Name:  identity.Name,
-		Age:   identity.Age,
+		Age:   420,
 		Email: identity.Email,
 	}
-	snapshot, err := uow.store.Snapshot(Producer, es.SubjectID(identity.Id), snapshotData)
+
+	_, err = uow.store.Snapshot(Producer, es.SubjectID(identity.Id), snapshotData1)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println("Snapshot", snapshot)
+	// log.Println("Create snapshot version", snapshot.Version)
+	// log.Println("Snapshot", snapshot)
+
+	// Do something
+	_, err = changeNameUseCase(IdentityChangeNameRequest{
+		Id:   identity.Id,
+		Name: "Dat Tommy Than Dieu",
+	})
+	if err != nil {
+		uow.Rollback()
+		log.Fatal("Name change of identity failed")
+	}
+
+	// Snapshot the aggregate
+	snapshotData2 := IdentitySnapshotV1{
+		Id:    identity.Id,
+		Name:  identity.Name,
+		Age:   69,
+		Email: "ddieu19@student.aau.dk",
+	}
+
+	// Make another snapshot
+	_, err = uow.store.Snapshot(Producer, es.SubjectID(identity.Id), snapshotData2)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// log.Println("Create snapshot version", snapshot.Version)
+	// log.Println("Snapshot", snapshot)
+
+	// Do something
+	_, err = changeNameUseCase(IdentityChangeNameRequest{
+		Id:   identity.Id,
+		Name: "Dat Tommy Than Dieu",
+	})
+	if err != nil {
+		uow.Rollback()
+		log.Fatal("Name change of identity failed")
+	}
+	// Do something
+	_, err = changeNameUseCase(IdentityChangeNameRequest{
+		Id:   identity.Id,
+		Name: "Dat Tommy Than Dieu",
+	})
+	if err != nil {
+		uow.Rollback()
+		log.Fatal("Name change of identity failed")
+	}
+	// Do something
+	_, err = changeNameUseCase(IdentityChangeNameRequest{
+		Id:   identity.Id,
+		Name: "Dat Tommy Than Dieu",
+	})
+	if err != nil {
+		uow.Rollback()
+		log.Fatal("Name change of identity failed")
+	}
+	// Do something
+	_, err = changeNameUseCase(IdentityChangeNameRequest{
+		Id:   identity.Id,
+		Name: "Dat Tommy Than Dieu",
+	})
+	if err != nil {
+		uow.Rollback()
+		log.Fatal("Name change of identity failed")
+	}
 
 	// Commit with the snapshot
 	if err = uow.Commit(); err != nil {
 		log.Fatal(err)
 	}
 
+	// Create Identity from fetched snapshot
+	latestSnapshot, err := uow.store.LatestSnapshot(es.SubjectID(identity.Id))
+	if err != nil {
+		log.Fatal(err)
+	}
+	finished_identity := VisitSnapshot(latestSnapshot)
+
+	// And the append proceeding events made after the snapshot
+	proceedingEvents, err := uow.store.With(es.SubjectID(identity.Id), latestSnapshot.Version)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// log.Println("Found", len(proceedingEvents), "events with snapshot version", latestSnapshot.Version)
+	finished_identity = VisitEvents(finished_identity, proceedingEvents)
+
 	// print the final identity
-	log.Println(identity.Id, identity.Name, identity.Age, identity.Email)
+	log.Println("finished_identity", finished_identity.Id, finished_identity.Name, finished_identity.Age, finished_identity.Email)
 
 	// For this example we sleep here such that you have the time to verify the output
 	time.Sleep(5 * time.Second)
 }
 
-func Visit(events []es.Event) Identity {
+func VisitSnapshot(snapshot es.Snapshot) Identity {
 	identity := Identity{}
+	log.Println("Visit:", snapshot.Name, snapshot.Version, ",", snapshot.Data)
+	switch snapshot.Name {
+	case "IdentitySnapshotV1":
+		var data IdentitySnapshotV1
+		snapshot.Unmarshal(&data)
+		identity.Id = data.Id
+		identity.Name = data.Name
+		identity.Age = data.Age
+		identity.Email = data.Email
+	}
+	return identity
+}
+
+func VisitEvents(identity Identity, events []es.Event) Identity {
 	for _, event := range events {
-		log.Println("Visit:", event)
+		log.Println("Visit:", event.Name, event.Version, ":", event.SnapshotVersion, ",", event.Data)
 		switch event.Name {
 		case "IdentityRegistered":
 			var data IdentityRegistered
@@ -213,6 +308,7 @@ func Visit(events []es.Event) Identity {
 			identity.Email = data.Email
 		}
 	}
+	// log.Println("Visit events:", identity)
 	return identity
 }
 

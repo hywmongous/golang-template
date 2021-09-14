@@ -3,6 +3,7 @@ package mongo
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"time"
 
 	"github.com/cockroachdb/errors"
@@ -18,14 +19,8 @@ type (
 	mongoConnectionAction func(context context.Context, collection *mongo.Collection) error
 )
 
-type stage struct {
-	events      []es.Event
-	hasSnapshot bool
-	snapshot    es.Snapshot
-}
-
 type MongoEventStore struct {
-	stages []stage
+	stage es.Stage
 }
 
 const (
@@ -50,7 +45,7 @@ const (
 	snapshotIdKey            = "snapshot.id"
 	snapshotProducerKey      = "snapshot.producer"
 	snapshotSubjectKey       = "snapshot.subject"
-	snapshotversionKey       = "snapshot.version"
+	snapshotVersionKey       = "snapshot.version"
 	snapshotSchemaVersionKey = "snapshot.schemaversion"
 	snapshotNameKey          = "snapshot.name"
 	snapshotTimestampKey     = "snapshot.timestamp"
@@ -72,43 +67,9 @@ var (
 
 func CreateMongoEventStore() MongoEventStore {
 	store := MongoEventStore{
-		stages: make([]stage, 1),
+		stage: es.CreateStage(),
 	}
-	store.stages[0] = createStage()
 	return store
-}
-
-func createStage() stage {
-	return stage{
-		events: make([]es.Event, 0),
-	}
-}
-
-func (store *MongoEventStore) addStage() {
-	store.stages = append(store.stages, createStage())
-}
-
-func (store *MongoEventStore) stage(event es.Event) {
-	last := len(store.stages) - 1
-	store.stages[last].events = append(store.stages[last].events, event)
-}
-
-func (store *MongoEventStore) clearStage() {
-	store.stages = make([]stage, 0)
-	store.addStage()
-}
-
-func (store *MongoEventStore) unstage(lookup es.Ident) (es.Event, error) {
-	for stageIdx, stage := range store.stages {
-		for eventIdx, event := range stage.events {
-			if event.Id == lookup {
-				store.stages[stageIdx].events = append(stage.events[:eventIdx], stage.events[eventIdx+1:]...)
-				return event, nil
-			}
-		}
-	}
-
-	return es.Event{}, ErrEventNotFound
 }
 
 func (store *MongoEventStore) collection(client *mongo.Client, collectionName string) (*mongo.Collection, error) {
@@ -365,34 +326,70 @@ func (store *MongoEventStore) Load(producer es.ProducerID, subject es.SubjectID,
 	if err != nil {
 		return event, err
 	}
-	store.stage(event)
+	store.stage.AddEvent(event)
 	return event, nil
 }
 
-func (store *MongoEventStore) Unload(lookup es.Ident) (es.Event, error) {
-	return store.unstage(lookup)
+func (store *MongoEventStore) Clear() {
+	for _, subject := range store.stage.Subjects() {
+		store.stage.Clear(subject)
+	}
 }
 
-func (store *MongoEventStore) Clear() error {
-	store.clearStage()
-	return nil
+func (store *MongoEventStore) isStageInSync(subject es.SubjectID) bool {
+	// Check whether the first staged event is
+	// the next remote event in the remote store
+	if store.stage.IsEmpty(subject) {
+		return true
+	}
+
+	// We ignore the "found" bool return value
+	// because we have just made the check "isStageEmpty"
+	firstStagedEvent, _ := store.stage.FirstEvent(subject)
+
+	latestRemoteEvent, err := store.latestRemoteEvent(subject)
+	if errors.Is(err, es.ErrNoEvents) {
+		return true
+	}
+
+	return firstStagedEvent.Version == latestRemoteEvent.Version+1
 }
 
-func (store *MongoEventStore) Ship() ([]es.Event, error) {
-	events := make([]es.Event, 1, 10)
-	for _, stage := range store.stages {
-		if err := store.sendEvents(stage.events); err != nil {
+func (store *MongoEventStore) shipSubject(subject es.SubjectID) ([]es.Event, error) {
+	if !store.isStageInSync(subject) {
+		return nil, errors.New("stage is out of sync with remote")
+	}
+
+	stages := store.stage.EventStages(subject)
+
+	events := make([]es.Event, 0, 8)
+	for _, stage := range stages {
+		if err := store.sendEvents(stage.Events()); err != nil {
 			return events, errors.Wrap(err, "shipping the events failed")
 		}
-		events = append(events, stage.events...)
+		events = append(events, stage.Events()...)
 
-		if stage.hasSnapshot {
-			if err := store.sendSnapshot(stage.snapshot); err != nil {
+		if stage.Snapshot() != nil {
+			log.Println("SENDING SNAPSHOT")
+			if err := store.sendSnapshot(*stage.Snapshot()); err != nil {
 				return events, errors.Wrap(err, "shipping the snapshot failed")
 			}
 		}
 	}
-	store.clearStage()
+	store.stage.Clear(subject)
+	return events, nil
+}
+
+func (store *MongoEventStore) Ship() ([]es.Event, error) {
+	events := make([]es.Event, 0, 32)
+	subjects := store.stage.Subjects()
+	for _, subject := range subjects {
+		shippedEvents, err := store.shipSubject(subject)
+		if err != nil {
+			return events, err
+		}
+		events = append(events, shippedEvents...)
+	}
 	return events, nil
 }
 
@@ -401,16 +398,14 @@ func (store *MongoEventStore) Snapshot(producer es.ProducerID, subject es.Subjec
 	if err != nil {
 		return es.Snapshot{}, errors.Wrap(err, "Snapshot creation failed")
 	}
-	store.stages[len(store.stages)-1].snapshot = snapshot
-	store.stages[len(store.stages)-1].hasSnapshot = true
-	store.addStage() // We create a stage per snapshot
+	store.stage.AddSnapshot(snapshot)
 	return snapshot, nil
 }
 
 func (store *MongoEventStore) Concerning(subject es.SubjectID) ([]es.Event, error) {
 	filter := bson.D{{Key: eventSubjectKey, Value: subject}}
 	options := options.Find()
-	options.SetSort(bson.D{{Key: eventVersionKey, Value: mongoDescending}})
+	options.SetSort(bson.D{{Key: snapshotVersionKey, Value: mongoAscending}})
 
 	events, err := store.findAllEvents(filter, options)
 	if err != nil {
@@ -423,7 +418,7 @@ func (store *MongoEventStore) Concerning(subject es.SubjectID) ([]es.Event, erro
 func (store *MongoEventStore) By(producer es.ProducerID) ([]es.Event, error) {
 	filter := bson.D{{Key: eventProducerKey, Value: producer}}
 	options := options.Find()
-	options.SetSort(bson.D{{Key: eventVersionKey, Value: mongoDescending}})
+	options.SetSort(bson.D{{Key: eventVersionKey, Value: mongoAscending}})
 
 	events, err := store.findAllEvents(filter, options)
 	if err != nil {
@@ -442,7 +437,7 @@ func (store *MongoEventStore) Between(subject es.SubjectID, from es.Version, to 
 		}},
 	}
 	options := options.Find()
-	options.SetSort(bson.D{{Key: eventVersionKey, Value: mongoDescending}})
+	options.SetSort(bson.D{{Key: eventVersionKey, Value: mongoAscending}})
 
 	events, err := store.findAllEvents(filter, options)
 	if err != nil {
@@ -458,7 +453,7 @@ func (store *MongoEventStore) With(subject es.SubjectID, snapshot es.Version) ([
 		{Key: eventSnapShotVersionKey, Value: snapshot},
 	}
 	options := options.Find()
-	options.SetSort(bson.D{{Key: eventVersionKey, Value: mongoDescending}})
+	options.SetSort(bson.D{{Key: eventVersionKey, Value: mongoAscending}})
 
 	events, err := store.findAllEvents(filter, options)
 	if err != nil {
@@ -485,7 +480,7 @@ func (store *MongoEventStore) Temporal(subject es.SubjectID, from es.Timestamp, 
 		}},
 	}
 	options := options.Find()
-	options.SetSort(bson.D{{Key: eventVersionKey, Value: mongoDescending}})
+	options.SetSort(bson.D{{Key: eventVersionKey, Value: mongoAscending}})
 
 	events, err := store.findAllEvents(filter, options)
 	if err != nil {
@@ -495,7 +490,7 @@ func (store *MongoEventStore) Temporal(subject es.SubjectID, from es.Timestamp, 
 	return events, nil
 }
 
-func (store *MongoEventStore) LatestEvent(subject es.SubjectID) (es.Event, error) {
+func (store *MongoEventStore) latestRemoteEvent(subject es.SubjectID) (es.Event, error) {
 	filter := bson.D{{Key: eventSubjectKey, Value: subject}}
 	options := options.FindOne()
 	options.SetSort(bson.D{{Key: eventVersionKey, Value: mongoDescending}})
@@ -505,20 +500,34 @@ func (store *MongoEventStore) LatestEvent(subject es.SubjectID) (es.Event, error
 		return es.Event{}, es.ErrNoEvents
 	}
 
-	return event, errors.Wrap(err, "latest event encountered an error")
+	return event, errors.Wrap(err, "latest remote event encountered an error")
 }
 
-func (store *MongoEventStore) LatestSnapshot(subject es.SubjectID) (es.Snapshot, error) {
+func (store *MongoEventStore) LatestEvent(subject es.SubjectID) (es.Event, error) {
+	if latestStagedEvent, found := store.stage.LatestEvent(subject); found {
+		return latestStagedEvent, nil
+	}
+	return store.latestRemoteEvent(subject)
+}
+
+func (store *MongoEventStore) latestRemoteSnapshot(subject es.SubjectID) (es.Snapshot, error) {
 	filter := bson.D{
 		{Key: snapshotSubjectKey, Value: subject},
 	}
 	options := options.FindOne()
-	options.SetSort(bson.D{{Key: eventSnapShotVersionKey, Value: mongoDescending}})
+	options.SetSort(bson.D{{Key: snapshotVersionKey, Value: mongoDescending}})
 
 	snapshot, err := store.findOneSnapshot(filter, options)
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		return es.Snapshot{}, es.ErrNoSnapshots
 	}
 
-	return snapshot, errors.Wrap(err, "latest snapshot encountered an error")
+	return snapshot, errors.Wrap(err, "latest remote snapshot encountered an error")
+}
+
+func (store *MongoEventStore) LatestSnapshot(subject es.SubjectID) (es.Snapshot, error) {
+	if latestStagedSnapshot, found := store.stage.LatestSnapshot(subject); found {
+		return latestStagedSnapshot, nil
+	}
+	return store.latestRemoteSnapshot(subject)
 }
