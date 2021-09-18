@@ -32,5 +32,5 @@ func (routes AuthenticationRoutes) Setup() {
 	// the session. Eg. if the authentication for a given session
 	// has failed numerous times and we want to revoke the session.
 	// We dont use POST because we are not always creating a new resource.
-	group.PUT("/verify", routes.controller.Verify)
+	// group.PUT("/verify", routes.controller.Verify)
 }

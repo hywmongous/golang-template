@@ -2,6 +2,9 @@ package gin
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/hywmongous/example-service/internal/application"
+	"github.com/hywmongous/example-service/internal/infrastructure"
+	"github.com/hywmongous/example-service/internal/infrastructure/cqrs"
 	"github.com/hywmongous/example-service/internal/infrastructure/services"
 	"github.com/hywmongous/example-service/internal/presentation/gin/controllers"
 	"github.com/hywmongous/example-service/internal/presentation/gin/routes"
@@ -17,6 +20,7 @@ var Module = fx.Options(
 	RouteOptions,
 	InfrastructureOptions,
 	engineOptions,
+	ActorOptions,
 	fx.Invoke(bootstrap),
 )
 
@@ -24,8 +28,17 @@ var engineOptions = fx.Option(
 	fx.Provide(gin.New),
 )
 
+var ActorOptions = fx.Options(
+	fx.Provide(application.UnregisteredUserFactory),
+	fx.Provide(application.RegisteredUserFactory),
+)
+
 var InfrastructureOptions = fx.Options(
 	fx.Provide(services.JWTServiceFactory),
+	fx.Provide(infrastructure.KafkaStreamFactory),
+	fx.Provide(infrastructure.MongoStoreFactory),
+	fx.Provide(infrastructure.UnitOfWorkFactory),
+	fx.Provide(cqrs.IdentityRepositoryFactory),
 )
 
 var ControllerOptions = fx.Options(

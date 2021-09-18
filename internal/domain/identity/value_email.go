@@ -6,6 +6,14 @@ type Email struct {
 	confirmed bool
 }
 
+func (email Email) Address() string {
+	return email.address
+}
+
+func (email Email) Confirmed() bool {
+	return email.confirmed
+}
+
 func CreateEmail(address string) (Email, error) {
 	return Email{
 		address:   address,

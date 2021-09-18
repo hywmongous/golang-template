@@ -1,0 +1,4 @@
+syntax="proto3";
+
+package cqrs;
+option go_package="../internal/infrastructure/cqrs";

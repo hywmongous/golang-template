@@ -1,0 +1,18 @@
+syntax="proto3";
+
+package identity;
+option go_package="../internal/domain/identity";
+
+message IdentityRegistered {
+  string ID = 1;
+  string email = 2;
+  string passwordhash = 3;
+}
+
+message IdentityLoggedIn {
+  string sessionID = 1;
+}
+
+message IdentityLoggedOut {
+  string sessionID = 1;
+}

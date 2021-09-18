@@ -1,5 +1,5 @@
 ROOTPATH=./../..
-CMDNAME=event_sourcing
+CMDNAME=service
 BASEPATH=$(ROOTPATH)/cmd/$(CMDNAME)
 MAINPATH=$(BASEPATH)/main.go
 

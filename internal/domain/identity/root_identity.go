@@ -2,31 +2,34 @@ package identity
 
 import (
 	"github.com/cockroachdb/errors"
+	"github.com/google/uuid"
+	"github.com/hywmongous/example-service/pkg/es"
+	"github.com/hywmongous/example-service/pkg/es/mediator"
 )
 
+var (
+	ErrSessionNotFound   = errors.New("session could not be found")
+	ErrIncorrectPassword = errors.New("password is incorrect")
+)
+
+type IdentityID string
 type Identity struct {
 	id       IdentityID
 	email    Email
 	password Password
 	sessions []Session
-	scopes   []Scope
 }
 
-var (
-	ErrVerifyScopeNoHayMatches     = errors.New("needle did not have a match in the haystack")
-	ErrLogoutSessionNotFound       = errors.New("session id did not match any session")
-	ErrLogoutSessionAlreadyRevoked = errors.New("attempted to logout from a revoked session")
-)
+func (identity Identity) ID() IdentityID {
+	return identity.id
+}
 
-func CreateIdentity(
-	email Email,
-	password Password,
-) (Identity, error) {
-	return Identity{
-		id:       GenerateIdentityID(),
-		email:    email,
-		password: password,
-	}, nil
+func (identity *Identity) Email() Email {
+	return identity.email
+}
+
+func (identity *Identity) Password() Password {
+	return identity.password
 }
 
 func RecreateIdentity(
@@ -34,66 +37,81 @@ func RecreateIdentity(
 	email Email,
 	password Password,
 	sessions []Session,
-	scopes []Scope,
 ) Identity {
 	return Identity{
 		id:       id,
 		email:    email,
 		password: password,
 		sessions: sessions,
-		scopes:   scopes,
 	}
 }
 
-func (identity *Identity) Login(password string) (Session, error) {
-	if err := identity.password.Verify(password); err != nil {
-		return Session{}, err
+func Register(
+	emailAddress string,
+	plainTextPassword string,
+) (Identity, error) {
+	email, err := CreateEmail(emailAddress)
+	if err != nil {
+		return Identity{}, err
 	}
 
-	CreateSession := CreateSession()
-	identity.sessions = append(identity.sessions, CreateSession)
-	return CreateSession, nil
+	password, err := CreatePassword(plainTextPassword)
+	if err != nil {
+		return Identity{}, err
+	}
+
+	identity := Identity{
+		id:       IdentityID(uuid.NewString()),
+		email:    email,
+		password: password,
+		sessions: make([]Session, 0),
+	}
+
+	identity.publishEvent(&IdentityRegistered{
+		ID:           string(identity.id),
+		Email:        emailAddress,
+		Passwordhash: password.hashedPassword,
+	})
+
+	return identity, nil
 }
 
-func (identity Identity) Logout(sessionId SessionID) error {
-	var session Session
-	var found bool
-	for _, curr := range identity.sessions {
-		if curr.GetId() == sessionId {
-			session = curr
-			found = true
-			break
+func (identity *Identity) Login(password string) (SessionID, error) {
+	if err := identity.password.verify(password); err != nil {
+		return SessionID(""), errors.Wrap(err, ErrIncorrectPassword.Error())
+	}
+
+	newSession, err := CreateSession()
+	if err != nil {
+		return SessionID(""), err
+	}
+	identity.sessions = append(identity.sessions, newSession)
+
+	identity.publishEvent(&IdentityLoggedIn{
+		SessionID: string(newSession.ID()),
+	})
+
+	return newSession.ID(), nil
+}
+
+func (identity *Identity) session(sessionID SessionID) (Session, error) {
+	for _, session := range identity.sessions {
+		if session.id == sessionID {
+			return session, nil
 		}
 	}
-
-	if !found {
-		return ErrLogoutSessionNotFound
-	}
-
-	if session.revoked {
-		return ErrLogoutSessionAlreadyRevoked
-	}
-
-	session.Revoke()
-
-	return nil
+	return Session{}, ErrSessionNotFound
 }
 
-func (identity Identity) VerifyScope(scope string) error {
-	needle, err := ParseScope(scope)
+func (identity *Identity) Logout(sessionID SessionID) error {
+	session, err := identity.session(sessionID)
 	if err != nil {
 		return err
 	}
-
-	for _, hay := range identity.scopes {
-		if HierarchicMatch(hay, needle) {
-			return nil
-		}
-	}
-
-	return ErrVerifyScopeNoHayMatches
+	session.revoke()
+	return nil
 }
 
-func (identity Identity) GetId() IdentityID {
-	return identity.id
+func (identity *Identity) publishEvent(event es.Data) {
+	mediator.Publish(es.SubjectID(identity.Email().address), event)
 }

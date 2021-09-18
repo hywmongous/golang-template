@@ -10,9 +10,8 @@ import (
 
 	"github.com/cockroachdb/errors"
 
-	"github.com/hywmongous/example-service/internal/domain/identity"
-
 	"github.com/dgrijalva/jwt-go"
+	"github.com/google/uuid"
 )
 
 type JWTService struct {
@@ -55,10 +54,17 @@ type Token struct {
 }
 
 const (
-	AccessTokenInitialTimeoutDuration   = 0
-	AccessTokenAbsoluteTimeoutDuration  = 30
-	RefreshTokenInitialTimeoutDuration  = 15
-	RefreshTokenAbsoluteTimeoutDuration = 30
+	AccessTokenInitialTimeoutMinutes   = 0
+	AccessTokenAbsoluteTimeoutMinutes  = 30
+	RefreshTokenInitialTimeoutMinutes  = 15
+	RefreshTokenAbsoluteTimeoutMinutes = 30
+
+	AccessTokenInitialTimeoutDuration   = AccessTokenInitialTimeoutMinutes * time.Minute
+	AccessTokenAbsoluteTimeoutDuration  = AccessTokenAbsoluteTimeoutMinutes * time.Minute
+	RefreshTokenInitialTimeoutDuration  = RefreshTokenInitialTimeoutMinutes * time.Minute
+	RefreshTokenAbsoluteTimeoutDuration = RefreshTokenAbsoluteTimeoutMinutes * time.Minute
+
+	Issuer = "hywmongous"
 )
 
 func JWTServiceFactory() JWTService {
@@ -68,37 +74,38 @@ func JWTServiceFactory() JWTService {
 	}
 }
 
-func accessTokenFactory(identity identity.Identity, context identity.SessionContext) Token {
+func createAccessToken(subject string) Token {
 	// Access tokens can be used immediately and expires after 30 minutes
 	now := time.Now()
 	return Token{
-		Subject:         identity.GetId().ToString(),
-		Id:              context.GetAccessTokenId().ToString(),
+		Subject:         subject,
+		Id:              uuid.NewString(),
 		IssuedAt:        now.Unix(),
-		InitialTimeout:  now.Add(AccessTokenInitialTimeoutDuration * time.Minute).Unix(),
-		AbsoluteTimeout: now.Add(AccessTokenAbsoluteTimeoutDuration * time.Minute).Unix(),
+		InitialTimeout:  now.Add(AccessTokenInitialTimeoutDuration).Unix(),
+		AbsoluteTimeout: now.Add(AccessTokenAbsoluteTimeoutDuration).Unix(),
 	}
 }
 
-func refreshTokenFactory(identity identity.Identity, context identity.SessionContext) Token {
+func createRefreshToken(subject string) Token {
 	// Refresh tokens can be used after 15 minutes and expires after 30
 	now := time.Now()
 	return Token{
-		Subject:         identity.GetId().ToString(),
-		Id:              context.GetRefreshTokenId().ToString(),
+		Subject:         subject,
+		Id:              uuid.NewString(),
 		IssuedAt:        now.Unix(),
-		InitialTimeout:  now.Add(RefreshTokenInitialTimeoutDuration * time.Minute).Unix(),
-		AbsoluteTimeout: now.Add(RefreshTokenAbsoluteTimeoutDuration * time.Minute).Unix(),
+		InitialTimeout:  now.Add(RefreshTokenInitialTimeoutDuration).Unix(),
+		AbsoluteTimeout: now.Add(RefreshTokenAbsoluteTimeoutDuration).Unix(),
 	}
 }
 
-func createClaims(context identity.SessionContext, token Token) Claims {
+func createClaims(token Token, sid string, csrf string) Claims {
 	return Claims{
-		SessionId: context.GetId().ToString(),
-		Csrf:      context.GetCsrf().ToString(),
+		SessionId: sid,
+		Csrf:      csrf,
 		StandardClaims: jwt.StandardClaims{
 			Id:        token.Id,
-			Issuer:    "hywmongous",
+			Subject:   token.Subject,
+			Issuer:    Issuer,
 			IssuedAt:  token.IssuedAt,
 			NotBefore: token.InitialTimeout,
 			ExpiresAt: token.AbsoluteTimeout,
@@ -106,10 +113,14 @@ func createClaims(context identity.SessionContext, token Token) Claims {
 	}
 }
 
-func (jwtService JWTService) Sign(identity identity.Identity, context identity.SessionContext) (TokenPair, error) {
+func (jwtService JWTService) Sign(
+	subject string,
+	sid string,
+	csrf string,
+) (TokenPair, error) {
 	accessToken := jwt.NewWithClaims(
 		jwtService.alg,
-		createClaims(context, accessTokenFactory(identity, context)),
+		createClaims(createAccessToken(subject), sid, csrf),
 	)
 	accessTokenString, err := accessToken.SignedString(jwtService.privateKey)
 	if err != nil {
@@ -118,7 +129,7 @@ func (jwtService JWTService) Sign(identity identity.Identity, context identity.S
 
 	refreshToken := jwt.NewWithClaims(
 		jwtService.alg,
-		createClaims(context, refreshTokenFactory(identity, context)),
+		createClaims(createRefreshToken(subject), sid, csrf),
 	)
 	refreshTokenString, err := refreshToken.SignedString(jwtService.privateKey)
 	if err != nil {
@@ -131,101 +142,42 @@ func (jwtService JWTService) Sign(identity identity.Identity, context identity.S
 	}, nil
 }
 
-func (jwtService JWTService) Verify(tokenPair TokenPair, csrf string, session identity.Session) error {
-	accessTokenClaims, err := jwtService.parse(tokenPair.AccessToken)
-	if err != nil {
-		session.Revoke()
-		return err
-	}
-
-	refreshTokenClaims, err := jwtService.parse(tokenPair.RefreshToken)
-	if err != nil {
-		session.Revoke()
-		return err
-	}
-
-	return jwtService.verifyClaims(accessTokenClaims, refreshTokenClaims, csrf, session)
-}
-
-func (JWTService JWTService) verifyClaims(accessToken Claims, refreshToken Claims, csrf string, session identity.Session) error {
-	if accessToken.Csrf != csrf ||
-		refreshToken.Csrf != csrf {
-		return ErrVerificationIncorrectCsrf
-	}
-
-	if accessToken.SessionId != session.GetId().ToString() ||
-		refreshToken.SessionId != session.GetId().ToString() {
-		return ErrVerificationIncorrestSessionId
-	}
-
-	context, err := session.Context()
-	if err != nil {
-		return err
-	}
-
-	if accessToken.IssuedAt != context.GetIssuedAt().GetInt64() ||
-		refreshToken.IssuedAt != context.GetIssuedAt().GetInt64() {
-		return ErrVerificationIncorrectIssueTime
-	}
-
-	if accessToken.Id != context.GetAccessTokenId().ToString() ||
-		refreshToken.Id != context.GetRefreshTokenId().ToString() {
-		return ErrVerificationIncorrectTokenId
-	}
-
-	return nil
-}
-
-func (jwtService JWTService) parse(token string) (Claims, error) {
-	if err := jwtService.verifyToken(token); err != nil {
-		return Claims{}, err
-	}
-
-	claims := &Claims{}
-	parsedToken, err := jwt.ParseWithClaims(
-		token, claims,
-		func(t *jwt.Token) (interface{}, error) { return jwtService.privateKey, nil },
-	)
-
-	switch err {
-	case jwt.ErrSignatureInvalid:
-	}
-
-	switch err {
-	case jwt.ErrSignatureInvalid:
-		return *claims, ErrJwtSignatureInvalid
-	case jwt.ErrHashUnavailable:
-		return *claims, ErrJwtHashUnavailable
-	}
-
-	if !parsedToken.Valid {
-		return *claims, ErrJwtInvalidToken
-	}
-
-	return *claims, nil
-}
-
-func (jwtService JWTService) verifyToken(token string) error {
+func (jwtService JWTService) Verify(token string, csrf string) (*Claims, error) {
+	// Verify general structure
 	parts := strings.Split(token, ".")
-
 	if len(parts) != 3 {
-		return ErrJwtInvalidStructure
+		return nil, ErrJwtInvalidStructure
 	}
 
-	err := jwtService.alg.Verify(
+	// Verify the jwt signature
+	if err := jwtService.alg.Verify(
 		strings.Join(parts[0:2], "."),
 		parts[2],
 		jwtService.privateKey,
-	)
-
-	switch err {
-	case jwt.ErrInvalidKey:
-		return ErrJwtInvalidKeyType
-	case jwt.ErrHashUnavailable:
-		return ErrJwtHashUnavailable
-	case jwt.ErrSignatureInvalid:
-		return ErrJwtSignatureInvalid
+	); err != nil {
+		return nil, err
 	}
 
-	return err
+	// Parse claims
+	claims := Claims{}
+	parsedToken, err := jwt.ParseWithClaims(
+		token,
+		&claims,
+		func(t *jwt.Token) (interface{}, error) { return jwtService.privateKey, nil },
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check the successfulness of the parsing
+	if !parsedToken.Valid {
+		return nil, errors.Wrap(parsedToken.Claims.Valid(), ErrJwtInvalidToken.Error())
+	}
+
+	// Verify claims
+	if claims.Csrf != csrf {
+		return nil, ErrVerificationIncorrectCsrf
+	}
+
+	return &claims, nil
 }

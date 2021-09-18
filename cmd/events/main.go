@@ -33,16 +33,12 @@ func main() {
 	store := mongo.CreateMongoEventStore()
 
 	log.Print("Commit event data")
-	ware, err := store.Load(producer, subject, eventData)
-	if err != nil {
+	if err := store.Load(producer, subject, eventData); err != nil {
 		log.Fatal(err)
-	} else {
-		log.Print("Loaded: ", ware.Id)
 	}
 
 	log.Print("Event shipping")
-	events, err := store.Ship()
-	if err != nil {
+	if err := store.Ship(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -61,6 +57,7 @@ func main() {
 	stream := kafka.CreateKafkaStream(topic)
 
 	log.Print("Event publications")
+	events := store.Stage().Events()
 	if err = stream.Publish(events); err != nil {
 		log.Fatal(err)
 	}

@@ -26,6 +26,6 @@ insert_final_newline = false
 indent_style = tab
 trim_trailing_whitespace = false
 
-[*.{yml,yaml,json}]
+[*.{yml,yaml,json,proto,conf}]
 indent_style = space
 indent_size = 2

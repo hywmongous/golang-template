@@ -12,9 +12,13 @@ const (
 	cost = 14
 )
 
+func (password Password) HashedPassword() string {
+	return password.hashedPassword
+}
+
 func CreatePassword(password string) (Password, error) {
 	createdPassword := Password{}
-	if err := createdPassword.Set(password); err != nil {
+	if err := createdPassword.set(password); err != nil {
 		return Password{}, nil
 	}
 	return createdPassword, nil
@@ -26,7 +30,7 @@ func RecreatePassword(hashedPassword string) Password {
 	}
 }
 
-func (password *Password) Set(input string) error {
+func (password *Password) set(input string) error {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(input), cost)
 	if err != nil {
 		return err
@@ -35,10 +39,6 @@ func (password *Password) Set(input string) error {
 	return nil
 }
 
-func (password Password) Verify(input string) error {
+func (password Password) verify(input string) error {
 	return bcrypt.CompareHashAndPassword([]byte(password.hashedPassword), []byte(input))
-}
-
-func (password Password) GetHash() string {
-	return password.hashedPassword
 }

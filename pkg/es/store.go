@@ -2,18 +2,25 @@ package es
 
 import "errors"
 
+/* Goals:
+ * Composite keys: The subject is the PK, however
+ *   it might be ggod if we could use multiple keys
+ *   to distinguish events. Eg. email (string) and userId (uuid).
+ *   it should be guranteed for all subjects to be unique in any order (the hash).
+ */
+
 type EventStore interface {
 	// Immediately sends an Event to the warehouse
 	Send(producer ProducerID, subject SubjectID, data []Data) ([]Event, error)
 	// The same as "begin commit"
-	Load(producer ProducerID, subject SubjectID, data Data) (Event, error)
+	Load(producer ProducerID, subject SubjectID, data Data) error
 	// The same as removing all the events loaded
 	Clear()
 	// Ships the EventData to the Database
-	Ship() ([]Event, error)
+	Ship() error
 
 	// Creates a new snapshot
-	Snapshot(producer ProducerID, subject SubjectID, data Data) (Snapshot, error)
+	Snapshot(producer ProducerID, subject SubjectID, data Data) error
 
 	// Requests the Events for a specific "Subject"
 	// The events are in sorted order with ascending versions
@@ -44,6 +51,8 @@ type EventStore interface {
 	LatestEvent(subject SubjectID) (Event, error)
 	// Returns the latest snapshot for a given subject
 	LatestSnapshot(subject SubjectID) (Snapshot, error)
+
+	Stage() Stage
 }
 
 var (

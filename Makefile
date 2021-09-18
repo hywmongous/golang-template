@@ -21,6 +21,9 @@ help:
 	@echo ''
 	@echo '-- make help-deployment --'
 	$(MAKE) help-deployment
+	@echo ''
+	@echo '-- make others --'
+	@echo '  protoc                        - Codegen proto files matching ./protos/*.proto'
 
 help-build:
 	@(for dir in $(BUILDDIRS); do \
@@ -47,6 +50,10 @@ dist_clean:
 	@(for dir in $(BUILDDIRS); do \
 		$(MAKE) -C $(BUILDPATH)/$$dir dist_clean; \
 	done)
+
+.ONESHELL:
+protoc:
+	@(cd ./protos/ ; protoc --go_out=. *.proto)
 
 .ONESHELL:
 .SILENT:

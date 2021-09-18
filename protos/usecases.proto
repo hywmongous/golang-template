@@ -1,0 +1,31 @@
+syntax="proto3";
+
+package application;
+option go_package="../internal/application";
+
+message RegisterIdentityRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message RegisterIdentityResponse {
+  string id = 1;
+}
+
+message LoginIdentityRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginIdentityResponse {
+  string sessionID = 1;
+}
+
+message LogoutIdentityRequest {
+  string email = 1;
+  string sessionID = 2;
+}
+
+message LogoutIdentityResponse {
+  bool revoked = 1;
+}

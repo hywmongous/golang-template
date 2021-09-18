@@ -110,7 +110,7 @@ func main() {
 		es.Topic("ia"),
 	)
 	uow := UnitOfWork{
-		store:  &mongoStore,
+		store:  mongoStore,
 		stream: kafkaStram,
 	}
 	mediator.Listen(uow.receiveEvent)
@@ -171,7 +171,7 @@ func main() {
 		Email: identity.Email,
 	}
 
-	_, err = uow.store.Snapshot(Producer, es.SubjectID(identity.Id), snapshotData1)
+	err = uow.store.Snapshot(Producer, es.SubjectID(identity.Id), snapshotData1)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -197,7 +197,7 @@ func main() {
 	}
 
 	// Make another snapshot
-	_, err = uow.store.Snapshot(Producer, es.SubjectID(identity.Id), snapshotData2)
+	err = uow.store.Snapshot(Producer, es.SubjectID(identity.Id), snapshotData2)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -376,7 +376,8 @@ func (uow *UnitOfWork) receiveEvent(subject es.SubjectID, data es.Data) {
 }
 
 func (uow *UnitOfWork) Commit() error {
-	events, err := uow.store.Ship()
+	events := uow.store.Stage().Events()
+	err := uow.store.Ship()
 	if err != nil {
 		log.Panicln("UnitOfWork store failed shipping the events")
 		return errors.Wrap(err, "UnitOfWork Commiting failed")

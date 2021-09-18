@@ -22,12 +22,22 @@ func CreateEventStage() EventStage {
 	}
 }
 
-func (eventStage *EventStage) Events() []Event {
+func (eventStage EventStage) Events() []Event {
 	return eventStage.events
 }
 
-func (eventStage *EventStage) Snapshot() *Snapshot {
+func (eventStage EventStage) Snapshot() *Snapshot {
 	return eventStage.snapshot
+}
+
+func (stage Stage) Events() []Event {
+	events := make([]Event, 0, 32)
+	for _, subject := range stage.Subjects() {
+		for _, eventStage := range stage.EventStages(subject) {
+			events = append(events, eventStage.events...)
+		}
+	}
+	return events
 }
 
 func (stage *Stage) Subjects() []SubjectID {

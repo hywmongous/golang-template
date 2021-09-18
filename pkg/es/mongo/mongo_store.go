@@ -3,7 +3,6 @@ package mongo
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"time"
 
 	"github.com/cockroachdb/errors"
@@ -20,7 +19,8 @@ type (
 )
 
 type MongoEventStore struct {
-	stage es.Stage
+	stage            es.Stage
+	insertionHistory map[string][]interface{}
 }
 
 const (
@@ -32,6 +32,8 @@ const (
 )
 
 const (
+	documentIdKey = "_id"
+
 	eventIdKey              = "event.id"
 	eventProducerKey        = "event.producer"
 	eventSubjectKey         = "event.subject"
@@ -53,6 +55,7 @@ const (
 
 	mongoLessThan    = "$lt"
 	mongoGreaterThan = "$gt"
+	mongoIn          = "$in"
 
 	mongoAscending  = 1
 	mongoDescending = -1
@@ -66,13 +69,18 @@ var (
 	ErrMissingEventKey    = errors.New("document does not have event key")
 	ErrMissingSnapshotKey = errors.New("document does not have snapshot key")
 	ErrStageOutOfSync     = errors.New("stage is out of sync with remote")
+	ErrRollbackFailed     = errors.New("rollback deletions failed")
 )
 
-func CreateMongoEventStore() MongoEventStore {
-	store := MongoEventStore{
-		stage: es.CreateStage(),
+func CreateMongoEventStore() *MongoEventStore {
+	return &MongoEventStore{
+		stage:            es.CreateStage(),
+		insertionHistory: make(map[string][]interface{}),
 	}
-	return store
+}
+
+func (store *MongoEventStore) Stage() es.Stage {
+	return store.stage
 }
 
 func (store *MongoEventStore) collection(client *mongo.Client, collectionName string) (*mongo.Collection, error) {
@@ -136,7 +144,6 @@ func (store *MongoEventStore) connect(action mongoConnectionAction, collectionNa
 			return err
 		}
 		// if err = sc.CommitTransaction(sc); err != nil {
-		// 	log.Println("Step 9")
 		// 	return err
 		// }
 		return nil
@@ -145,22 +152,109 @@ func (store *MongoEventStore) connect(action mongoConnectionAction, collectionNa
 	return err
 }
 
+func (store *MongoEventStore) findOneEvent(filter interface{}, options ...*options.FindOneOptions) (es.Event, error) {
+	var resultantEvent es.Event
+	action := func(ctx context.Context, collection *mongo.Collection) error {
+		result := collection.FindOne(ctx, filter, options...)
+		if result == nil {
+			return result.Err()
+		}
+
+		if conErr := decodeEvent(result, &resultantEvent); conErr != nil {
+			return conErr
+		}
+
+		return nil
+	}
+	return resultantEvent, store.connect(action, eventsCollection)
+}
+
+func (store *MongoEventStore) findAllEvents(filter interface{}, options ...*options.FindOptions) ([]es.Event, error) {
+	var events []es.Event
+	action := func(ctx context.Context, collection *mongo.Collection) error {
+		cursor, err := collection.Find(ctx, filter, options...)
+		if err != nil {
+			return err
+		}
+		defer cursor.Close(ctx)
+
+		for cursor.Next(ctx) {
+			var event es.Event
+			conErr := decodeEvent(cursor, &event)
+			if conErr != nil {
+				return conErr
+			}
+			events = append(events, event)
+		}
+
+		return nil
+	}
+	return events, store.connect(action, eventsCollection)
+}
+
+func (store *MongoEventStore) addToInsertionHistory(collectionName string, insertionIDs ...interface{}) {
+	if _, found := store.insertionHistory[collectionName]; !found {
+		store.insertionHistory[collectionName] = make([]interface{}, 0)
+	}
+	store.insertionHistory[collectionName] = append(store.insertionHistory[collectionName], insertionIDs...)
+}
+
+func (store *MongoEventStore) clearInsertionHistory() {
+	store.insertionHistory = make(map[string][]interface{})
+}
+
 func (store *MongoEventStore) insertManyDocuments(documents []interface{}, collectionName string) error {
 	action := func(ctx context.Context, collection *mongo.Collection) error {
-		_, err := collection.InsertMany(ctx, documents)
+		results, err := collection.InsertMany(ctx, documents)
+		if err == nil {
+			store.addToInsertionHistory(collectionName, results.InsertedIDs...)
+		}
 		return err
 	}
-
 	return store.connect(action, collectionName)
 }
 
 func (store *MongoEventStore) insertDocument(document interface{}, collectionName string) error {
 	action := func(ctx context.Context, collection *mongo.Collection) error {
-		_, err := collection.InsertOne(ctx, document)
+		result, err := collection.InsertOne(ctx, document)
+		if err == nil {
+			store.addToInsertionHistory(collectionName, result.InsertedID)
+		}
 		return err
 	}
-
 	return store.connect(action, collectionName)
+}
+
+func (store *MongoEventStore) deleteManyDocument(filter interface{}, collectionName string, options ...*options.DeleteOptions) error {
+	action := func(ctx context.Context, collection *mongo.Collection) error {
+		_, err := collection.DeleteMany(ctx, filter, options...)
+		return err
+	}
+	return store.connect(action, collectionName)
+}
+
+// func (store *MongoEventStore) deleteDocument(filter interface{}, collectionName string, options ...*options.DeleteOptions) error {
+// 	action := func(ctx context.Context, collection *mongo.Collection) error {
+// 		_, err := collection.DeleteOne(ctx, filter, options...)
+// 		return err
+// 	}
+// 	return store.connect(action, collectionName)
+// }
+
+func (store *MongoEventStore) rollbackInsertions() error {
+	for collectionName, ids := range store.insertionHistory {
+		filter := bson.D{
+			{Key: documentIdKey, Value: bson.D{
+				{Key: mongoIn, Value: ids},
+			}},
+		}
+		options := options.Delete()
+
+		if err := store.deleteManyDocument(filter, collectionName, options); err != nil {
+			return errors.Wrap(err, "rollback failed")
+		}
+	}
+	return nil
 }
 
 func decodeEvent(
@@ -245,47 +339,6 @@ func unmarshalDocument(document bson.M, value interface{}) error {
 	return nil
 }
 
-func (store *MongoEventStore) findOneEvent(filter interface{}, options ...*options.FindOneOptions) (es.Event, error) {
-	var resultantEvent es.Event
-	action := func(ctx context.Context, collection *mongo.Collection) error {
-		result := collection.FindOne(ctx, filter, options...)
-		if result == nil {
-			return result.Err()
-		}
-
-		if conErr := decodeEvent(result, &resultantEvent); conErr != nil {
-			return conErr
-		}
-
-		return nil
-	}
-	return resultantEvent, store.connect(action, eventsCollection)
-}
-
-func (store *MongoEventStore) findAllEvents(filter interface{}, options ...*options.FindOptions) ([]es.Event, error) {
-	var events []es.Event
-	action := func(ctx context.Context, collection *mongo.Collection) error {
-		cursor, err := collection.Find(ctx, filter, options...)
-		if err != nil {
-			return err
-		}
-		defer cursor.Close(ctx)
-
-		for cursor.Next(ctx) {
-			var event es.Event
-			conErr := decodeEvent(cursor, &event)
-			if conErr != nil {
-				return conErr
-			}
-			events = append(events, event)
-		}
-
-		return nil
-	}
-
-	return events, store.connect(action, eventsCollection)
-}
-
 func (store *MongoEventStore) findOneSnapshot(filter interface{}, options ...*options.FindOneOptions) (es.Snapshot, error) {
 	var resultantSnapshot es.Snapshot
 	action := func(ctx context.Context, collection *mongo.Collection) error {
@@ -324,13 +377,13 @@ func (store *MongoEventStore) sendSnapshot(snapshot es.Snapshot) error {
 	return store.insertDocument(document, snapshotsCollection)
 }
 
-func (store *MongoEventStore) Load(producer es.ProducerID, subject es.SubjectID, data es.Data) (es.Event, error) {
+func (store *MongoEventStore) Load(producer es.ProducerID, subject es.SubjectID, data es.Data) error {
 	event, err := es.CreateEvent(producer, subject, es.Version(1), data, store)
 	if err != nil {
-		return event, err
+		return err
 	}
 	store.stage.AddEvent(event)
-	return event, nil
+	return nil
 }
 
 func (store *MongoEventStore) Clear() {
@@ -358,51 +411,60 @@ func (store *MongoEventStore) isStageInSync(subject es.SubjectID) bool {
 	return firstStagedEvent.Version == latestRemoteEvent.Version+1
 }
 
-func (store *MongoEventStore) shipSubject(subject es.SubjectID) ([]es.Event, error) {
+func (store *MongoEventStore) shipSubject(subject es.SubjectID) error {
 	if !store.isStageInSync(subject) {
-		return nil, ErrStageOutOfSync
+		return ErrStageOutOfSync
 	}
 
 	stages := store.stage.EventStages(subject)
-
-	events := make([]es.Event, 0, 8)
 	for _, stage := range stages {
 		if err := store.sendEvents(stage.Events()); err != nil {
-			return events, errors.Wrap(err, "shipping the events failed")
+			return errors.Wrap(err, "shipping the events failed")
 		}
-		events = append(events, stage.Events()...)
 
 		if stage.Snapshot() != nil {
-			log.Println("SENDING SNAPSHOT")
 			if err := store.sendSnapshot(*stage.Snapshot()); err != nil {
-				return events, errors.Wrap(err, "shipping the snapshot failed")
+				return errors.Wrap(err, "shipping the snapshot failed")
 			}
 		}
 	}
 	store.stage.Clear(subject)
-	return events, nil
+	return nil
 }
 
-func (store *MongoEventStore) Ship() ([]es.Event, error) {
-	events := make([]es.Event, 0, 32)
+func (store *MongoEventStore) Ship() error {
 	subjects := store.stage.Subjects()
 	for _, subject := range subjects {
-		shippedEvents, err := store.shipSubject(subject)
+		err := store.shipSubject(subject)
 		if err != nil {
-			return events, err
+			// If an error is encountered of any count then rollback.
+			// we do so even if we lsot connection. Because in the
+			// mean time it is possible connection has been established
+			// TODO: Spike tests makes this rollback cause a panic
+			return errors.Wrap(
+				err,
+				store.rollbackInsertions().Error(),
+			)
 		}
-		events = append(events, shippedEvents...)
 	}
-	return events, nil
+	// Clearing the insertion history is not "defered"
+	// the reason for this is: When an error cocured when
+	// shipping then it might be rollbacking itself failed.
+	// If we have cleared even though it failed then it would
+	// be impossible to ever return to the desired state
+	// where all insertions have been deleted because we would
+	// not know which documents to delete to aquire this.
+	store.clearInsertionHistory()
+	return nil
 }
 
-func (store *MongoEventStore) Snapshot(producer es.ProducerID, subject es.SubjectID, data es.Data) (es.Snapshot, error) {
+func (store *MongoEventStore) Snapshot(producer es.ProducerID, subject es.SubjectID, data es.Data) error {
 	snapshot, err := es.CreateSnapshot(producer, subject, es.Version(1), data, store)
 	if err != nil {
-		return es.Snapshot{}, errors.Wrap(err, "Snapshot creation failed")
+		return errors.Wrap(err, "Snapshot creation failed")
 	}
 	store.stage.AddSnapshot(snapshot)
-	return snapshot, nil
+	return nil
 }
 
 func (store *MongoEventStore) Concerning(subject es.SubjectID) ([]es.Event, error) {

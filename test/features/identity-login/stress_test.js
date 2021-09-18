@@ -10,7 +10,7 @@ import {
 export const options = {
     insecureSkipTLSVerify: true,
     noConnectionReuse: false,
-    minIterationDuration: '1s',
+    minIterationDuration: '10s', // I think this can be used to simulate the session duration
     stages: [
         { duration: '2m', target: BELOW_NORMAL_LOAD }, // below normal load
         { duration: '5m', target: BELOW_NORMAL_LOAD },

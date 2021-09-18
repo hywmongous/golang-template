@@ -1,115 +1,132 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 
+	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
-	identity "github.com/hywmongous/example-service/internal/domain/identity"
-	infrastructure "github.com/hywmongous/example-service/internal/infrastructure/services"
+	"github.com/google/uuid"
+	"github.com/hywmongous/example-service/internal/application"
+	"github.com/hywmongous/example-service/internal/infrastructure/services"
 )
 
 type AuthenticationController struct {
-	jwtService infrastructure.JWTService
+	jwtService     services.JWTService
+	registeredUser application.RegisteredUser
 }
 
 const (
-	csrfHeaderKey             = "csrf"
+	csrfHeaderKey             = "Csrf"
 	jwtAccessTokenCookieName  = "JWT-ACCESS-TOKEN"
 	jwtRefreshTokenCookieName = "JWT-REFRESH-TOKEN"
 )
 
-var password, _ = identity.CreatePassword("password")
-var email, _ = identity.CreateEmail("andreasbrandhoej@hotmail.com")
-var currIdentity, _ = identity.CreateIdentity(email, password)
-var currSession, _ = currIdentity.Login("password")
-
 func AuthenticationControllerFactory(
-	jwtService infrastructure.JWTService,
+	jwtService services.JWTService,
+	registeredUser application.RegisteredUser,
 ) AuthenticationController {
 	return AuthenticationController{
-		jwtService: jwtService,
+		jwtService:     jwtService,
+		registeredUser: registeredUser,
 	}
 }
 
 func (controller AuthenticationController) Login(context *gin.Context) {
-	currSession = identity.CreateSession()
-	username, password, ok := context.Request.BasicAuth()
-	if username == "" || password == "" || !ok {
+	email, password, ok := context.Request.BasicAuth()
+	if email == "" || password == "" || !ok {
 		context.Writer.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
-	sessionContext, err := currSession.Context()
-	if err != nil {
-		context.Writer.WriteHeader(http.StatusInternalServerError)
-		context.Abort()
+	request := &application.LoginIdentityRequest{
+		Email:    email,
+		Password: password,
 	}
 
-	controller.writeSessionToResponse(context, sessionContext)
-	context.String(http.StatusOK, fmt.Sprintf("Logging in %s:%s", username, password))
+	response, err := controller.registeredUser.Login(request)
+	if err != nil {
+		context.Writer.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	if err = controller.writeSessionToResponse(context, email, response.SessionID); err != nil {
+		context.Writer.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	context.JSON(http.StatusOK, response)
 }
 
 func (controller AuthenticationController) Logout(context *gin.Context) {
-	currSession.Revoke()
-	context.String(http.StatusOK, "Logging out")
+	csrf := context.Request.Header.Get(csrfHeaderKey)
+
+	accessToken, err := context.Cookie(jwtAccessTokenCookieName)
+	if err != nil {
+		context.String(http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	claims, err := controller.jwtService.Verify(accessToken, csrf)
+	if err != nil {
+		context.String(http.StatusUnauthorized, errors.Wrap(err, csrf).Error())
+		return
+	}
+
+	request := &application.LogoutIdentityRequest{
+		Email:     claims.Subject,
+		SessionID: claims.SessionId,
+	}
+
+	response, err := controller.registeredUser.Logout(request)
+	if err != nil {
+		context.String(http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	context.JSON(http.StatusOK, response)
 }
 
 func (controller AuthenticationController) Refresh(context *gin.Context) {
-	CreateSessionContext := currSession.Refresh()
-	controller.writeSessionToResponse(context, CreateSessionContext)
-	context.String(http.StatusOK, "Refresh session tokens")
+	context.String(http.StatusOK, "Refresh")
 }
 
-func (controller AuthenticationController) Verify(context *gin.Context) {
-	accessTokenCookie, err := context.Cookie(jwtAccessTokenCookieName)
-	if err == nil {
-		context.Writer.WriteHeader(http.StatusUnauthorized)
-		return
+func (controller AuthenticationController) writeSessionToResponse(
+	context *gin.Context,
+	subject string,
+	sid string,
+) error {
+	csrf := uuid.NewString()
+	tokens, err := controller.jwtService.Sign(subject, sid, csrf)
+	if err != nil {
+		return err
 	}
 
-	refreshTokenCookie, err := context.Cookie(jwtRefreshTokenCookieName)
-	if err == nil {
-		context.Writer.WriteHeader(http.StatusUnauthorized)
-		return
-	}
+	context.Header(csrfHeaderKey, csrf)
 
-	tokenPair := infrastructure.TokenPair{
-		AccessToken:  accessTokenCookie,
-		RefreshToken: refreshTokenCookie,
-	}
-
-	csrf := context.Request.Header.Get(csrfHeaderKey)
-
-	if controller.jwtService.Verify(tokenPair, csrf, currSession) != nil {
-		context.Writer.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-	context.Writer.WriteHeader(http.StatusOK)
-}
-
-func (controller AuthenticationController) writeSessionToResponse(context *gin.Context, sessionContext identity.SessionContext) {
-	tokens, _ := controller.jwtService.Sign(currIdentity, sessionContext)
-
-	context.Header(csrfHeaderKey, string(sessionContext.GetCsrf()))
+	path := "/"
+	domain := "localhost"
+	secure := false
+	httponly := true
 
 	context.SetCookie(
 		jwtAccessTokenCookieName,
 		string(tokens.AccessToken),
-		infrastructure.AccessTokenAbsoluteTimeoutDuration*60,
-		"/",
-		"localhost",
-		false,
-		true,
+		services.AccessTokenAbsoluteTimeoutMinutes*60,
+		path,
+		domain,
+		secure,
+		httponly,
 	)
 
 	context.SetCookie(
 		jwtRefreshTokenCookieName,
 		string(tokens.RefreshToken),
-		infrastructure.RefreshTokenAbsoluteTimeoutDuration*60,
+		services.RefreshTokenAbsoluteTimeoutMinutes*60,
 		"/",
 		"localhost",
-		false,
-		true,
+		secure,
+		httponly,
 	)
+
+	return nil
 }

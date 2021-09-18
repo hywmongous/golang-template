@@ -1,52 +1,38 @@
 package identity
 
-import (
-	"github.com/cockroachdb/errors"
-)
+import "github.com/google/uuid"
 
+type SessionID string
 type Session struct {
-	id       SessionID
-	revoked  bool
-	contexts []SessionContext
+	id      SessionID
+	revoked bool
 }
 
-var (
-	ErrSessionRevoked = errors.New("session is revoked")
-)
-
-func CreateSession() Session {
-	contexts := [1]SessionContext{CreateSessionContext()}
-	return Session{
-		id:       GenerateSessionID(),
-		revoked:  false,
-		contexts: contexts[:],
-	}
-}
-
-func (session *Session) Refresh() SessionContext {
-	CreateSessionContext := CreateSessionContext()
-	session.contexts = append(session.contexts, CreateSessionContext)
-	return CreateSessionContext
-}
-
-func (session *Session) Revoke() {
-	session.revoked = true
-}
-
-func (session Session) Context() (SessionContext, error) {
-	if session.revoked {
-		return SessionContext{}, ErrSessionRevoked
-	}
-
-	latest := session.contexts[0]
-	for _, context := range session.contexts {
-		if context.issuedAt > latest.issuedAt {
-			latest = context
-		}
-	}
-	return latest, nil
-}
-
-func (session Session) GetId() SessionID {
+func (session Session) ID() SessionID {
 	return session.id
+}
+
+func (session Session) Revoked() bool {
+	return session.revoked
+}
+
+func CreateSession() (Session, error) {
+	return Session{
+		id:      SessionID(uuid.NewString()),
+		revoked: false,
+	}, nil
+}
+
+func RecreateSession(
+	id SessionID,
+	revoked bool,
+) Session {
+	return Session{
+		id:      id,
+		revoked: revoked,
+	}
+}
+
+func (session *Session) revoke() {
+	session.revoked = true
 }

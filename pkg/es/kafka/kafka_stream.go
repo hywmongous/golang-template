@@ -20,13 +20,13 @@ const (
 	group  = "ia"
 )
 
-func CreateKafkaStream(topic es.Topic) KafkaStream {
-	return KafkaStream{
+func CreateKafkaStream(topic es.Topic) *KafkaStream {
+	return &KafkaStream{
 		topic: topic,
 	}
 }
 
-func (stream KafkaStream) write(ctx context.Context, config kafka.WriterConfig, events []es.Event) error {
+func (stream *KafkaStream) write(ctx context.Context, config kafka.WriterConfig, events []es.Event) error {
 	writer := kafka.NewWriter(config)
 	for _, event := range events {
 		value, err := event.Marshall()
@@ -47,7 +47,7 @@ func (stream KafkaStream) write(ctx context.Context, config kafka.WriterConfig, 
 	return writer.Close()
 }
 
-func (stream KafkaStream) Publish(events []es.Event) error {
+func (stream *KafkaStream) Publish(events []es.Event) error {
 	config := kafka.WriterConfig{
 		Brokers: []string{broker},
 		Topic:   string(stream.topic),
@@ -58,7 +58,7 @@ func (stream KafkaStream) Publish(events []es.Event) error {
 	return stream.write(ctx, config, events)
 }
 
-func (stream KafkaStream) read(ctx context.Context, config kafka.ReaderConfig, events chan es.Event, errors chan error) {
+func (stream *KafkaStream) read(ctx context.Context, config kafka.ReaderConfig, events chan es.Event, errors chan error) {
 	reader := kafka.NewReader(config)
 	defer reader.Close() // TODO: What if closing the reader fails?
 	for {
@@ -74,7 +74,7 @@ func (stream KafkaStream) read(ctx context.Context, config kafka.ReaderConfig, e
 	}
 }
 
-func (stream KafkaStream) Subscribe(topic es.Topic, ctx context.Context) (chan es.Event, chan error) {
+func (stream *KafkaStream) Subscribe(topic es.Topic, ctx context.Context) (chan es.Event, chan error) {
 	config := kafka.ReaderConfig{
 		Brokers: []string{broker},
 		Topic:   string(topic),

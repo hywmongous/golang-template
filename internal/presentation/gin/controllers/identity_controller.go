@@ -4,14 +4,19 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hywmongous/example-service/internal/application/actors"
-	"github.com/hywmongous/example-service/internal/application/usecases"
+	"github.com/hywmongous/example-service/internal/application"
 )
 
-type IdentityController struct{}
+type IdentityController struct {
+	unregisteredUser application.UnregisteredUser
+}
 
-func AccountControllerFactory() IdentityController {
-	return IdentityController{}
+func AccountControllerFactory(
+	unregisteredUser application.UnregisteredUser,
+) IdentityController {
+	return IdentityController{
+		unregisteredUser: unregisteredUser,
+	}
 }
 
 func (controller IdentityController) GetAll(context *gin.Context) {
@@ -19,11 +24,21 @@ func (controller IdentityController) GetAll(context *gin.Context) {
 }
 
 func (controller IdentityController) Create(context *gin.Context) {
-	actor := actors.CreateUnregisteredIdentity()
-	request := usecases.RegisterIdentityRequest{}
-	response, err := actor.Register(request)
+	email, password, ok := context.Request.BasicAuth()
+	if email == "" || password == "" || !ok {
+		context.String(http.StatusUnauthorized, "something went wrong with the basic auth")
+		return
+	}
+
+	request := &application.RegisterIdentityRequest{
+		Email:    email,
+		Password: password,
+	}
+
+	response, err := controller.unregisteredUser.Register(request)
 	if err != nil {
-		context.String(http.StatusInternalServerError, "Something went wrong when registering the identity")
+		context.String(http.StatusInternalServerError, err.Error())
+		return
 	}
 	context.JSON(http.StatusCreated, response)
 }

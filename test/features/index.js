@@ -1,16 +1,34 @@
 import { Counter } from 'k6/metrics'
 
-export const PORT = '5000';
-export const PROTOCOL = 'http://';
+export const PORT = '80';
+export const PROTOCOL = 'http';
 export const SUBDOMAIN = ''; // eg. 'www.'
 export const ROOT_DOMAIN = 'localhost';
 export const TLD = ''; // eg. '.com'
-export const BASE_URL = `${PROTOCOL}${SUBDOMAIN}${ROOT_DOMAIN}${TLD}:${PORT}`;
-export function buildUrl(basic) { return `${PROTOCOL}${SUBDOMAIN}${basic}@${ROOT_DOMAIN}${TLD}:${PORT}`; }
+export const BASE_URL = `${PROTOCOL}://${SUBDOMAIN}${ROOT_DOMAIN}${TLD}:${PORT}`;
+export function buildUrl(basic) { return `${PROTOCOL}://${SUBDOMAIN}${basic}@${ROOT_DOMAIN}${TLD}:${PORT}`; }
 
 export const CSRF_HEADER_KEY = 'Csrf'
 export const JWT_ACCESS_TOKEN_COOKIE_NAME = 'JWT-ACCESS-TOKEN'
 export const JWT_REFRESH_TOKEN_COOKIE_NAME = 'JWT-REFRESH-TOKEN'
+
+export const REGISTERED_USERS = [
+    { username: "some1@email",  password: "P@ssw0rd" },
+    { username: "some2@email",  password: "P@ssw0rd" },
+    { username: "some3@email",  password: "P@ssw0rd" },
+    { username: "some4@email",  password: "P@ssw0rd" },
+    { username: "some5@email",  password: "P@ssw0rd" },
+    { username: "some6@email",  password: "P@ssw0rd" },
+    { username: "some7@email",  password: "P@ssw0rd" },
+    { username: "some8@email",  password: "P@ssw0rd" },
+    { username: "some9@email",  password: "P@ssw0rd" },
+    { username: "some10@email", password: "P@ssw0rd" },
+]
+
+let userRoundRobinIndex = 0;
+export function getUser() {
+    return REGISTERED_USERS[userRoundRobinIndex++ % REGISTERED_USERS.length]
+}
 
 export function getWeightedElement(weightedArray) {
     const totalWeight = weightedArray.reduce((prev, curr) => prev + curr.weight, 0);
@@ -46,12 +64,9 @@ export function runCaseByName(weightedCases, caseName) {
     }
 }
 
-let roundRobinIndex = 0;
+let caseRoundRobinIndex = 0;
 export function runCaseRoundRobin(weightedCases) {
-    if (roundRobinIndex >= weightedCases.length) {
-        roundRobinIndex = 0;
-    }
-    runTest(weightedCases[roundRobinIndex++]);
+    runTest(weightedCases[caseRoundRobinIndex++ % weightedCases.length]);
 }
 
 export function runTest(testCase) {
