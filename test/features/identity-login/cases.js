@@ -7,17 +7,16 @@ import {
     JWT_REFRESH_TOKEN_COOKIE_NAME,
     buildUrl,
     initCases,
-    REGISTERED_USERS,
-    getUser,
+    getRandomUser,
 } from '../index.js'
 
 export function random_successfull_login() {
-    const user = getUser()
+    const user = getRandomUser()
     return successfull_login(user.username, user.password)
 }
 
 export function successfull_login(
-    username = 'some@email',
+    username = 'some1@email',
     password = 'P@ssw0rd',
 ) {
     const base = buildUrl(`${username}:${password}`);

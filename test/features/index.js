@@ -23,11 +23,50 @@ export const REGISTERED_USERS = [
     { username: "some8@email",  password: "P@ssw0rd" },
     { username: "some9@email",  password: "P@ssw0rd" },
     { username: "some10@email", password: "P@ssw0rd" },
+    { username: "some11@email", password: "P@ssw0rd" },
+    { username: "some12@email", password: "P@ssw0rd" },
+    { username: "some13@email", password: "P@ssw0rd" },
+    { username: "some14@email", password: "P@ssw0rd" },
+    { username: "some15@email", password: "P@ssw0rd" },
+    { username: "some16@email", password: "P@ssw0rd" },
+    { username: "some17@email", password: "P@ssw0rd" },
+    { username: "some18@email", password: "P@ssw0rd" },
+    { username: "some19@email", password: "P@ssw0rd" },
+    { username: "some20@email", password: "P@ssw0rd" },
+    { username: "some21@email", password: "P@ssw0rd" },
+    { username: "some22@email", password: "P@ssw0rd" },
+    { username: "some23@email", password: "P@ssw0rd" },
+    { username: "some24@email", password: "P@ssw0rd" },
+    { username: "some25@email", password: "P@ssw0rd" },
+    { username: "some26@email", password: "P@ssw0rd" },
+    { username: "some27@email", password: "P@ssw0rd" },
+    { username: "some28@email", password: "P@ssw0rd" },
+    { username: "some29@email", password: "P@ssw0rd" },
+    { username: "some30@email", password: "P@ssw0rd" },
+    { username: "some31@email", password: "P@ssw0rd" },
+    { username: "some32@email", password: "P@ssw0rd" },
+    { username: "some33@email", password: "P@ssw0rd" },
+    { username: "some34@email", password: "P@ssw0rd" },
+    { username: "some35@email", password: "P@ssw0rd" },
+    { username: "some36@email", password: "P@ssw0rd" },
+    { username: "some37@email", password: "P@ssw0rd" },
+    { username: "some38@email", password: "P@ssw0rd" },
+    { username: "some39@email", password: "P@ssw0rd" },
+    { username: "some40@email", password: "P@ssw0rd" },
+    { username: "some41@email", password: "P@ssw0rd" },
+    { username: "some42@email", password: "P@ssw0rd" },
+    { username: "some43@email", password: "P@ssw0rd" },
+    { username: "some44@email", password: "P@ssw0rd" },
+    { username: "some45@email", password: "P@ssw0rd" },
+    { username: "some46@email", password: "P@ssw0rd" },
+    { username: "some47@email", password: "P@ssw0rd" },
+    { username: "some48@email", password: "P@ssw0rd" },
+    { username: "some49@email", password: "P@ssw0rd" },
+    { username: "some50@email", password: "P@ssw0rd" },
 ]
 
-let userRoundRobinIndex = 0;
-export function getUser() {
-    return REGISTERED_USERS[userRoundRobinIndex++ % REGISTERED_USERS.length]
+export function getRandomUser() {
+    return REGISTERED_USERS[Math.floor(Math.random() * REGISTERED_USERS.length)]
 }
 
 export function getWeightedElement(weightedArray) {

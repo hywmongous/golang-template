@@ -28,7 +28,9 @@ func (user UnregisteredUser) Register(request *RegisterIdentityRequest) (*Regist
 		return nil, err
 	}
 
-	user.uow.Commit()
+	if err = user.uow.Commit(); err != nil {
+		return nil, err
+	}
 	return &RegisterIdentityResponse{
 		Id: string(identity.ID()),
 	}, nil

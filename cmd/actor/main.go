@@ -3,8 +3,6 @@ package main
 import (
 	"log"
 
-	"github.com/hywmongous/example-service/internal/application/actors"
-	"github.com/hywmongous/example-service/internal/application/usecases"
 	"github.com/hywmongous/example-service/internal/domain/identity"
 )
 
@@ -13,11 +11,11 @@ func main() {
 }
 
 func scenario_registraion() {
-	actor := actors.CreateUnregisteredIdentity()
+	actor := CreateUnregisteredIdentity()
 
 	email, _ := identity.CreateEmail("andreasbrandhoej@hotmail.com")
 	password, _ := identity.CreatePassword("password")
-	registrationRequest := usecases.RegisterIdentityRequest{
+	registrationRequest := RegisterIdentityRequest{
 		Email:    email,
 		Password: password,
 	}

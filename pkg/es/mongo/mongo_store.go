@@ -3,6 +3,7 @@ package mongo
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"time"
 
 	"github.com/cockroachdb/errors"
@@ -251,7 +252,7 @@ func (store *MongoEventStore) rollbackInsertions() error {
 		options := options.Delete()
 
 		if err := store.deleteManyDocument(filter, collectionName, options); err != nil {
-			return errors.Wrap(err, "rollback failed")
+			return errors.Wrap(err, "rollback deletion of documents failed")
 		}
 	}
 	return nil
@@ -429,32 +430,46 @@ func (store *MongoEventStore) shipSubject(subject es.SubjectID) error {
 		}
 	}
 	store.stage.Clear(subject)
+
+	if err := recover(); err != nil {
+		log.Println("Mongo Store paniced", err, ".")
+		return nil
+	}
+
 	return nil
 }
 
 func (store *MongoEventStore) Ship() error {
+	// Clearing the insertion history is not "defered"
+	//   the reason for this is: When an error cocured when
+	//   shipping then it might be rollbacking itself failed.
+	//   If we have cleared even though it failed then it would
+	//   be impossible to ever return to the desired state
+	//   where all insertions have been deleted because we would
+	//   not know which documents to delete to aquire this.
+	// As of now this is a defered call becuase I (Andreas) believe
+	//   it causes an panic the other way
+	defer store.clearInsertionHistory()
+
 	subjects := store.stage.Subjects()
 	for _, subject := range subjects {
 		err := store.shipSubject(subject)
 		if err != nil {
+			log.Println("Shipping subject", subject, "failed")
+			log.Println("Rollback issued because", err)
 			// If an error is encountered of any count then rollback.
-			// we do so even if we lsot connection. Because in the
-			// mean time it is possible connection has been established
-			// TODO: Spike tests makes this rollback cause a panic
-			return errors.Wrap(
-				err,
-				store.rollbackInsertions().Error(),
-			)
+			//   we do so even if we lsot connection. Because in the
+			//   mean time it is possible connection has been established
+			// FIXED: Spike tests makes this rollback cause a panic
+			//   This occured because i called "Error()" on "rollbackErr"
+			//   even when "rollbackErr" is nil causing a null dereference error
+			rollbackErr := store.rollbackInsertions()
+			if rollbackErr != nil {
+				return errors.Wrap(err, rollbackErr.Error())
+			}
+			return errors.Wrap(err, "rollback sucessful")
 		}
 	}
-	// Clearing the insertion history is not "defered"
-	// the reason for this is: When an error cocured when
-	// shipping then it might be rollbacking itself failed.
-	// If we have cleared even though it failed then it would
-	// be impossible to ever return to the desired state
-	// where all insertions have been deleted because we would
-	// not know which documents to delete to aquire this.
-	store.clearInsertionHistory()
 	return nil
 }
 

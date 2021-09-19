@@ -49,7 +49,9 @@ func (user RegisteredUser) Logout(request *LogoutIdentityRequest) (*LogoutIdenti
 		return nil, err
 	}
 
-	user.uow.Commit()
+	if err = user.uow.Commit(); err != nil {
+		return nil, err
+	}
 	return &LogoutIdentityResponse{
 		Revoked: true,
 	}, nil

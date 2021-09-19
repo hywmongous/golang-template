@@ -13,7 +13,7 @@ import {
 } from '../index.js'
 
 export function successfull_logout(
-    username = 'some@email',
+    username = 'some1@email',
     password = 'P@ssw0rd',
 ) {
     const login_response = successfull_login(username, password)

@@ -12,7 +12,6 @@ networks:
 services:
   ia_nginx:
     image: nginx:latest
-    container_name: ia_nginx
     restart: always
     depends_on:
       - ia_api
@@ -63,7 +62,6 @@ services:
 
   ia_kafka:
     image: wurstmeister/kafka:latest
-    container_name: ia_kafka
     restart: always
     depends_on:
       - ia_zookeeper
@@ -78,7 +76,6 @@ services:
 
   ia_mongo:
     image: mongo:latest
-    container_name: ia_mongo
     restart: always
     env_file:
       - ./mongodb/environment.env

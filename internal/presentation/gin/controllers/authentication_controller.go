@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/cockroachdb/errors"
@@ -45,13 +46,19 @@ func (controller AuthenticationController) Login(context *gin.Context) {
 
 	response, err := controller.registeredUser.Login(request)
 	if err != nil {
+		log.Println("Login endpoint error", err)
 		context.Writer.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
 	if err = controller.writeSessionToResponse(context, email, response.SessionID); err != nil {
+		log.Println("Login endpoint error", err)
 		context.Writer.WriteHeader(http.StatusUnauthorized)
 		return
+	}
+
+	if response == nil {
+		log.Println("Login response was nil")
 	}
 
 	context.JSON(http.StatusOK, response)
