@@ -30,7 +30,10 @@ func (user RegisteredUser) Login(request *LoginIdentityRequest) (*LoginIdentityR
 		return nil, err
 	}
 
-	user.uow.Commit()
+	if err = user.uow.Commit(); err != nil {
+		return nil, err
+	}
+
 	return &LoginIdentityResponse{
 		SessionID: string(sessionID),
 	}, nil
