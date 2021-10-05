@@ -57,24 +57,6 @@ type IdentityChangeNameResponse struct {
 }
 type ChangeIdentityNameUseCase func(request IdentityChangeNameRequest) (IdentityChangeNameResponse, error)
 
-type IdentityChangeAgeRequest struct {
-	Id  string
-	Age int
-}
-type IdentityChangeAgeResponse struct {
-	Success bool
-}
-type ChangeIdentityAgeUseCase func(request IdentityChangeNameRequest) (IdentityChangeNameResponse, error)
-
-type IdentityChangeEmailRequest struct {
-	Id    string
-	Email string
-}
-type IdentityChangeEmailResponse struct {
-	Success bool
-}
-type ChangeIdentityEmailUseCase func(request IdentityChangeNameRequest) (IdentityChangeNameResponse, error)
-
 // Events
 type IdentityRegistered struct {
 	Id    string
