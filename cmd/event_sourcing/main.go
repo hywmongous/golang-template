@@ -109,7 +109,11 @@ func main() {
 	}
 	registrationResponse, err := registrationUseCase(registrationRequest)
 	if err != nil {
-		uow.Rollback()
+		log.Println(err)
+		if err = uow.Rollback(); err != nil {
+			log.Println("rollback failed")
+			log.Println(err)
+		}
 		log.Fatal("Registration use case failed")
 	}
 	// log.Println("Identity:", registrationResponse.Id, "was registered")
@@ -122,7 +126,11 @@ func main() {
 	}
 	_, err = changeNameUseCase(nameChangeRequest)
 	if err != nil {
-		uow.Rollback()
+		log.Println(err)
+		if err = uow.Rollback(); err != nil {
+			log.Println("rollback failed")
+			log.Println(err)
+		}
 		log.Fatal("Name change of identity failed")
 	}
 	// log.Println("Identity:", registrationResponse.Id, "changed name to '"+nameChangeRequest.Name+"'")
@@ -166,7 +174,11 @@ func main() {
 		Name: "Dat Tommy Than Dieu",
 	})
 	if err != nil {
-		uow.Rollback()
+		log.Println(err)
+		if err = uow.Rollback(); err != nil {
+			log.Println("rollback failed")
+			log.Println(err)
+		}
 		log.Fatal("Name change of identity failed")
 	}
 
@@ -192,7 +204,11 @@ func main() {
 		Name: "Dat Tommy Than Dieu",
 	})
 	if err != nil {
-		uow.Rollback()
+		log.Println(err)
+		if err = uow.Rollback(); err != nil {
+			log.Println("rollback failed")
+			log.Println(err)
+		}
 		log.Fatal("Name change of identity failed")
 	}
 	// Do something
@@ -201,7 +217,11 @@ func main() {
 		Name: "Dat Tommy Than Dieu",
 	})
 	if err != nil {
-		uow.Rollback()
+		log.Println(err)
+		if err = uow.Rollback(); err != nil {
+			log.Println("rollback failed")
+			log.Println(err)
+		}
 		log.Fatal("Name change of identity failed")
 	}
 	// Do something
@@ -210,7 +230,11 @@ func main() {
 		Name: "Dat Tommy Than Dieu",
 	})
 	if err != nil {
-		uow.Rollback()
+		log.Println(err)
+		if err = uow.Rollback(); err != nil {
+			log.Println("rollback failed")
+			log.Println(err)
+		}
 		log.Fatal("Name change of identity failed")
 	}
 	// Do something
@@ -219,7 +243,11 @@ func main() {
 		Name: "Dat Tommy Than Dieu",
 	})
 	if err != nil {
-		uow.Rollback()
+		log.Println(err)
+		if err = uow.Rollback(); err != nil {
+			log.Println("rollback failed")
+			log.Println(err)
+		}
 		log.Fatal("Name change of identity failed")
 	}
 
