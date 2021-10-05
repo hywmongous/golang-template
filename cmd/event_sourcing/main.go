@@ -352,11 +352,12 @@ func (unregisteredUser UnregisteredUser) ChangeName(request IdentityChangeNameRe
 }
 
 func (uow *UnitOfWork) receiveEvent(subject es.SubjectID, data es.Data) {
-	uow.store.Load(
+	err := uow.store.Load(
 		Producer,
 		subject,
 		data,
 	)
+	panic(err)
 }
 
 func (uow *UnitOfWork) Commit() error {
