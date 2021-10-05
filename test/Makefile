@@ -1,4 +1,4 @@
-FEATURESPATH=./features
+FEATURESPATH=./k6
 K6=k6
 TESTS=$(K6)
 
