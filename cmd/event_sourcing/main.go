@@ -323,32 +323,6 @@ func (unregisteredUser UnregisteredUser) ChangeName(request IdentityChangeNameRe
 	return response, nil
 }
 
-func (unregisteredUser UnregisteredUser) ChangeAge(request IdentityChangeAgeRequest) (IdentityChangeAgeResponse, error) {
-	response := IdentityChangeAgeResponse{
-		Success: true,
-	}
-	mediator.Publish(
-		es.SubjectID(request.Id),
-		IdentityChangedAge{
-			Age: request.Age,
-		},
-	)
-	return response, nil
-}
-
-func (unregisteredUser UnregisteredUser) ChangeEmail(request IdentityChangeEmailRequest) (IdentityChangeEmailResponse, error) {
-	response := IdentityChangeEmailResponse{
-		Success: true,
-	}
-	mediator.Publish(
-		es.SubjectID(request.Id),
-		IdentityChangedEmail{
-			Email: request.Email,
-		},
-	)
-	return response, nil
-}
-
 func (uow *UnitOfWork) receiveEvent(subject es.SubjectID, data es.Data) {
 	uow.store.Load(
 		Producer,
