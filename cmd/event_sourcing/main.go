@@ -284,7 +284,9 @@ func VisitSnapshot(snapshot es.Snapshot) Identity {
 	switch snapshot.Name {
 	case "IdentitySnapshotV1":
 		var data IdentitySnapshotV1
-		snapshot.Unmarshal(&data)
+		if err := snapshot.Unmarshal(&data); err != nil {
+			panic(err)
+		}
 		identity.Id = data.Id
 		identity.Name = data.Name
 		identity.Age = data.Age
