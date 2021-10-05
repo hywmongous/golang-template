@@ -53,21 +53,33 @@ func main() {
 	}
 	response, err := actor.Register(request)
 	if err != nil {
-		log.Panic(err)
-		uow.Rollback()
+		log.Println(err)
+		if err = uow.Rollback(); err != nil {
+			log.Println("rollback failed")
+			log.Println(err)
+		}
+		log.Fatal(err)
 	}
 
 	if response.success {
 		log.Println("Registration was successfull")
 	} else {
-		log.Panic("Registration failed")
-		uow.Rollback()
+		log.Println(err)
+		if err = uow.Rollback(); err != nil {
+			log.Println("rollback failed")
+			log.Println(err)
+		}
+		log.Fatal(err)
 	}
 
 	// Commit changes
 	if err = uow.Commit(); err != nil {
-		log.Panic(err)
-		uow.Rollback()
+		log.Println(err)
+		if err = uow.Rollback(); err != nil {
+			log.Println("rollback failed")
+			log.Println(err)
+		}
+		log.Fatal(err)
 	}
 }
 
