@@ -301,22 +301,30 @@ func VisitEvents(identity Identity, events []es.Event) Identity {
 		switch event.Name {
 		case "IdentityRegistered":
 			var data IdentityRegistered
-			event.Unmarshal(&data)
+			if err := event.Unmarshal(&data); err != nil {
+				panic(err)
+			}
 			identity.Id = data.Id
 			identity.Age = data.Age
 			identity.Email = data.Email
 			identity.Name = data.Name
 		case "IdentityChangedName":
 			var data IdentityChangedName
-			event.Unmarshal(&data)
+			if err := event.Unmarshal(&data); err != nil {
+				panic(err)
+			}
 			identity.Name = data.Name
 		case "IdentityChangedAge":
 			var data IdentityChangedAge
-			event.Unmarshal(&data)
+			if err := event.Unmarshal(&data); err != nil {
+				panic(err)
+			}
 			identity.Age = data.Age
 		case "IdentityChangedEmail":
 			var data IdentityChangedEmail
-			event.Unmarshal(&data)
+			if err := event.Unmarshal(&data); err != nil {
+				panic(err)
+			}
 			identity.Email = data.Email
 		}
 	}
