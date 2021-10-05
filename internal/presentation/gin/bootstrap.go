@@ -17,7 +17,9 @@ func bootstrap(
 		OnStart: func(context context.Context) error {
 			go func() {
 				routes.Setup()
-				engine.Run(":5000")
+				if err := engine.Run(":5000"); err != nil {
+					panic(err)
+				}
 			}()
 			return nil
 		},
