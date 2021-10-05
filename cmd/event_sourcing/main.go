@@ -372,12 +372,14 @@ func (uow *UnitOfWork) receiveEvent(subject es.SubjectID, data es.Data) {
 
 func (uow *UnitOfWork) Commit() error {
 	events := uow.store.Stage().Events()
-	err := uow.store.Ship()
-	if err != nil {
-		log.Panicln("UnitOfWork store failed shipping the events")
-		return errors.Wrap(err, "UnitOfWork Commiting failed")
+	if err := uow.store.Ship(); err != nil {
+		log.Panicln("UnitOfWork store failed shipping/storing the events")
+		return errors.Wrap(err, "UnitOfWork storing failed")
 	}
-	uow.stream.Publish(events)
+	if err := uow.stream.Publish(events); err != nil {
+		log.Panicln("UnitOfWork store failed shipping/publishing the events")
+		return errors.Wrap(err, "UnitOfWork publishing failed")
+	}
 	return nil
 }
 
