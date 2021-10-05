@@ -119,7 +119,6 @@ func (store *MongoEventStore) connect(action mongoConnectionAction, collectionNa
 	if err = client.Connect(ctx); err != nil {
 		return err
 	}
-	defer client.Disconnect(ctx)
 
 	// create session
 	session, err := client.StartSession()
@@ -151,7 +150,7 @@ func (store *MongoEventStore) connect(action mongoConnectionAction, collectionNa
 		return nil
 	})
 
-	return err
+	return client.Disconnect(ctx)
 }
 
 func (store *MongoEventStore) findOneEvent(filter interface{}, options ...*options.FindOneOptions) (es.Event, error) {
