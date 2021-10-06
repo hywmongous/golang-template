@@ -20,9 +20,7 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args:
-            --severity-threshold=${{ env.SNYK_THRESHOLD }}
-            --sarif-file-output=${{ env.SNYK_OUT_FILE }}
+          args: --severity-threshold=${{ env.SNYK_THRESHOLD }} --sarif-file-output=${{ env.SNYK_OUT_FILE }}
 
       - uses: github/codeql-action/upload-sarif@v1
         name: Upload result to GitHub Code Scanning
