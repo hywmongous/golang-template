@@ -5,7 +5,7 @@ on: push
 
 env:
   # https://docs.snyk.io/features/snyk-cli/guides-for-our-cli/set-severity-thresholds-for-cli-tests
-  SNYK_THRESHOLD: medium #low|medium|high|critical
+  SNYK_THRESHOLD: low #low|medium|high|critical
   SNYK_OUT_FILE: snyk.sarif
 
 jobs:
