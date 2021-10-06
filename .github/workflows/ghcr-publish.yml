@@ -73,6 +73,7 @@ jobs:
           args:
             --file=./build/docker/Dockerfile
             --severity-threshold=${{ env.SNYK_THRESHOLD }}
+            --sarif-file-output=${{ env.SNYK_OUT_FILE }}
 
       - name: Upload result to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v1
