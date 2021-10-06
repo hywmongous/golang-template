@@ -61,7 +61,23 @@ jobs:
           file: ./build/docker/Dockerfile
           tags: ${{ steps.docker_meta.outputs.tags }}
 
+      - name: Snyk Docker
+        uses: snyk/actions/docker@master
+        # Snyk can be used to break the build when it detects vulnerabilities.
+        # In this case we want to upload the issues to GitHub Code Scanning
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: hywmongous/golang-template:main
+          args:
+            --file=./build/docker/Dockerfile
+            --severity-threshold=${{ env.SNYK_THRESHOLD }}
 
+      - name: Upload result to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: ${{ env.SNYK_OUT_FILE }}
 
 
         # Temp fix
@@ -73,6 +89,4 @@ jobs:
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
       - name: Docker image digest
-        run:
-          echo ${{ steps.docker_image_build.outputs.metadata }}
-          echo ${{ steps.docker_image_build.outputs.digest }}
+        run: echo ${{ steps.docker_image_build.outputs.digest }}
