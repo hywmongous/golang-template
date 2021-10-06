@@ -1,6 +1,5 @@
-name: ghcr docker image publishing
-
 # Inspired by: https://github.com/gbaeke/python-msi/blob/main/.github/workflows/build-push.yml
+name: ghcr docker image publishing
 
 on:
   push:
