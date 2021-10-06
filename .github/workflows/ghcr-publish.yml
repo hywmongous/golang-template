@@ -27,7 +27,5 @@ jobs:
           file: ./build/docker/Dockerfile
           push: true
           tags: ${{ github.repository }}:latest
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
       - name: Docker image digest
         run: echo ${{ steps.docker_image_builder.outputs.digest }}
