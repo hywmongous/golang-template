@@ -18,7 +18,7 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          file: ./build/docker/Dockerfile
+          file: ./deployment/docker-compose/docker-compose.yml
           args:
             --severity-threshold=${{ env.SNYK_THRESHOLD }}
             --sarif-file-output=${{ env.SNYK_OUT_FILE }}
