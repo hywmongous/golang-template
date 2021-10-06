@@ -1,4 +1,4 @@
-name: Trivy CVE Dependency Scanner
+name: Trivy
 
 on: push
 
