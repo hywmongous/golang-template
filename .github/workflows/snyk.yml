@@ -16,6 +16,7 @@ jobs:
 
       - uses: snyk/actions/golang@master
         name: Snyk vulnerability check
+        continue-on-error: true # To make sure that SARIF upload gets called
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
