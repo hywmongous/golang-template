@@ -1,5 +1,5 @@
 # https://github.com/snyk/actions/tree/master/golang
-name: Snyk code
+name: Snyk go
 
 on: push
 
@@ -9,7 +9,7 @@ env:
   SNYK_OUT_FILE: snyk.sarif
 
 jobs:
-  security:
+  synk:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
