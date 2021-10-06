@@ -69,7 +69,7 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          image: ${{ steps.buildx.outputs.name }}:${{ steps.docker_meta.outputs.tags }}
+          image: ${{ steps.docker_meta.outputs.tags }}
           args:
             --file=./build/docker/Dockerfile
             --severity-threshold=${{ env.SNYK_THRESHOLD }}
