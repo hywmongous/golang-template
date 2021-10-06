@@ -71,7 +71,7 @@ jobs:
         with:
           image: ghcr.io/${{ github.repository }}:sha-7d73293
           args:
-            --file=./Dockerfile
+            --file=./build/docker/Dockerfile
             --severity-threshold=${{ env.SNYK_THRESHOLD }}
             --sarif-file-output=${{ env.SNYK_OUT_FILE }}
 
