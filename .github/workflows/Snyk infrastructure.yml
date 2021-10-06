@@ -1,0 +1,25 @@
+name: Snyk Infrastructure as Code
+
+on: push
+
+env:
+  # https://docs.snyk.io/features/snyk-cli/guides-for-our-cli/set-severity-thresholds-for-cli-tests
+  SNYK_THRESHOLD: low #low|medium|high|critical
+  SNYK_OUT_FILE: snyk.sarif
+
+jobs:
+  snyk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run Snyk to check configuration files for security issues
+        continue-on-error: true
+        uses: snyk/actions/iac@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          file: ./build/docker/Dockerfile
+      - name: Upload result to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: ${{ env.SNYK_OUT_FILE }}
