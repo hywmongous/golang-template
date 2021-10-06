@@ -1,5 +1,5 @@
 # https://github.com/snyk/actions/tree/master/golang
-name: Golang Snyk code scanning
+name: Snyk
 
 on: push
 
