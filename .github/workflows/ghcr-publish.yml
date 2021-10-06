@@ -10,5 +10,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: docker/login-action@v1
+        name: Login to GitHub Container Registry
+        with:
+          registry: ghcr.io
+          # The login of the user that initiated the workflow run.
+          username: ${{ github.actor }}
+          # A token to authenticate on behalf of the GitHub App installed on your repository.
+          password: ${{ github.token }}
       - uses: docker/build-push-action@v2
-        run: make docker_build
+        # Allows us to retrieve the output from the build
+        id: docker_image_builder
+        with:
+          # Because the Dockerfile is within /build/docker
+          context: ./../../
+          file: ./build/docker/Dockerfile
+          push: true
+          tags: ${{ github.repository }}:latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+      - name: Docker image digest
+        run: echo ${{ steps.docker_image_builder.outputs.digest }}
