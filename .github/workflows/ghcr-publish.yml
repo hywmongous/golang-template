@@ -23,7 +23,7 @@ jobs:
         id: docker_image_builder
         with:
           # Because the Dockerfile is within /build/docker
-          context: ./../../
+          context: .
           file: ./build/docker/Dockerfile
           push: true
           tags: ${{ github.repository }}:latest
