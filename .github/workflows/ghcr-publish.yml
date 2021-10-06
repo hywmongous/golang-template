@@ -17,7 +17,7 @@ jobs:
         name: Docker meta
         id: docker_meta
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}
+          images: ${{ env.REGISTRY }}/hywmongous/golang-template
           tag-sha: true
           tag-edge: false
           tag-latest: true
