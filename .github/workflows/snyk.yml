@@ -1,0 +1,28 @@
+# https://github.com/snyk/actions/tree/master/golang
+name: Golang Snyk code scanning
+
+on: push
+
+env:
+  # https://docs.snyk.io/features/snyk-cli/guides-for-our-cli/set-severity-thresholds-for-cli-tests
+  SNYK_THRESHOLD: medium #low|medium|high|critical
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: snyk/actions/golang@master
+        name: Snyk vulnerability check
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args:
+            --severity-threshold=${{ env.SNYK_THRESHOLD }}
+            --sarif-file-output
+
+      - uses: github/codeql-action/upload-sarif@v1
+        name: Upload result to GitHub Code Scanning
+        with:
+          sarif_file: snyk.sarif
