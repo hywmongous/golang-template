@@ -1,0 +1,1 @@
+sudo kubectl cluster-info
