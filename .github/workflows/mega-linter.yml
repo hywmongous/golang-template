@@ -22,7 +22,7 @@ jobs:
         with:
           token: ${{ github.token }}
 
-      - uses: nvuillam/mega-linter@latest
+      - uses: nvuillam/mega-linter/flavors/ci_light@latest
         name: Go mega linting
         id: go_mega-linting
 
