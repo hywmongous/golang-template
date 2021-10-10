@@ -34,29 +34,3 @@ jobs:
           path: |
             report
             mega-linter.log
-
-      # Create pull request if applicable (for now works only on PR from same repository, not from forks)
-      - name: Create Pull Request with applied fixes
-        id: cpr
-        if: steps.ml.outputs.has_updated_sources == 1
-        uses: peter-evans/create-pull-request@v3.10.1
-        with:
-          token: ${{ github.token }}
-          commit-message: "[Mega-Linter] Apply linters automatic fixes"
-          title: "[Mega-Linter] Apply linters automatic fixes"
-          labels: bot
-      - name: Create PR output
-        if: steps.ml.outputs.has_updated_sources == 1
-        run: |
-          echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}"
-          echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"
-      # Push new commit if applicable (for now works only on PR from same repository, not from forks)
-      - name: Prepare commit
-        if: steps.ml.outputs.has_updated_sources == 1
-        run: sudo chown -Rc $UID .git/
-      - name: Commit and push applied linter fixes
-        if: steps.ml.outputs.has_updated_sources == 1
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          branch: ${{ github.event.pull_request.head.ref || github.head_ref || github.ref }}
-          commit_message: "[Mega-Linter] Apply linters fixes"
