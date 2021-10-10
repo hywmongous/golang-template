@@ -46,5 +46,5 @@ COPY --from=builder ./dist/main /
 # Expose the port on which the REST API HTTP server listens to
 EXPOSE 8080/tcp
 
-# Execute the binary executable
+# Execute the binary executable.
 ENTRYPOINT ["/main"]
