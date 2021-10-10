@@ -1,4 +1,4 @@
-name: Linting
+name: Go linting
 
 on:
   push:
