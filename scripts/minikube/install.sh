@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Source: https://phoenixnap.com/kb/install-minikube-on-ubuntu
 # Source: https://minikube.sigs.k8s.io/docs/start/
 
