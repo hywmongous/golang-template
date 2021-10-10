@@ -11,7 +11,8 @@ ENV GO111MODULE=on \
 WORKDIR /build
 
 # Install make which is later used to build
-RUN apt-get update && apt-get install make
+RUN apt-get update && apt-get install -y --no-install-recommends make
+RUN rm -rf /var/lib/apt/lists/*
 
 # Ensure go has the nessecary information to download the modules
 COPY ./go.mod ./go.mod
