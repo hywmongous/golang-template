@@ -328,7 +328,6 @@ func VisitEvents(identity Identity, events []es.Event) Identity {
 			identity.Email = data.Email
 		}
 	}
-	// log.Println("Visit events:", identity)
 	return identity
 }
 
