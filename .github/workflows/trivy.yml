@@ -2,7 +2,6 @@ name: Trivy
 
 on: push
 
-
 jobs:
   build:
     name: Scan
@@ -14,14 +13,14 @@ jobs:
       - uses: aquasecurity/trivy-action@master
         name: Run Trivy vulnerability scanner in repo mode
         with:
-          scan-type: 'fs'
+          scan-type: "fs"
           ignore-unfixed: true
-          format: 'template'
-          template: '@/contrib/sarif.tpl'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
+          format: "template"
+          template: "@/contrib/sarif.tpl"
+          output: "trivy-results.sarif"
+          severity: "CRITICAL,HIGH"
 
       - uses: github/codeql-action/upload-sarif@v1
         name: Upload Trivy scan results to GitHub Security tab
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: "trivy-results.sarif"
