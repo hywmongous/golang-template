@@ -52,7 +52,7 @@ jobs:
         # Allows us to retrieve the output from the build
         id: docker_image_build
         with:
-          builder: ${{ steps.buildx.outputs.name }}
+          # builder: ${{ steps.buildx.outputs.name }}
           cache-from: type=local,src=/tmp/.buildx-cache-new
           cache-to: type=local,dest=/tmp/.buildx-cache-new
           # The context is NOT relative to the Dockerfile location but the repository root
