@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 curl -X POST -u some1@email:P@ssw0rd localhost/api/v1/identities
 curl -X POST -u some2@email:P@ssw0rd localhost/api/v1/identities
 curl -X POST -u some3@email:P@ssw0rd localhost/api/v1/identities
