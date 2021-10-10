@@ -2,7 +2,21 @@ name: Mega linter
 
 on:
   push:
+    paths:
+      - "**.env"
+      - "**.json"
+      - "**.xml"
+      - "**.yaml"
+      - "**.yml"
+      - "**/Dockerfile"
   pull_request:
+    paths:
+      - "**.env"
+      - "**.json"
+      - "**.xml"
+      - "**.yaml"
+      - "**.yml"
+      - "**/Dockerfile"
   workflow_dispatch:
 
 jobs:

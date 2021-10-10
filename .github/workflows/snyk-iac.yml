@@ -1,6 +1,9 @@
 name: Snyk IaC
 
-on: push
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
 
 env:
   # https://docs.snyk.io/features/snyk-cli/guides-for-our-cli/set-severity-thresholds-for-cli-tests
@@ -18,7 +21,6 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          file: kubernetes file here
           args: --severity-threshold=${{ env.SNYK_THRESHOLD }}
             --sarif-file-output=${{ env.SNYK_OUT_FILE }}
       - name: Upload result to GitHub Code Scanning

@@ -1,7 +1,16 @@
 # https://github.com/snyk/actions/tree/master/golang
 name: Snyk go
 
-on: push
+on:
+  push:
+    paths:
+      - "**.go"
+      - "**.js"
+  pull_request:
+    paths:
+      - "**.go"
+      - "**.js"
+  workflow_dispatch:
 
 env:
   # https://docs.snyk.io/features/snyk-cli/guides-for-our-cli/set-severity-thresholds-for-cli-tests

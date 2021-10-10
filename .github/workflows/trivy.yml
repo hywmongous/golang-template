@@ -1,6 +1,17 @@
 name: Trivy
 
-on: push
+on:
+  push:
+    paths:
+      - "**.go"
+      - "**.sh"
+      - "**.js"
+  pull_request:
+    paths:
+      - "**.go"
+      - "**.sh"
+      - "**.js"
+  workflow_dispatch:
 
 jobs:
   build:
