@@ -1,0 +1,16 @@
+name: Go report card
+
+on:
+  push:
+    paths:
+      - "**.go"
+  pull_request:
+    paths:
+      - "**.go"
+  workflow_dispatch:
+
+jobs:
+  go-report-card:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: creekorful/goreportcard-action@v1.0
