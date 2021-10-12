@@ -4,6 +4,7 @@
 [![Trivy](https://github.com/hywmongous/golang-template/actions/workflows/trivy.yml/badge.svg)](https://github.com/hywmongous/golang-template/actions/workflows/trivy.yml)
 [![codecov](https://codecov.io/gh/hywmongous/golang-template/branch/main/graph/badge.svg?token=QYZJBMQM1O)](https://codecov.io/gh/hywmongous/golang-template)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hywmongous/golang-template)](https://goreportcard.com/report/github.com/hywmongous/golang-template)
+![Go](https://img.shields.io/github/go-mod/go-version/hywmongous/golang-template)
 ![Release](https://img.shields.io/github/v/release/hywmongous/golang-template)
 
 # golang-template
