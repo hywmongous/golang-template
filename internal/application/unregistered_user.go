@@ -20,9 +20,6 @@ func UnregisteredUserFactory(
 func (user UnregisteredUser) Register(request *RegisterIdentityRequest) (*RegisterIdentityResponse, error) {
 	defer user.uow.Clear()
 
-
-
-
 	identity, err := identity.Register(
 		request.Email,
 		request.Password,
