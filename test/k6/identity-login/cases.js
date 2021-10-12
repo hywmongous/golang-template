@@ -24,6 +24,7 @@ export function successfull_login(
 
     const login_response = http.post(url);
 
+
     check(login_response, {
         'successfull_login: Status code is 200': (response) => response.status === 200,
         'successfull_login: Contains CSRF header': (response) => response.headers[CSRF_HEADER_KEY] !== undefined,
