@@ -4,9 +4,11 @@ import { weightedCases } from "./cases.js";
 export const options = {
     insecureSkipTLSVerify: true,
     noConnectionReuse: false,
-    minIterationDuration: '1s',
+    minIterationDuration: "1s",
     vus: 1,
-    duration: '1m',
-}
+    duration: "1m",
+};
 
-export default () => { runCaseRoundRobin(weightedCases); }
+export default () => {
+    runCaseRoundRobin(weightedCases);
+};
