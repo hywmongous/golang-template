@@ -299,7 +299,7 @@ func VisitEvents(identity Identity, events []es.Event) Identity {
 	for _, event := range events {
 		log.Println("Visit:", event.Name, event.Version, ":", event.SnapshotVersion, ",", event.Data)
 		switch event.Name {
-		case "IdentityRegistered":
+		case "IdentityRegistered": //
 			var data IdentityRegistered
 			if err := event.Unmarshal(&data); err != nil {
 				panic(err)
