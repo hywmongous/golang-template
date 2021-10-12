@@ -1,12 +1,10 @@
-db.createUser(
-    {
-        user: "root",
-        pwd: "root",
-        roles: [
-            {
-                role: "readWrite",
-                db: "eventstore"
-            }
-        ]
-    }
-);
+db.createUser({
+    user: "root",
+    pwd: "root",
+    roles: [
+        {
+            role: "readWrite",
+            db: "eventstore",
+        },
+    ],
+});
