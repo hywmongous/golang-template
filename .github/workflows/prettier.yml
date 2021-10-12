@@ -2,33 +2,7 @@ name: Go formatting
 
 on:
   push:
-    paths:
-      - "**.js"
-      - "**.ts"
-      - "**.jsx"
-      - "**.yaml"
-      - "**.yml"
-      - "**.html"
-      - "**.css"
-      - "**.scss"
-      - "**.json"
-      - "**.toml"
-      - "**.md"
-      - "**.less"
   pull_request:
-    paths:
-      - "**.js"
-      - "**.ts"
-      - "**.jsx"
-      - "**.yaml"
-      - "**.yml"
-      - "**.html"
-      - "**.css"
-      - "**.scss"
-      - "**.json"
-      - "**.toml"
-      - "**.md"
-      - "**.less"
   workflow_dispatch:
 
 jobs:
