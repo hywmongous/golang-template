@@ -1,3 +1,4 @@
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Linting](https://github.com/hywmongous/golang-template/actions/workflows/go-linting.yml/badge.svg)](https://github.com/hywmongous/golang-template/actions/workflows/go-linting.yml)
 [![Unit tests](https://github.com/hywmongous/golang-template/actions/workflows/go-test.yml/badge.svg)](https://github.com/hywmongous/golang-template/actions/workflows/go-test.yml)
 [![Snyk go](https://github.com/hywmongous/golang-template/actions/workflows/snyk-go.yml/badge.svg)](https://github.com/hywmongous/golang-template/actions/workflows/snyk-go.yml)
