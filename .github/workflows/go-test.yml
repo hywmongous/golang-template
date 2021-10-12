@@ -27,4 +27,7 @@ jobs:
       - uses: codecov/codecov-action@v2
         name: Upload coverage to Codecov
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.platform }},go-${{ matrix.go-version }}
+          fail_ci_if_error: true
+          verbose: true
