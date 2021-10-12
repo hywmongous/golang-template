@@ -27,4 +27,4 @@ jobs:
       - uses: codecov/codecov-action@v2
         name: Upload coverage to Codecov
         with:
-          flags: ${{ matrix.os }},go-${{ matrix.go }},${{ matrix.test-tags }}
+          flags: ${{ matrix.platform }},go-${{ matrix.go-version }}
