@@ -24,7 +24,6 @@ export function successfull_login(
 
     const login_response = http.post(url);
 
-
     check(login_response, {
         "successfull_login: Status code is 200": (response) =>
             response.status === 200,
