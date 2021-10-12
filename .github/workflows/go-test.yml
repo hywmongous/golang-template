@@ -23,7 +23,7 @@ jobs:
           go-version: ${{ matrix.go-version }}
       - uses: actions/checkout@v2
       - name: Test
-        run: go test ./...
+        run: go test -race -covermode=atomic -coverprofile=coverage.out ./...
       - uses: codecov/codecov-action@v2
         name: Upload coverage to Codecov
         with:
