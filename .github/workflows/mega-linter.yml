@@ -30,8 +30,7 @@ jobs:
           token: ${{ github.token }}
 
       - uses: nvuillam/mega-linter/flavors/ci_light@v4
-        name: Go mega linting
-        id: go_mega-linting
+        name: Mega linting
 
       - uses: actions/upload-artifact@v2
         name: Archieve artifacts
