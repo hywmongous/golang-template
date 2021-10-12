@@ -17,10 +17,14 @@ jobs:
         platform: [ubuntu-latest]
     runs-on: ${{ matrix.platform }}
     steps:
-      - name: Install Gp
+      - name: Install Go
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go-version }}
       - uses: actions/checkout@v2
       - name: Test
         run: go test ./...
+      - uses: codecov/codecov-action@v2
+        name: Upload coverage to Codecov
+        with:
+          flags: ${{ matrix.os }},go-${{ matrix.go }},${{ matrix.test-tags }}
