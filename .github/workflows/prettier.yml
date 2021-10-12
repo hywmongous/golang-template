@@ -1,0 +1,40 @@
+name: Go formatting
+
+on:
+  push:
+    paths:
+      - "**.js"
+      - "**.ts"
+      - "**.jsx"
+      - "**.yaml"
+      - "**.yml"
+      - "**.html"
+      - "**.css"
+      - "**.scss"
+      - "**.json"
+      - "**.toml"
+      - "**.md"
+      - "**.less"
+  pull_request:
+    paths:
+      - "**.js"
+      - "**.ts"
+      - "**.jsx"
+      - "**.yaml"
+      - "**.yml"
+      - "**.html"
+      - "**.css"
+      - "**.scss"
+      - "**.json"
+      - "**.toml"
+      - "**.md"
+      - "**.less"
+  workflow_dispatch:
+
+jobs:
+  prettier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: creyD/prettier_action@v4.0
+        name: Prettify
