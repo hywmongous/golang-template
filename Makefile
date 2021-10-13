@@ -41,16 +41,6 @@ help-deployment:
 		echo ''
 	done)
 
-build_clean:
-	@(for dir in $(BUILDDIRS); do \
-		$(MAKE) -C $(BUILDPATH)/$$dir build_clean; \
-	done)
-
-dist_clean:
-	@(for dir in $(BUILDDIRS); do \
-		$(MAKE) -C $(BUILDPATH)/$$dir dist_clean; \
-	done)
-
 .ONESHELL:
 protoc:
 	@(cd ./protos/ ; protoc --go_out=. *.proto)
