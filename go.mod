@@ -4,8 +4,8 @@ go 1.17
 
 require (
 	github.com/cockroachdb/errors v1.8.6
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.7.4
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.3.0
 	github.com/segmentio/kafka-go v0.4.20
 	go.mongodb.org/mongo-driver v1.7.3

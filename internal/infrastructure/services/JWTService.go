@@ -10,7 +10,7 @@ import (
 
 	"github.com/cockroachdb/errors"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 )
 
