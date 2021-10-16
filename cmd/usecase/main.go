@@ -62,7 +62,7 @@ func main() {
 	}
 
 	if response.success {
-		log.Println("Registration was successfull")
+		log.Println("Registration was successful")
 	} else {
 		log.Println(err)
 		if err = uow.Rollback(); err != nil {
