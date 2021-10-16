@@ -25,7 +25,7 @@ type EventStream interface {
 	//     3. Ignore the client close. What can we do about it? I think: Nothing.
 	// This discussion is closed, on the realisation that we should stop streaming
 	//   when an error occurs because we are required to publish them in a sequential order
-	//   this simplifies the whole process of commiting the changes to topics.
+	//   this simplifies the whole process of committing the changes to topics.
 	Publish(events []Event) error
 	Subscribe(topic Topic, ctx context.Context) (chan Event, chan error)
 	// Publish(events chan Event, errors chan error) context.CancelFunc

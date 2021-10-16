@@ -10,12 +10,12 @@ import {
     getRandomUser,
 } from "../index.js";
 
-export function random_successfull_login() {
+export function random_successful_login() {
     const user = getRandomUser();
-    return successfull_login(user.username, user.password);
+    return successful_login(user.username, user.password);
 }
 
-export function successfull_login(
+export function successful_login(
     username = "some1@email",
     password = "P@ssw0rd"
 ) {
@@ -25,13 +25,13 @@ export function successfull_login(
     const login_response = http.post(url);
 
     check(login_response, {
-        "successfull_login: Status code is 200": (response) =>
+        "successful_login: Status code is 200": (response) =>
             response.status === 200,
-        "successfull_login: Contains CSRF header": (response) =>
+        "successful_login: Contains CSRF header": (response) =>
             response.headers[CSRF_HEADER_KEY] !== undefined,
-        "successfull_login: Contains cookie acces token": (response) =>
+        "successful_login: Contains cookie acces token": (response) =>
             response.cookies[JWT_ACCESS_TOKEN_COOKIE_NAME] !== undefined,
-        "successfull_login: Contains cookie refresh token": (response) =>
+        "successful_login: Contains cookie refresh token": (response) =>
             response.cookies[JWT_REFRESH_TOKEN_COOKIE_NAME] !== undefined,
     });
 
@@ -84,7 +84,7 @@ export function missing_credentials_login() {
 }
 
 export const weightedCases = initCases([
-    { weight: 85, case: random_successfull_login },
+    { weight: 85, case: random_successful_login },
     { weight: 10, case: invalid_credentials_login },
     { weight: 5, case: missing_credentials_login },
 ]);

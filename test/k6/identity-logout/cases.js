@@ -1,6 +1,6 @@
 import { check, sleep } from "k6";
 import http from "k6/http";
-import { successfull_login } from "../identity-login/cases.js";
+import { successful_login } from "../identity-login/cases.js";
 import {
     BASE_URL,
     CSRF_HEADER_KEY,
@@ -10,11 +10,11 @@ import {
     initCases,
 } from "../index.js";
 
-export function successfull_logout(
+export function successful_logout(
     username = "some1@email",
     password = "P@ssw0rd"
 ) {
-    const login_response = successfull_login(username, password);
+    const login_response = successful_login(username, password);
 
     const logout_url = `${BASE_URL}/api/v1/authentication/logout`;
     const logout_body = null;
@@ -27,7 +27,7 @@ export function successfull_logout(
     });
 
     check(logout_response, {
-        "successfull_logout: Status code is 200": (response) =>
+        "successful_logout: Status code is 200": (response) =>
             response.status === 200,
     });
 
@@ -35,5 +35,5 @@ export function successfull_logout(
 }
 
 export const weightedCases = initCases([
-    { weight: 100, case: successfull_logout },
+    { weight: 100, case: successful_logout },
 ]);

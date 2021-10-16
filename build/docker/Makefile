@@ -10,9 +10,9 @@ help:
 	@echo  '  dist_clean                    - Removes the image from the local docker library'
 	@echo  'Configuration targets:'
 	@echo  '  build                         - Builds the rest-server as an image'
-	@echo  '  create                        - Builds if nessecary and creates a container with the image'
-	@echo  '  run                           - Builds if nessecary and runs the images'
-	@echo  '  runit                         - Builds if nessecary and runs the images with an interactive shell'
+	@echo  '  create                        - Builds if necessary and creates a container with the image'
+	@echo  '  run                           - Builds if necessary and runs the images'
+	@echo  '  runit                         - Builds if necessary and runs the images with an interactive shell'
 	@echo  '  push                          - Pushes the image to Dockerhub'
 	@echo  '  pull                          - Pulls the image from Dockerhub'
 

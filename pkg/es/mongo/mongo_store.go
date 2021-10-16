@@ -446,8 +446,8 @@ func (store *MongoEventStore) Ship() error {
 	//   If we have cleared even though it failed then it would
 	//   be impossible to ever return to the desired state
 	//   where all insertions have been deleted because we would
-	//   not know which documents to delete to aquire this.
-	// As of now this is a defered call becuase I (Andreas) believe
+	//   not know which documents to delete to acquire this.
+	// As of now this is a defered call because I (Andreas) believe
 	//   it causes an panic the other way
 	defer store.clearInsertionHistory()
 
@@ -461,13 +461,13 @@ func (store *MongoEventStore) Ship() error {
 			//   we do so even if we lsot connection. Because in the
 			//   mean time it is possible connection has been established
 			// FIXED: Spike tests makes this rollback cause a panic
-			//   This occured because i called "Error()" on "rollbackErr"
+			//   This occurred because i called "Error()" on "rollbackErr"
 			//   even when "rollbackErr" is nil causing a null dereference error
 			rollbackErr := store.rollbackInsertions()
 			if rollbackErr != nil {
 				return errors.Wrap(err, rollbackErr.Error())
 			}
-			return errors.Wrap(err, "rollback sucessful")
+			return errors.Wrap(err, "rollback successful")
 		}
 	}
 	return nil

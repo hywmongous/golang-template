@@ -6,7 +6,7 @@ import "errors"
  * Composite keys: The subject is the PK, however
  *   it might be ggod if we could use multiple keys
  *   to distinguish events. Eg. email (string) and userId (uuid).
- *   it should be guranteed for all subjects to be unique in any order (the hash).
+ *   it should be guaranteed for all subjects to be unique in any order (the hash).
  */
 
 type EventStore interface {

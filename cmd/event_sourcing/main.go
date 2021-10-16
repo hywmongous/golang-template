@@ -81,7 +81,7 @@ var (
 func main() {
 	// Scenario: A user reigstration is issued and afterwards the events are read to construct the aggregate
 
-	// We sleep here in this example jsut to ensure initialization of external services are done
+	// We sleep here in this example just to ensure initialization of external services are done
 	time.Sleep(15 * time.Second)
 
 	log.Println("EVENT SOURCING EXAMPLE")
