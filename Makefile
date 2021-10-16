@@ -42,6 +42,32 @@ help-deployment:
 	done)
 
 .ONESHELL:
+lint: misspell staticcheck vet gofmt
+	golangci-lint run --verbose ./...
+
+.ONESHELL:
+misspell:
+	misspell -locale UK .
+
+.ONESHELL:
+staticcheck:
+	staticcheck ./...
+
+.ONESHELL:
+vet:
+	go vet ...
+
+.ONESHELL:
+gofmt:
+	gofmt -s -d -w .
+
+.ONESHELL:
+install:
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	go install github.com/client9/misspell/cmd/misspell@latest
+	|| go install honnef.co/go/tools/cmd/staticcheck@latest
+
+.ONESHELL:
 protoc:
 	@(cd ./protos/ ; protoc --go_out=. *.proto)
 
