@@ -44,7 +44,7 @@ FROM scratch
 COPY --from=builder ./dist/main /
 
 # Expose the port on which the REST API HTTP server listens to
-EXPOSE 8080/tcp
+EXPOSE 5000/tcp
 
 # Execute the binary executable.
 ENTRYPOINT ["/main"]

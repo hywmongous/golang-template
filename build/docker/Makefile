@@ -26,11 +26,11 @@ create: build
 
 .PHONY:
 run: create
-	sudo $(DOCKER) run -p 8080:8080 $(IMAGENAME) --rm
+	sudo $(DOCKER) run -p 5000:5000 $(IMAGENAME) --rm
 
 .PHONY:
 runit: create
-	sudo $(DOCKER) run -p 8080:8080 -it $(IMAGENAME)
+	sudo $(DOCKER) run -p 5000:5000 -it $(IMAGENAME)
 
 .PHONY:
 push: build

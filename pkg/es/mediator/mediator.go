@@ -1,6 +1,8 @@
 package mediator
 
-import "github.com/hywmongous/example-service/pkg/es"
+import (
+	"github.com/hywmongous/example-service/pkg/es"
+)
 
 type Subscription func(subject es.SubjectID, data es.Data)
 type Connector chan ConnectorResult

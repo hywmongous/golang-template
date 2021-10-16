@@ -18,6 +18,11 @@ help-features:
 	echo ''
 
 .ONESHELL:
+.PHONY:
+smoke:
+	$(K6) run $(FEATURESPATH)/smoke_all.js
+
+.ONESHELL:
 .SILENT:
 .PHONY:
 %:

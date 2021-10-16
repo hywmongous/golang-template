@@ -48,12 +48,13 @@ func UnitOfWorkFactory(
 }
 
 func (uow *UnitOfWork) receiveEvent(subject es.SubjectID, data es.Data) {
-	err := uow.store.Load(
+	if err := uow.store.Load(
 		Producer,
 		subject,
 		data,
-	)
-	panic(err)
+	); err != nil {
+		panic(err)
+	}
 }
 
 func (uow *UnitOfWork) Commit() error {

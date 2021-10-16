@@ -55,17 +55,21 @@ staticcheck:
 
 .ONESHELL:
 vet:
-	go vet ...
+	go vet -all ./...
 
 .ONESHELL:
 gofmt:
 	gofmt -s -d -w .
 
 .ONESHELL:
+gotest:
+	go test -v -race -covermode=atomic ./...
+
+.ONESHELL:
 install:
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	go install github.com/client9/misspell/cmd/misspell@latest
-	|| go install honnef.co/go/tools/cmd/staticcheck@latest
+	go install honnef.co/go/tools/cmd/staticcheck@latest
 
 .ONESHELL:
 protoc:

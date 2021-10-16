@@ -37,8 +37,8 @@ var InfrastructureOptions = fx.Options(
 	fx.Provide(services.JWTServiceFactory),
 	fx.Provide(infrastructure.KafkaStreamFactory),
 	fx.Provide(infrastructure.MongoStoreFactory),
-	fx.Provide(infrastructure.UnitOfWorkFactory),
 	fx.Provide(cqrs.IdentityRepositoryFactory),
+	fx.Provide(infrastructure.UnitOfWorkFactory),
 )
 
 var ControllerOptions = fx.Options(

@@ -38,11 +38,11 @@ services:
   ia_api:
     image: example-service:latest
     restart: always
-    deploy:
-      replicas: 2
     depends_on:
       - ia_mongo
       - ia_kafka
+    ports:
+      - 5000:5000
     networks:
       - service_net
     env_file:
@@ -67,6 +67,8 @@ services:
       - ./kafka/environment.env
     networks:
       - service_net
+    ports:
+      - 9092:9092
     logging:
       driver: "none"
 
