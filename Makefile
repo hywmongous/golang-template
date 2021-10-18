@@ -1,32 +1,43 @@
-BUILDPATH=./build
+# https://www.gnu.org/software/make/manual/html_node/index.html#SEC_Contents
+
+BUILDPATH=./builds
 BUILDDIRS=golang docker
 
-DEPLOYMENTPATH=./deployment
-DEPLOYMENTDIRS=docker-compose
-TARGETREQURIESDOCKERBUILD=up
+DEPLOYMENTPATH=./deployments
+DOCKERCOMPOSE=docker-compose
+DOCKERSTACK=docker-stack
+DEPLOYMENTDIRS=$(DOCKERCOMPOSE) $(DOCKERSTACK)
+TARGETREQURIESDOCKERBUILD=up create
 
-SPACE :=
-SPACE +=
+GITHUBPATH=./.github
+WORKFLOWS=workflow workflows
+WORKFLOWSPATH=$(GITHUBPATH)/workflows
+
+.ONESHELL:
+.SILENT:
+.PHONY:
 
 help:
-	@echo 'Cleaning targets:'
-	@echo '  build_clean                   - Invokes all build_clean in supported build makefiles'
-	@echo '  dist_clean                    - Invokes all dist_clean in supported build makefiles'
-	@echo 'Examples:'
-	@echo '  Build golang binary: "make golang_build'
-	@echo '  Run docker: "make docker_run'
-	@echo '  Deploy docker-compose: "make docker-compose-postgres_up'
-	@echo ''
-	@echo '-- make help-build --'
-	$(MAKE) help-build
-	@echo ''
-	@echo '-- make help-deployment --'
-	$(MAKE) help-deployment
-	@echo ''
-	@echo '-- make others --'
+	@echo 'Project targets:'
+	@echo '  lint                          - Applies golangci and misspell, staticcheck, vet, and gofmt'
+	@echo '  misspell                      - Applies client9 misspell with UK'
+	@echo '  vet                           - Runs go vet with all checks'
+	@echo '  gofmt                         - Applies go formatting'
+	@echo '  gotest                        - runs all go tests with race check'
+	@echo '  install                       - Installs all dedpendencies, eg. golangci-lint, and misspell'
 	@echo '  protoc                        - Codegen proto files matching ./protos/*.proto'
+	@echo '  %                             - Wildcard which constructs a bubild/deployment/act target'
+	@echo 'Help targets:'
+	@echo '  help-builds                   - Prints all the help targets from the builds'
+	@echo '  help-deployments              - Prints all the help targets from the deployment'
+	@echo 'Examples:'
+	@echo '  "make vet"                    - Golang vet project'
+	@echo '  "make golang_build"           - Build golang binary'
+	@echo '  "make docker_run"             - Run docker'
+	@echo '  "make docker_hellp"           - Get docker help'
+	@echo '  "make docker-compose_up"      - Deploy docker-compose'
 
-help-build:
+help-builds:
 	@(for dir in $(BUILDDIRS); do \
 		echo $${dir}
 		echo -n '  '
@@ -34,7 +45,7 @@ help-build:
 		echo ''
 	done)
 
-help-deployment:
+help-deployments:
 	@(for dir in $(DEPLOYMENTDIRS); do \
 		echo $${dir}
 		echo -n '  '
@@ -42,64 +53,74 @@ help-deployment:
 		echo ''
 	done)
 
-.ONESHELL:
 lint: misspell staticcheck vet gofmt
 	golangci-lint run --verbose ./...
 
-.ONESHELL:
 misspell:
 	misspell -locale UK .
 
-.ONESHELL:
 staticcheck:
 	staticcheck ./...
 
-.ONESHELL:
 vet:
 	go vet -all ./...
 
-.ONESHELL:
 gofmt:
 	gofmt -s -d -w .
 
-.ONESHELL:
 gotest:
 	go test -v -race -covermode=atomic ./...
 
-.ONESHELL:
 install:
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	go install github.com/client9/misspell/cmd/misspell@latest
 	go install honnef.co/go/tools/cmd/staticcheck@latest
 
-.ONESHELL:
 protoc:
 	@(cd ./protos/ ; protoc --go_out=. *.proto)
 
-.ONESHELL:
-.SILENT:
-.PHONY:
 %:
 	$(eval argv=$(subst _, , ${MAKECMDGOALS})) \
+	$(eval target=$(word 2, $(argv))) \
+
+# No target? Then the default is "help"
+	$(if $(target),, \
+		$(eval target=help) \
+	)
+
+# Workflow targets
+	$(if $(filter $(firstword $(argv)),$(WORKFLOWS)), \
+		$(info Workflow: $(target)) \
+
+		$(MAKE) -C $(WORKFLOWSPATH) $(target)
+	)
+
+# Build targets
 	$(if $(filter $(firstword $(argv)),$(BUILDDIRS)), \
 		$(eval build=$(word 1, $(argv))) \
-		$(eval target=$(word 2, $(argv))) \
 
 		$(info Build: $(build)) \
 		$(info Target: $(target)) \
 
 		$(MAKE) -C $(BUILDPATH)/$(build) $(target)
 	)
+
+# Deployment targets
 	$(if $(filter $(firstword $(argv)),$(DEPLOYMENTDIRS)), \
 		$(eval deployment=$(word 1, $(argv))) \
-		$(eval target=$(word 2, $(argv)))
+		$(info Deployment: $(deployment))
+
+# The docker stack targets are in the same folder as docker-compose
+		$(if $(filter $(deployment),$(DOCKERSTACK)), \
+			$(eval deployment=$(DOCKERCOMPOSE)) \
+		)
+
+		$(info Target: $(target)) \
 
 # Only build the docker image if we are deploying it
 		$(if $(filter $(target),$(TARGETREQURIESDOCKERBUILD)), \
 			$(MAKE) docker_build \
 		)
 
-		$(info Deployment: $(deployment)) \
-		$(info Target: $(target)) \
 		$(MAKE) -C $(DEPLOYMENTPATH)/$(deployment) $(target)
 	)

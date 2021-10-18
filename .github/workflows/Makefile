@@ -1,25 +1,35 @@
+# https://github.com/nektos/act
+
 ROOT=./../../
-SUDO=sudo
-ACT=act
 DIRECTORY=--directory "$(ROOT)"
+
 ENVIRONMENT=--env-file environment
 SECRETS=--secret-file secrets
 BOILERPLATE=$(DIRECTORY) $(ENVIRONMENT) $(SECRETS) --use-gitignore
 
-# https://github.com/nektos/act
+.PHONY:
+
+help:
+	@echo 'Targets:'
+	@echo '  graph                         - Graphs the workflows and their connections'
+	@echo '  list                          - Lists all the workflwos'
+	@echo '  on-push                       - Imitates a push and runs the appropriate workflows'
+	@echo '  on-pr                         - Imitates a pull--request and runs the appropriate workflows'
+	@echo '  %                             - Wildcard which runs an arbitrary job'
+	@echo 'Examples:'
+	@echo '  "make go-test"                - Runs thte go-test workflow'
 
 graph:
-	$(SUDO) $(ACT) --graph $(DIRECTORY)
+	sudo act --graph $(DIRECTORY)
 
 list:
-	$(SUDO) $(ACT) --list $(DIRECTORY)
+	sudo act --list $(DIRECTORY)
 
 on-push:
-	$(SUDO) $(ACT) $(BOILERPLATE)
+	sudo act $(BOILERPLATE)
 
-on-pullrequest:
-	$(SUDO) $(ACT) pull_request $(BOILERPLATE)
+on-pr:
+	sudo act pull_request $(BOILERPLATE)
 
-# Eg. "make go-linting", "make go-test"
 %:
-	$(SUDO) $(ACT) --job "$@" $(BOILERPLATE)
+	sudo act --job "$@" $(BOILERPLATE)
