@@ -42,22 +42,6 @@ help:
 	@echo '  "make k6_smoke"               - Runs k6 smoke_all test'
 	@echo '  "make k6_smoke_identity-login"- Runs k6 smoke test for the feature identity-login'
 
-help-builds:
-	@(for dir in $(BUILDDIRS); do \
-		echo $${dir}
-		echo -n '  '
-		$(MAKE) -s -C $(BUILDPATH)/$$dir help; \
-		echo ''
-	done)
-
-help-deployments:
-	@(for dir in $(DEPLOYMENTDIRS); do \
-		echo $${dir}
-		echo -n '  '
-		$(MAKE) -s -C $(DEPLOYMENTPATH)/$$dir help; \
-		echo ''
-	done)
-
 lint: misspell staticcheck vet gofmt
 	golangci-lint run --verbose ./...
 
