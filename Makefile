@@ -9,6 +9,9 @@ DOCKERSTACK=docker-stack
 DEPLOYMENTDIRS=$(DOCKERCOMPOSE) $(DOCKERSTACK)
 TARGETREQURIESDOCKERBUILD=up create
 
+TESTPATH=./test
+TESTMETHODS=k6
+
 GITHUBPATH=./.github
 WORKFLOWS=workflow workflows
 WORKFLOWSPATH=$(GITHUBPATH)/workflows
@@ -86,6 +89,16 @@ protoc:
 # No target? Then the default is "help"
 	$(if $(target),, \
 		$(eval target=help) \
+	)
+
+# Test targets
+	$(if $(filter $(firstword $(argv)),$(TESTMETHODS)), \
+		$(eval test=$(word 1, $(argv))) \
+
+		$(info Test: $(test)) \
+		$(info Target: $(target)) \
+
+		$(MAKE) -C $(TESTPATH)/$(test) $(target)
 	)
 
 # Workflow targets

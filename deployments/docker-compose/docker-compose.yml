@@ -1,0 +1,84 @@
+version: "3.9"
+
+volumes:
+  ia_mongo_data:
+  ia_nginx_letsencrypt:
+  ia_nginx_cache:
+
+networks:
+  service_net:
+    driver: overlay
+    ipam:
+      config:
+        - subnet: 10.11.0.0/16
+
+services:
+  ia_nginx:
+    image: nginx:latest
+    restart: always
+    depends_on:
+      - ia_api
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/mime.types:/etc/nginx/mime.types
+      - ./nginx/proxy.conf:/etc/nginx/proxy.conf
+      - ./nginx/fastcgi.conf:/etc/nginx/fastcgi.conf
+      #- ./nginx/:/etc/nginx/error_log.log
+      - ./nginx/logs:/etc/nginx/logs
+      #- ia_nginx_letsencrypt:/etc/nginx/letsencrypt/
+      - ia_nginx_cache:/etc/nginx/cache
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      - service_net
+    env_file:
+      - ./nginx/environment.env
+
+  ia_api:
+    image: example-service:latest
+    restart: always
+    depends_on:
+      - ia_mongo
+      - ia_kafka
+    networks:
+      - service_net
+    env_file:
+      - ./api/environment.env
+
+  ia_zookeeper:
+    image: wurstmeister/zookeeper:latest
+    restart: always
+    env_file:
+      - ./zookeeper/environment.env
+    networks:
+      - service_net
+    logging:
+      driver: "none"
+
+  ia_kafka:
+    image: wurstmeister/kafka:latest
+    restart: always
+    depends_on:
+      - ia_zookeeper
+    env_file:
+      - ./kafka/environment.env
+    networks:
+      - service_net
+    logging:
+      driver: "none"
+
+  ia_mongo:
+    image: mongo:latest
+    restart: always
+    env_file:
+      - ./mongodb/environment.env
+    volumes:
+      - ia_mongo_data:/data/db
+      - ./mongodb/users.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    ports:
+      - 27017:27017
+    networks:
+      - service_net
+    logging:
+      driver: "none"
