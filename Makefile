@@ -39,6 +39,8 @@ help:
 	@echo '  "make docker_run"             - Run docker'
 	@echo '  "make docker_hellp"           - Get docker help'
 	@echo '  "make docker-compose_up"      - Deploy docker-compose'
+	@echo '  "make k6_smoke"               - Runs k6 smoke_all test'
+	@echo '  "make k6_smoke_identity-login"- Runs k6 smoke test for the feature identity-login'
 
 help-builds:
 	@(for dir in $(BUILDDIRS); do \

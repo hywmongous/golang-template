@@ -20,8 +20,8 @@ features:
 
 %:
 	$(eval argv=$(subst _, , ${MAKECMDGOALS})) \
-	$(eval feature=$(word 1, $(argv))) \
-	$(eval type=$(word 2, $(argv))) \
+	$(eval type=$(word 1, $(argv))) \
+	$(eval feature=$(word 2, $(argv))) \
 
 	$(if $(type),,
 		k6 run ./$(feature)_all.js
