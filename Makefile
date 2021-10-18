@@ -3,6 +3,7 @@ BUILDDIRS=golang docker
 
 DEPLOYMENTPATH=./deployment
 DEPLOYMENTDIRS=docker-compose
+TARGETREQURIESDOCKERBUILD=up
 
 SPACE :=
 SPACE +=
@@ -84,20 +85,21 @@ protoc:
 		$(eval build=$(word 1, $(argv))) \
 		$(eval target=$(word 2, $(argv))) \
 
-		$(info Building: $(build)) \
+		$(info Build: $(build)) \
 		$(info Target: $(target)) \
 
 		$(MAKE) -C $(BUILDPATH)/$(build) $(target)
 	)
 	$(if $(filter $(firstword $(argv)),$(DEPLOYMENTDIRS)), \
 		$(eval deployment=$(word 1, $(argv))) \
-		$(eval target=$(word 2, $(argv))) \
+		$(eval target=$(word 2, $(argv)))
 
-# TODO: Only build docker image if we deploy.
-#   Right now we always do it, even on "docker-compose_down"
-		$(MAKE) docker_build
-		$(info Deploying: $(deployment)) \
+# Only build the docker image if we are deploying it
+		$(if $(filter $(target),$(TARGETREQURIESDOCKERBUILD)), \
+			$(MAKE) docker_build \
+		)
+
+		$(info Deployment: $(deployment)) \
 		$(info Target: $(target)) \
-
 		$(MAKE) -C $(DEPLOYMENTPATH)/$(deployment) $(target)
 	)
