@@ -1,4 +1,4 @@
-package identity
+package authentication
 
 import (
 	"github.com/cockroachdb/errors"

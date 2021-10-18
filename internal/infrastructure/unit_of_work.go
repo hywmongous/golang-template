@@ -2,7 +2,7 @@ package infrastructure
 
 import (
 	"github.com/cockroachdb/errors"
-	"github.com/hywmongous/example-service/internal/domain/identity"
+	identity "github.com/hywmongous/example-service/internal/domain/authentication"
 	"github.com/hywmongous/example-service/pkg/es"
 	"github.com/hywmongous/example-service/pkg/es/kafka"
 	"github.com/hywmongous/example-service/pkg/es/mediator"

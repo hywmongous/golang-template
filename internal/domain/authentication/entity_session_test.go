@@ -1,4 +1,4 @@
-package identity
+package authentication
 
 import (
 	"testing"

@@ -1,7 +1,7 @@
 package cqrs
 
 import (
-	"github.com/hywmongous/example-service/internal/domain/identity"
+	identity "github.com/hywmongous/example-service/internal/domain/authentication"
 	"github.com/hywmongous/example-service/pkg/es"
 )
 

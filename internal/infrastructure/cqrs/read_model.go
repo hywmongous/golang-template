@@ -1,9 +1,9 @@
 package cqrs
 
-import "github.com/hywmongous/example-service/internal/domain/identity"
+import "github.com/hywmongous/example-service/internal/domain/authentication"
 
 type readModel interface {
-	ApplyIdentityRegistered(event *identity.IdentityRegistered) readModel
-	ApplyIdentityLoggedIn(event *identity.IdentityLoggedIn) readModel
-	ApplyIdentityLoggedOut(event *identity.IdentityLoggedOut) readModel
+	ApplyIdentityRegistered(event *authentication.IdentityRegistered) readModel
+	ApplyIdentityLoggedIn(event *authentication.IdentityLoggedIn) readModel
+	ApplyIdentityLoggedOut(event *authentication.IdentityLoggedOut) readModel
 }

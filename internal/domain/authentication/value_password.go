@@ -1,4 +1,4 @@
-package identity
+package authentication
 
 import (
 	"golang.org/x/crypto/bcrypt"

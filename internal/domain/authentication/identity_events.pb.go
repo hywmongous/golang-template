@@ -4,7 +4,7 @@
 // 	protoc        v3.14.0
 // source: identity_events.proto
 
-package identity
+package authentication
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
