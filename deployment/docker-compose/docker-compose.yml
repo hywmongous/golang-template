@@ -41,8 +41,6 @@ services:
     depends_on:
       - ia_mongo
       - ia_kafka
-    ports:
-      - 5000:5000
     networks:
       - service_net
     env_file:
@@ -67,8 +65,6 @@ services:
       - ./kafka/environment.env
     networks:
       - service_net
-    ports:
-      - 9092:9092
     logging:
       driver: "none"
 
