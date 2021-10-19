@@ -17,6 +17,6 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
-          Version: v1.29
+          Version: latest
           args: --enable-all --verbose --sort-results --tests --fix
             --disable maligned --disable interfacer --disable scopelint --disable golint
