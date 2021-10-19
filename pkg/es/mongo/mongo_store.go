@@ -62,14 +62,34 @@ const (
 )
 
 var (
-	ErrDatabaseNotFound   = errors.New("eventstore database could not be found")
-	ErrCollectionNotFound = errors.New("events collection could not be found")
-	ErrInsertion          = errors.New("failed inserting one or more documents into collection")
-	ErrEventNotFound      = errors.New("event not found")
-	ErrMissingEventKey    = errors.New("document does not have event key")
-	ErrMissingSnapshotKey = errors.New("document does not have snapshot key")
-	ErrStageOutOfSync     = errors.New("stage is out of sync with remote")
-	ErrRollbackFailed     = errors.New("rollback deletions failed")
+	ErrDatabaseNotFound                          = errors.New("eventstore database could not be found")
+	ErrCollectionNotFound                        = errors.New("events collection could not be found")
+	ErrInsertion                                 = errors.New("failed inserting one or more documents into collection")
+	ErrEventNotFound                             = errors.New("event not found")
+	ErrMissingEventKey                           = errors.New("document does not have event key")
+	ErrMissingSnapshotKey                        = errors.New("document does not have snapshot key")
+	ErrStageOutOfSync                            = errors.New("stage is out of sync with remote")
+	ErrRollbackFailed                            = errors.New("rollback deletions failed")
+	ErrEventCreationFailedOnLoad                 = errors.New("event could not be created and loaded")
+	ErrEventBatchCreationFailedOnSend            = errors.New("event batch could not be created and sent")
+	ErrCouldNotFindSnapshots                     = errors.New("snapshots could not be found in database")
+	ErrCouldNotFindEvents                        = errors.New("events could not be found in database")
+	ErrCouldNotConnectToEventStore               = errors.New("could not connect to event store")
+	ErrEventCouldNotBeDecoded                    = errors.New("snapshot could not be decoded")
+	ErrCustomEventDecoder                        = errors.New("custom snapshot decoder could not decode snapshot")
+	ErrEventFailedJSONMarshalling                = errors.New("event could not be json marshalled")
+	ErrEventFailedJSONUnmarshalling              = errors.New("event could not be json unmarshalled")
+	ErrSnapshotCouldNotBeDecoded                 = errors.New("snapshot could not be decoded")
+	ErrCustomSnapshotDecoder                     = errors.New("custom snapshot decoder could not decode snapshot")
+	ErrSnapshotFailedJSONMarshalling             = errors.New("event could not be json marshalled")
+	ErrSnapshotFailedJSONUnmarshalling           = errors.New("event could not be json unmarshalled")
+	ErrMongoDocumentDeletion                     = errors.New("deleting documents failed")
+	ErrMongoClientCouldNotBeCreated              = errors.New("creating new mongo client failed")
+	ErrMongoClientCouldNotConnect                = errors.New("mongo client could not connect")
+	ErrMongoClientCouldNotCreateSession          = errors.New("mongo client could not create session")
+	ErrMongoClientCouldNotConnectionToCollection = errors.New("mongo client could not connect to collection")
+	ErrMongoClientCouldNotPerformAction          = errors.New("mongo client could not perform action")
+	ErrMongoClientCouldNotDisconnect             = errors.New("mongo client failed disconnecting")
 )
 
 func CreateMongoEventStore() *MongoEventStore {
@@ -106,7 +126,7 @@ func (store *MongoEventStore) connect(action mongoConnectionAction, collectionNa
 	// Client construction
 	client, err := mongo.NewClient(uri)
 	if err != nil {
-		return err
+		return errors.Wrap(err, ErrMongoClientCouldNotBeCreated.Error())
 	}
 
 	// Create the context
@@ -115,14 +135,15 @@ func (store *MongoEventStore) connect(action mongoConnectionAction, collectionNa
 
 	// Construct the connected client
 	if err = client.Connect(ctx); err != nil {
-		return err
+		return errors.Wrap(err, ErrMongoClientCouldNotConnect.Error())
 	}
 
 	// create session
 	session, err := client.StartSession()
 	if err != nil {
-		return err
+		return errors.Wrap(err, ErrMongoClientCouldNotCreateSession.Error())
 	}
+
 	defer session.EndSession(ctx)
 
 	// begin transaction to ensure rollbacks on errors
@@ -133,14 +154,14 @@ func (store *MongoEventStore) connect(action mongoConnectionAction, collectionNa
 	// Connect to the collection
 	collection, err := store.collection(client, collectionName)
 	if err != nil {
-		return err
+		return errors.Wrap(err, ErrMongoClientCouldNotConnectionToCollection.Error())
 	}
 
 	// Do action encapsulated in the transaction (session)
 	err = mongo.WithSession(ctx, session, func(sc mongo.SessionContext) error {
 		if err = action(sc, collection); err != nil {
 			// sc.AbortTransaction(sc)
-			return err
+			return errors.Wrap(err, ErrMongoClientCouldNotPerformAction.Error())
 		}
 		// if err = sc.CommitTransaction(sc); err != nil {
 		// 	return err
@@ -148,23 +169,24 @@ func (store *MongoEventStore) connect(action mongoConnectionAction, collectionNa
 		return nil
 	})
 
-	return client.Disconnect(ctx)
+	return errors.Wrap(client.Disconnect(ctx), ErrMongoClientCouldNotDisconnect.Error())
 }
 
 func (store *MongoEventStore) findOneEvent(filter interface{}, options ...*options.FindOneOptions) (es.Event, error) {
 	var resultantEvent es.Event
 	action := func(ctx context.Context, collection *mongo.Collection) error {
 		result := collection.FindOne(ctx, filter, options...)
-		if result == nil {
-			return result.Err()
+		if result.Err() != nil {
+			return errors.Wrap(result.Err(), ErrCouldNotFindEvents.Error())
 		}
 
-		if conErr := decodeEvent(result, &resultantEvent); conErr != nil {
-			return conErr
+		if err := decodeEvent(result, &resultantEvent); err != nil {
+			return errors.Wrap(err, ErrEventCouldNotBeDecoded.Error())
 		}
 
 		return nil
 	}
+
 	return resultantEvent, store.connect(action, eventsCollection)
 }
 
@@ -173,16 +195,17 @@ func (store *MongoEventStore) findAllEvents(filter interface{}, options ...*opti
 	action := func(ctx context.Context, collection *mongo.Collection) error {
 		cursor, err := collection.Find(ctx, filter, options...)
 		if err != nil {
-			return err
+			return errors.Wrap(err, ErrCouldNotFindEvents.Error())
 		}
 		defer cursor.Close(ctx)
 
 		for cursor.Next(ctx) {
 			var event es.Event
-			conErr := decodeEvent(cursor, &event)
-			if conErr != nil {
-				return conErr
+			err := decodeEvent(cursor, &event)
+			if err != nil {
+				return errors.Wrap(err, ErrEventCouldNotBeDecoded.Error())
 			}
+
 			events = append(events, event)
 		}
 
@@ -195,6 +218,7 @@ func (store *MongoEventStore) addToInsertionHistory(collectionName string, inser
 	if _, found := store.insertionHistory[collectionName]; !found {
 		store.insertionHistory[collectionName] = make([]interface{}, 0)
 	}
+
 	store.insertionHistory[collectionName] = append(store.insertionHistory[collectionName], insertionIDs...)
 }
 
@@ -224,15 +248,24 @@ func (store *MongoEventStore) insertDocument(document interface{}, collectionNam
 	return store.connect(action, collectionName)
 }
 
-func (store *MongoEventStore) deleteManyDocument(filter interface{}, collectionName string, options ...*options.DeleteOptions) error {
+func (store *MongoEventStore) deleteManyDocument(
+	filter interface{},
+	collectionName string,
+	options ...*options.DeleteOptions,
+) error {
 	action := func(ctx context.Context, collection *mongo.Collection) error {
 		_, err := collection.DeleteMany(ctx, filter, options...)
-		return err
+
+		return errors.Wrap(err, ErrMongoDocumentDeletion.Error())
 	}
 	return store.connect(action, collectionName)
 }
 
-// func (store *MongoEventStore) deleteDocument(filter interface{}, collectionName string, options ...*options.DeleteOptions) error {
+// func (store *MongoEventStore) deleteDocument(
+//	filter interface{},
+//	collectionName string,
+//	options ...*options.DeleteOptions
+// ) error {
 // 	action := func(ctx context.Context, collection *mongo.Collection) error {
 // 		_, err := collection.DeleteOne(ctx, filter, options...)
 // 		return err
@@ -262,7 +295,7 @@ func decodeEvent(
 ) error {
 	var document bson.M
 	if err := decoder.Decode(&document); err != nil {
-		return err
+		return errors.Wrap(err, ErrCustomEventDecoder.Error())
 	}
 
 	eventDocument, ok := document["event"].(bson.M)
@@ -271,7 +304,7 @@ func decodeEvent(
 	}
 
 	if err := unmarshalDocument(eventDocument, value); err != nil {
-		return err
+		return errors.Wrap(err, ErrEventFailedJSONUnmarshalling.Error())
 	}
 
 	return nil
@@ -283,7 +316,7 @@ func decodeSnapshot(
 ) error {
 	var document bson.M
 	if err := decoder.Decode(&document); err != nil {
-		return err
+		return errors.Wrap(err, ErrCustomSnapshotDecoder.Error())
 	}
 
 	snapshotDocument, ok := document["snapshot"].(bson.M)
@@ -292,7 +325,7 @@ func decodeSnapshot(
 	}
 
 	if err := unmarshalDocument(snapshotDocument, value); err != nil {
-		return err
+		return errors.Wrap(err, ErrSnapshotFailedJSONUnmarshalling.Error())
 	}
 
 	return nil
@@ -328,37 +361,43 @@ func unmarshalDocument(document bson.M, value interface{}) error {
 	// the json package, so for Marshalling we use json
 	obj, err := json.Marshal(document)
 	if err != nil {
-		return err
+		return errors.Wrap(err, ErrEventFailedJSONMarshalling.Error())
 	}
 
 	if err = json.Unmarshal(obj, &value); err != nil {
-		return err
+		return errors.Wrap(err, ErrEventFailedJSONUnmarshalling.Error())
 	}
 
 	return nil
 }
 
-func (store *MongoEventStore) findOneSnapshot(filter interface{}, options ...*options.FindOneOptions) (es.Snapshot, error) {
+func (store *MongoEventStore) findOneSnapshot(
+	filter interface{},
+	options ...*options.FindOneOptions,
+) (es.Snapshot, error) {
 	var resultantSnapshot es.Snapshot
+
 	action := func(ctx context.Context, collection *mongo.Collection) error {
 		result := collection.FindOne(ctx, filter, options...)
-		if result == nil {
-			return result.Err()
+		if result.Err() != nil {
+			return errors.Wrap(result.Err(), ErrCouldNotFindSnapshots.Error())
 		}
 
-		if conErr := decodeSnapshot(result, &resultantSnapshot); conErr != nil {
-			return conErr
+		if err := decodeSnapshot(result, &resultantSnapshot); err != nil {
+			return errors.Wrap(err, ErrSnapshotCouldNotBeDecoded.Error())
 		}
 
 		return nil
 	}
-	return resultantSnapshot, store.connect(action, snapshotsCollection)
+	err := store.connect(action, snapshotsCollection)
+
+	return resultantSnapshot, errors.Wrap(err, ErrCouldNotConnectToEventStore.Error())
 }
 
 func (store *MongoEventStore) Send(producer es.ProducerID, subject es.SubjectID, data []es.Data) ([]es.Event, error) {
 	events, err := es.CreateEventBatch(producer, subject, es.Version(1), data, store)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, ErrEventBatchCreationFailedOnSend.Error())
 	}
 	return events, store.sendEvents(events)
 }
@@ -367,20 +406,23 @@ func (store *MongoEventStore) sendEvents(events []es.Event) error {
 	if len(events) == 0 {
 		return nil
 	}
+
 	documents := marshallEventDocuments(events)
 	return store.insertManyDocuments(documents, eventsCollection)
 }
 
 func (store *MongoEventStore) sendSnapshot(snapshot es.Snapshot) error {
 	document := marshallSnapshotDocument(snapshot)
+
 	return store.insertDocument(document, snapshotsCollection)
 }
 
 func (store *MongoEventStore) Load(producer es.ProducerID, subject es.SubjectID, data es.Data) error {
 	event, err := es.CreateEvent(producer, subject, es.Version(1), data, store)
 	if err != nil {
-		return err
+		return errors.Wrap(err, ErrEventCreationFailedOnLoad.Error())
 	}
+
 	store.stage.AddEvent(event)
 	return nil
 }
@@ -427,10 +469,12 @@ func (store *MongoEventStore) shipSubject(subject es.SubjectID) error {
 			}
 		}
 	}
+
 	store.stage.Clear(subject)
 
 	if err := recover(); err != nil {
 		log.Println("Mongo Store paniced", err, ".")
+
 		return nil
 	}
 
@@ -476,6 +520,7 @@ func (store *MongoEventStore) Snapshot(producer es.ProducerID, subject es.Subjec
 	if err != nil {
 		return errors.Wrap(err, "Snapshot creation failed")
 	}
+
 	store.stage.AddSnapshot(snapshot)
 	return nil
 }

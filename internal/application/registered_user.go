@@ -2,7 +2,6 @@ package application
 
 import (
 	"github.com/cockroachdb/errors"
-
 	"github.com/hywmongous/example-service/internal/domain/authentication"
 	"github.com/hywmongous/example-service/internal/infrastructure"
 )

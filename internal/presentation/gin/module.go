@@ -12,16 +12,16 @@ import (
 )
 
 func Run() {
-	var engineOptions = fx.Option(
+	engineOptions := fx.Option(
 		fx.Provide(gin.New),
 	)
 
-	var actorOptions = fx.Options(
+	actorOptions := fx.Options(
 		fx.Provide(application.UnregisteredUserFactory),
 		fx.Provide(application.RegisteredUserFactory),
 	)
 
-	var infrastructureOptions = fx.Options(
+	infrastructureOptions := fx.Options(
 		fx.Provide(services.JWTServiceFactory),
 		fx.Provide(infrastructure.KafkaStreamFactory),
 		fx.Provide(infrastructure.MongoStoreFactory),
@@ -29,14 +29,14 @@ func Run() {
 		fx.Provide(infrastructure.UnitOfWorkFactory),
 	)
 
-	var controllerOptions = fx.Options(
+	controllerOptions := fx.Options(
 		fx.Provide(controllers.AccountControllerFactory),
 		fx.Provide(controllers.AuthenticationControllerFactory),
 		fx.Provide(controllers.SessionControllerFactory),
 		fx.Provide(controllers.TicketControllerFactory),
 	)
 
-	var routeOptions = fx.Options(
+	routeOptions := fx.Options(
 		fx.Provide(routes.RoutesFactory),
 		fx.Provide(routes.CreateAccountRoutes),
 		fx.Provide(routes.CreateAuthenticationRoutes),
@@ -44,7 +44,7 @@ func Run() {
 		fx.Provide(routes.CreateTicketRoutes),
 	)
 
-	var module = fx.Options(
+	module := fx.Options(
 		controllerOptions,
 		routeOptions,
 		infrastructureOptions,

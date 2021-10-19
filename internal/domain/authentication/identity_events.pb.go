@@ -7,10 +7,11 @@
 package authentication
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -211,12 +212,15 @@ func file_identity_events_proto_rawDescGZIP() []byte {
 	return file_identity_events_proto_rawDescData
 }
 
-var file_identity_events_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_identity_events_proto_goTypes = []interface{}{
-	(*IdentityRegistered)(nil), // 0: identity.IdentityRegistered
-	(*IdentityLoggedIn)(nil),   // 1: identity.IdentityLoggedIn
-	(*IdentityLoggedOut)(nil),  // 2: identity.IdentityLoggedOut
-}
+var (
+	file_identity_events_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+	file_identity_events_proto_goTypes  = []interface{}{
+		(*IdentityRegistered)(nil), // 0: identity.IdentityRegistered
+		(*IdentityLoggedIn)(nil),   // 1: identity.IdentityLoggedIn
+		(*IdentityLoggedOut)(nil),  // 2: identity.IdentityLoggedOut
+	}
+)
+
 var file_identity_events_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
 	0, // [0:0] is the sub-list for method input_type

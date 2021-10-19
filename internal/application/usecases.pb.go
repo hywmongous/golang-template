@@ -7,10 +7,11 @@
 package application
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -371,15 +372,18 @@ func file_usecases_proto_rawDescGZIP() []byte {
 	return file_usecases_proto_rawDescData
 }
 
-var file_usecases_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
-var file_usecases_proto_goTypes = []interface{}{
-	(*RegisterIdentityRequest)(nil),  // 0: application.RegisterIdentityRequest
-	(*RegisterIdentityResponse)(nil), // 1: application.RegisterIdentityResponse
-	(*LoginIdentityRequest)(nil),     // 2: application.LoginIdentityRequest
-	(*LoginIdentityResponse)(nil),    // 3: application.LoginIdentityResponse
-	(*LogoutIdentityRequest)(nil),    // 4: application.LogoutIdentityRequest
-	(*LogoutIdentityResponse)(nil),   // 5: application.LogoutIdentityResponse
-}
+var (
+	file_usecases_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+	file_usecases_proto_goTypes  = []interface{}{
+		(*RegisterIdentityRequest)(nil),  // 0: application.RegisterIdentityRequest
+		(*RegisterIdentityResponse)(nil), // 1: application.RegisterIdentityResponse
+		(*LoginIdentityRequest)(nil),     // 2: application.LoginIdentityRequest
+		(*LoginIdentityResponse)(nil),    // 3: application.LoginIdentityResponse
+		(*LogoutIdentityRequest)(nil),    // 4: application.LogoutIdentityRequest
+		(*LogoutIdentityResponse)(nil),   // 5: application.LogoutIdentityResponse
+	}
+)
+
 var file_usecases_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
 	0, // [0:0] is the sub-list for method input_type

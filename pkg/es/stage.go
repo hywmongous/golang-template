@@ -5,6 +5,10 @@ type EventStage struct {
 	snapshot *Snapshot
 }
 
+const (
+	initialStageSize = 32
+)
+
 type Stage struct {
 	subjects map[SubjectID][]EventStage
 }
@@ -31,7 +35,8 @@ func (eventStage EventStage) Snapshot() *Snapshot {
 }
 
 func (stage Stage) Events() []Event {
-	events := make([]Event, 0, 32)
+	events := make([]Event, 0, initialStageSize)
+
 	for _, subject := range stage.Subjects() {
 		for _, eventStage := range stage.EventStages(subject) {
 			events = append(events, eventStage.events...)
@@ -43,6 +48,7 @@ func (stage Stage) Events() []Event {
 func (stage *Stage) Subjects() []SubjectID {
 	subjects := make([]SubjectID, len(stage.subjects))
 	idx := 0
+
 	for subject := range stage.subjects {
 		subjects[idx] = subject
 		idx++
@@ -54,6 +60,7 @@ func (stage *Stage) Clear(subject SubjectID) {
 	if _, found := stage.subjects[subject]; !found {
 		return
 	}
+
 	stage.subjects[subject] = make([]EventStage, 1)
 }
 
@@ -82,37 +89,37 @@ func (stage *Stage) EventStages(subject SubjectID) []EventStage {
 
 func (stage *Stage) HasSubject(subject SubjectID) bool {
 	_, found := stage.subjects[subject]
+
 	return found
 }
 
 func (stage *Stage) FirstEvent(subject SubjectID) (Event, bool) {
 	if !stage.HasSubject(subject) {
-		return Event{}, false
+		return EmptyEvent(), false
 	}
 
 	firstStage := stage.subjects[subject][0]
 	if len(firstStage.events) > 0 {
 		return firstStage.events[0], true
 	}
-	return Event{}, false
+	return EmptyEvent(), false
 }
 
-func (stage *Stage) LatestEvent(subject SubjectID) (Event, bool) {
+func (stage *Stage) LatestEvent(subject SubjectID) (latestEvent Event, found bool) {
 	if !stage.HasSubject(subject) {
-		return Event{}, false
+		return EmptyEvent(), false
 	}
 
 	eventStages := stage.subjects[subject]
 
-	found := false
-	var latestEvent Event
 	for _, eventStage := range eventStages {
 		if len(eventStage.events) > 0 {
 			latestEvent = eventStage.events[len(eventStage.events)-1]
 			found = true
 		}
 	}
-	return latestEvent, found
+
+	return
 }
 
 func (stage *Stage) LatestSnapshot(subject SubjectID) (Snapshot, bool) {

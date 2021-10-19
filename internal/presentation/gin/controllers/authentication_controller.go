@@ -23,9 +23,7 @@ const (
 	secondsPerMinute          = 60
 )
 
-var (
-	ErrCouldNotWriteSessionToResponse = errors.New("session could not be written to response")
-)
+var ErrCouldNotWriteSessionToResponse = errors.New("session could not be written to response")
 
 func AuthenticationControllerFactory(
 	jwtService services.JWTService,

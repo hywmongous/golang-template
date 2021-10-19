@@ -8,7 +8,7 @@ import (
 )
 
 type Snapshot struct {
-	Id            Ident
+	ID            Ident
 	Producer      ProducerID
 	Subject       SubjectID
 	Version       Version
@@ -37,7 +37,7 @@ func CreateSnapshot(
 	}
 
 	return Snapshot{
-		Id:            Ident(uuid.New().String()),
+		ID:            Ident(uuid.New().String()),
 		Producer:      producer,
 		Subject:       subject,
 		Version:       nextSnapshotVersion,
@@ -49,24 +49,24 @@ func CreateSnapshot(
 }
 
 func RecreateSnapshot(
-	Id Ident,
-	Producer ProducerID,
-	Subject SubjectID,
-	Version Version,
-	SchemaVersion Version,
-	Name Title,
-	Timestamp Timestamp,
-	Data Data,
+	id Ident,
+	producer ProducerID,
+	subject SubjectID,
+	version Version,
+	schemaVersion Version,
+	name Title,
+	timestamp Timestamp,
+	data Data,
 ) Snapshot {
 	return Snapshot{
-		Id:            Id,
-		Producer:      Producer,
-		Subject:       Subject,
-		Version:       Version,
-		SchemaVersion: SchemaVersion,
-		Name:          Name,
-		Timestamp:     Timestamp,
-		Data:          Data,
+		ID:            id,
+		Producer:      producer,
+		Subject:       subject,
+		Version:       version,
+		SchemaVersion: schemaVersion,
+		Name:          name,
+		Timestamp:     timestamp,
+		Data:          data,
 	}
 }
 
