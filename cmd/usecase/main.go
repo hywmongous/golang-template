@@ -110,7 +110,3 @@ func (uow *UnitOfWork) Rollback() error {
 	uow.events = make([]es.Data, 0)
 	return nil
 }
-
-func (uow *UnitOfWork) receiver(subject es.SubjectID, data es.Data) {
-	uow.events = append(uow.events, data)
-}
