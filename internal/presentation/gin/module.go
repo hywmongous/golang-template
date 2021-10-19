@@ -13,9 +13,7 @@ import (
 )
 
 func Run() {
-	engineOptions := fx.Option(
-		fx.Provide(gin.New),
-	)
+	engineOptions := fx.Provide(gin.New)
 
 	actorOptions := fx.Options(
 		fx.Provide(application.UnregisteredUserFactory),

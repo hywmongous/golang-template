@@ -19,4 +19,3 @@ jobs:
         with:
           golangci_lint_flags: --enable-all --verbose --sort-results --tests --fix \
             --disable maligned --disable interfacer --disable scopelint --disable golint
-          level: info
