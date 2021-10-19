@@ -15,7 +15,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: golangci-lint
-        uses: reviewdog/action-golangci-lint@v2
+        uses: golangci/golangci-lint-action@v2
         with:
-          golangci_lint_flags: --enable-all --verbose --sort-results --tests --fix
+          Version: v1.29
+          args: --enable-all --verbose --sort-results --tests --fix
             --disable maligned --disable interfacer --disable scopelint --disable golint

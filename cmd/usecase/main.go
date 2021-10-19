@@ -108,5 +108,6 @@ func (uow *UnitOfWork) Commit() error {
 
 func (uow *UnitOfWork) Rollback() error {
 	uow.events = make([]es.Data, 0)
+
 	return nil
 }
