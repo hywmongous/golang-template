@@ -42,13 +42,8 @@ help:
 	@echo '  "make k6_smoke"               - Runs k6 smoke_all test'
 	@echo '  "make k6_smoke_identity-login"- Runs k6 smoke test for the feature identity-login'
 
-<<<<<<< HEAD
-lint: staticcheck vet gofmt misspell
-	golangci-lint run --verbose --enable-all --fix ./...
-=======
 lint: misspell staticcheck vet gofmt
 	golangci-lint run --enable-all --verbose --sort-results --tests ./...
->>>>>>> afb01aa13211cda42a8dc283f0a6ef2e505ffd31
 
 misspell:
 	misspell -locale UK .
