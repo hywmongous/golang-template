@@ -1,7 +1,8 @@
 package cqrs
 
 import (
-	identity "github.com/hywmongous/example-service/internal/domain/authentication"
+	"github.com/cockroachdb/errors"
+	"github.com/hywmongous/example-service/internal/domain/authentication"
 	"github.com/hywmongous/example-service/pkg/es"
 )
 
@@ -9,26 +10,32 @@ type IdentityRepository struct {
 	store es.EventStore
 }
 
+var (
+	ErrVisitForEventFailed       = errors.New("visiting event failed")
+	ErrCouldNotFindEntity        = errors.New("could not find entity in event store")
+	ErrCouldNotReconstructEntity = errors.New("could not construct entity")
+)
+
 func IdentityRepositoryFactory(
 	store es.EventStore,
-) identity.Repository {
+) authentication.Repository {
 	return IdentityRepository{
 		store: store,
 	}
 }
 
-func (repository IdentityRepository) FindIdentityByEmail(email string) (identity.Identity, error) {
+func (repository IdentityRepository) FindIdentityByEmail(email string) (authentication.Identity, error) {
 	events, err := repository.store.Concerning(es.SubjectID(email))
 	if err != nil {
-		return identity.Identity{}, err
+		return authentication.Identity{}, errors.Wrap(err, ErrCouldNotFindEntity.Error())
 	}
 
-	model := identityModel{}
+	model := defaultIdentityModel()
 	if err = visitEvents(events, &model); err != nil {
-		return identity.Identity{}, err
+		return authentication.Identity{}, errors.Wrap(err, ErrCouldNotReconstructEntity.Error())
 	}
 
-	return identity.RecreateIdentity(
+	return authentication.RecreateIdentity(
 		model.id,
 		model.email,
 		model.password,
@@ -40,21 +47,21 @@ func visitEvents(events []es.Event, model readModel) error {
 	for _, event := range events {
 		switch event.Name {
 		case "IdentityRegistered":
-			var data identity.IdentityRegistered
+			var data authentication.IdentityRegistered
 			if err := event.Unmarshal(&data); err != nil {
-				return err
+				return errors.Wrap(err, ErrVisitForEventFailed.Error())
 			}
 			model = model.ApplyIdentityRegistered(&data)
 		case "IdentityLoggedIn":
-			var data identity.IdentityLoggedIn
+			var data authentication.IdentityLoggedIn
 			if err := event.Unmarshal(&data); err != nil {
-				return err
+				return errors.Wrap(err, ErrVisitForEventFailed.Error())
 			}
 			model = model.ApplyIdentityLoggedIn(&data)
 		case "IdentityLoggedOut":
-			var data identity.IdentityLoggedOut
+			var data authentication.IdentityLoggedOut
 			if err := event.Unmarshal(&data); err != nil {
-				return err
+				return errors.Wrap(err, ErrVisitForEventFailed.Error())
 			}
 			model = model.ApplyIdentityLoggedOut(&data)
 		}

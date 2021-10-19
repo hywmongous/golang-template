@@ -1,22 +1,17 @@
-package authentication
+package authentication_test
 
 import (
 	"testing"
+
+	"github.com/hywmongous/example-service/internal/domain/authentication"
 )
 
 func TestCreateSession(t *testing.T) {
-	var session Session
-	var err error
+	t.Parallel()
 
-	session, err = CreateSession()
+	_, err := authentication.CreateSession()
 
 	if err != nil {
 		t.Error("CreateSession failed with err:", err)
-	}
-	if session.id == "" {
-		t.Error("CreateSession created a session with an empty id")
-	}
-	if session.revoked {
-		t.Error("CreateSession created a session which was immediately revoked")
 	}
 }

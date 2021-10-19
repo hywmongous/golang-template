@@ -25,7 +25,6 @@ type defaultMediator struct {
 	universalConnectors []Connector
 	receivers           map[es.Topic][]Subscription
 	universalReceivers  []Subscription
-	Mediator
 }
 
 // Singleton for the mediator used when one is not defined

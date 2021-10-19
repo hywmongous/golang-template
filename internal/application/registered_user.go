@@ -1,13 +1,23 @@
 package application
 
 import (
-	identity "github.com/hywmongous/example-service/internal/domain/authentication"
+	"github.com/cockroachdb/errors"
+
+	"github.com/hywmongous/example-service/internal/domain/authentication"
 	"github.com/hywmongous/example-service/internal/infrastructure"
 )
 
 type RegisteredUser struct {
 	uow infrastructure.UnitOfWork
 }
+
+var (
+	ErrCouldNotFindIdentity   = errors.New("identity could not be found by email")
+	ErrLoginFailed            = errors.New("identity login failed")
+	ErrLoginFailedCommitting  = errors.New("identity login failed")
+	ErrLogoutFailed           = errors.New("identity logout failed")
+	ErrLogoutFailedCommitting = errors.New("identity logout failed")
+)
 
 func RegisteredUserFactory(
 	uow infrastructure.UnitOfWork,
@@ -22,16 +32,16 @@ func (user RegisteredUser) Login(request *LoginIdentityRequest) (*LoginIdentityR
 
 	me, err := user.uow.IdentityRepository().FindIdentityByEmail(request.Email)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, ErrCouldNotFindIdentity.Error())
 	}
 
 	sessionID, err := me.Login(request.Password)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, ErrLoginFailed.Error())
 	}
 
 	if err = user.uow.Commit(); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, ErrLoginFailedCommitting.Error())
 	}
 
 	return &LoginIdentityResponse{
@@ -44,16 +54,16 @@ func (user RegisteredUser) Logout(request *LogoutIdentityRequest) (*LogoutIdenti
 
 	me, err := user.uow.IdentityRepository().FindIdentityByEmail(request.Email)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, ErrCouldNotFindIdentity.Error())
 	}
 
-	err = me.Logout(identity.SessionID(request.SessionID))
+	err = me.Logout(authentication.SessionID(request.SessionID))
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, ErrLoginFailed.Error())
 	}
 
 	if err = user.uow.Commit(); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, ErrLogoutFailedCommitting.Error())
 	}
 	return &LogoutIdentityResponse{
 		Revoked: true,
