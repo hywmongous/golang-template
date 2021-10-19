@@ -20,6 +20,11 @@ const (
 	csrfHeaderKey             = "Csrf"
 	jwtAccessTokenCookieName  = "JWT-ACCESS-TOKEN"
 	jwtRefreshTokenCookieName = "JWT-REFRESH-TOKEN"
+	secondsPerMinute          = 60
+)
+
+var (
+	ErrCouldNotWriteSessionToResponse = errors.New("session could not be written to response")
 )
 
 func AuthenticationControllerFactory(
@@ -105,7 +110,10 @@ func (controller AuthenticationController) writeSessionToResponse(
 	csrf := uuid.NewString()
 	tokens, err := controller.jwtService.Sign(subject, sid, csrf)
 	if err != nil {
-		return err
+		return errors.Wrap(
+			err,
+			ErrCouldNotWriteSessionToResponse.Error(),
+		)
 	}
 
 	context.Header(csrfHeaderKey, csrf)
@@ -118,7 +126,7 @@ func (controller AuthenticationController) writeSessionToResponse(
 	context.SetCookie(
 		jwtAccessTokenCookieName,
 		string(tokens.AccessToken),
-		services.AccessTokenAbsoluteTimeoutMinutes*60,
+		services.AccessTokenAbsoluteTimeoutMinutes*secondsPerMinute,
 		path,
 		domain,
 		secure,
@@ -128,7 +136,7 @@ func (controller AuthenticationController) writeSessionToResponse(
 	context.SetCookie(
 		jwtRefreshTokenCookieName,
 		string(tokens.RefreshToken),
-		services.RefreshTokenAbsoluteTimeoutMinutes*60,
+		services.RefreshTokenAbsoluteTimeoutMinutes*secondsPerMinute,
 		"/",
 		"localhost",
 		secure,

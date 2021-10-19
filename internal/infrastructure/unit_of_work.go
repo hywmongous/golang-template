@@ -2,7 +2,7 @@ package infrastructure
 
 import (
 	"github.com/cockroachdb/errors"
-	identity "github.com/hywmongous/example-service/internal/domain/authentication"
+	"github.com/hywmongous/example-service/internal/domain/authentication"
 	"github.com/hywmongous/example-service/pkg/es"
 	"github.com/hywmongous/example-service/pkg/es/kafka"
 	"github.com/hywmongous/example-service/pkg/es/mediator"
@@ -13,7 +13,7 @@ type UnitOfWork struct {
 	store  es.EventStore
 	stream es.EventStream
 
-	identityRepository identity.Repository
+	identityRepository authentication.Repository
 }
 
 var (
@@ -21,7 +21,7 @@ var (
 	Topic    = es.Topic("ia")
 )
 
-func (uow *UnitOfWork) IdentityRepository() identity.Repository {
+func (uow *UnitOfWork) IdentityRepository() authentication.Repository {
 	return uow.identityRepository
 }
 
@@ -36,7 +36,7 @@ func KafkaStreamFactory() es.EventStream {
 func UnitOfWorkFactory(
 	store es.EventStore,
 	stream es.EventStream,
-	identityRepository identity.Repository,
+	identityRepository authentication.Repository,
 ) UnitOfWork {
 	uow := UnitOfWork{
 		store:              store,

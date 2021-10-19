@@ -12,46 +12,46 @@ import (
 )
 
 func Run() {
-	fx.New(Module).Run()
+	var engineOptions = fx.Option(
+		fx.Provide(gin.New),
+	)
+
+	var actorOptions = fx.Options(
+		fx.Provide(application.UnregisteredUserFactory),
+		fx.Provide(application.RegisteredUserFactory),
+	)
+
+	var infrastructureOptions = fx.Options(
+		fx.Provide(services.JWTServiceFactory),
+		fx.Provide(infrastructure.KafkaStreamFactory),
+		fx.Provide(infrastructure.MongoStoreFactory),
+		fx.Provide(cqrs.IdentityRepositoryFactory),
+		fx.Provide(infrastructure.UnitOfWorkFactory),
+	)
+
+	var controllerOptions = fx.Options(
+		fx.Provide(controllers.AccountControllerFactory),
+		fx.Provide(controllers.AuthenticationControllerFactory),
+		fx.Provide(controllers.SessionControllerFactory),
+		fx.Provide(controllers.TicketControllerFactory),
+	)
+
+	var routeOptions = fx.Options(
+		fx.Provide(routes.RoutesFactory),
+		fx.Provide(routes.CreateAccountRoutes),
+		fx.Provide(routes.CreateAuthenticationRoutes),
+		fx.Provide(routes.CreateSessionRoutes),
+		fx.Provide(routes.CreateTicketRoutes),
+	)
+
+	var module = fx.Options(
+		controllerOptions,
+		routeOptions,
+		infrastructureOptions,
+		engineOptions,
+		actorOptions,
+		fx.Invoke(bootstrap),
+	)
+
+	fx.New(module).Run()
 }
-
-var Module = fx.Options(
-	ControllerOptions,
-	RouteOptions,
-	InfrastructureOptions,
-	engineOptions,
-	ActorOptions,
-	fx.Invoke(bootstrap),
-)
-
-var engineOptions = fx.Option(
-	fx.Provide(gin.New),
-)
-
-var ActorOptions = fx.Options(
-	fx.Provide(application.UnregisteredUserFactory),
-	fx.Provide(application.RegisteredUserFactory),
-)
-
-var InfrastructureOptions = fx.Options(
-	fx.Provide(services.JWTServiceFactory),
-	fx.Provide(infrastructure.KafkaStreamFactory),
-	fx.Provide(infrastructure.MongoStoreFactory),
-	fx.Provide(cqrs.IdentityRepositoryFactory),
-	fx.Provide(infrastructure.UnitOfWorkFactory),
-)
-
-var ControllerOptions = fx.Options(
-	fx.Provide(controllers.AccountControllerFactory),
-	fx.Provide(controllers.AuthenticationControllerFactory),
-	fx.Provide(controllers.SessionControllerFactory),
-	fx.Provide(controllers.TicketControllerFactory),
-)
-
-var RouteOptions = fx.Options(
-	fx.Provide(routes.RoutesFactory),
-	fx.Provide(routes.CreateAccountRoutes),
-	fx.Provide(routes.CreateAuthenticationRoutes),
-	fx.Provide(routes.CreateSessionRoutes),
-	fx.Provide(routes.CreateTicketRoutes),
-)

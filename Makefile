@@ -42,8 +42,13 @@ help:
 	@echo '  "make k6_smoke"               - Runs k6 smoke_all test'
 	@echo '  "make k6_smoke_identity-login"- Runs k6 smoke test for the feature identity-login'
 
+<<<<<<< HEAD
 lint: staticcheck vet gofmt misspell
 	golangci-lint run --verbose --enable-all --fix ./...
+=======
+lint: misspell staticcheck vet gofmt
+	golangci-lint run --enable-all --verbose --sort-results --tests ./...
+>>>>>>> afb01aa13211cda42a8dc283f0a6ef2e505ffd31
 
 misspell:
 	misspell -locale UK .
@@ -64,6 +69,9 @@ install:
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	go install github.com/client9/misspell/cmd/misspell@latest
 	go install honnef.co/go/tools/cmd/staticcheck@latest
+	sudo apt install -y protobuf-compiler
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
 protoc:
 	@(cd ./protos/ ; protoc --go_out=. *.proto)

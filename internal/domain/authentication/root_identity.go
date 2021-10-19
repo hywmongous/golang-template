@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	ErrSessionNotFound   = errors.New("session could not be found")
-	ErrIncorrectPassword = errors.New("password is incorrect")
+	ErrSessionNotFound              = errors.New("session could not be found")
+	ErrPasswordAuthenticationFailed = errors.New("authentication failed because of password validation")
 )
 
 type (
@@ -80,7 +80,7 @@ func Register(
 
 func (identity *Identity) Login(password string) (SessionID, error) {
 	if err := identity.password.verify(password); err != nil {
-		return SessionID(""), errors.Wrap(err, ErrIncorrectPassword.Error())
+		return SessionID(""), errors.Wrap(err, ErrPasswordAuthenticationFailed.Error())
 	}
 
 	newSession, err := CreateSession()
