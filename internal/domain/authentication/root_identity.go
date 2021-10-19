@@ -90,6 +90,7 @@ func (identity *Identity) Login(password string) (SessionID, error) {
 	if err != nil {
 		return SessionID(""), err
 	}
+
 	identity.sessions = append(identity.sessions, newSession)
 
 	identity.publishEvent(&IdentityLoggedIn{
