@@ -7,9 +7,7 @@ import (
 	"time"
 
 	"github.com/cockroachdb/errors"
-
 	"github.com/hywmongous/example-service/pkg/es"
-
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -36,24 +34,24 @@ const (
 	documentIdKey = "_id"
 
 	// The commented constants are kept to display document structure.
-	// eventIdKey              = "event.id"
+	// eventIdKey              = "event.id".
 	eventProducerKey = "event.producer"
 	eventSubjectKey  = "event.subject"
 	eventVersionKey  = "event.version"
-	// eventSchemaVersionKey   = "event.schemaversion"
+	// eventSchemaVersionKey   = "event.schemaversion".
 	eventSnapShotVersionKey = "event.snapshotversion"
-	// eventNameKey            = "event.name"
+	// eventNameKey            = "event.name".
 	eventTimestampKey = "event.timestamp"
-	// eventDataKey            = "event.data"
+	// eventDataKey            = "event.data".
 
 	// snapshotIdKey            = "snapshot.id"
-	// snapshotProducerKey      = "snapshot.producer"
+	// snapshotProducerKey      = "snapshot.producer".
 	snapshotSubjectKey = "snapshot.subject"
 	snapshotVersionKey = "snapshot.version"
 	// snapshotSchemaVersionKey = "snapshot.schemaversion"
 	// snapshotNameKey          = "snapshot.name"
 	// snapshotTimestampKey     = "snapshot.timestamp"
-	// snapshotDataKey          = "snapshot.data"
+	// snapshotDataKey          = "snapshot.data".
 
 	mongoLessThan    = "$lt"
 	mongoGreaterThan = "$gt"

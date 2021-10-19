@@ -20,7 +20,7 @@ func AccountControllerFactory(
 }
 
 func (controller IdentityController) GetAll(context *gin.Context) {
-	context.String(http.StatusOK, "Retriving all accounts")
+	context.String(http.StatusOK, "Retrieving all accounts")
 }
 
 func (controller IdentityController) Create(context *gin.Context) {
@@ -45,7 +45,7 @@ func (controller IdentityController) Create(context *gin.Context) {
 
 func (controller IdentityController) Get(context *gin.Context) {
 	// accountId := context.Param("aid")
-	context.String(http.StatusOK, "Retriving the account")
+	context.String(http.StatusOK, "Retrieving the account")
 }
 
 func (controller IdentityController) Change(context *gin.Context) {

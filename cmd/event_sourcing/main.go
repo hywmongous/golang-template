@@ -12,13 +12,13 @@ import (
 	"github.com/hywmongous/example-service/pkg/es/mongo"
 )
 
-// Infrastructure
+// Infrastructure.
 type UnitOfWork struct {
 	store  es.EventStore
 	stream es.EventStream
 }
 
-// Aggregate
+// Aggregate.
 type Identity struct {
 	Id    string
 	Name  string
@@ -26,7 +26,7 @@ type Identity struct {
 	Email string
 }
 
-// Snapshot(s)
+// Snapshot(s).
 type IdentitySnapshotV1 struct {
 	Id    string
 	Name  string
@@ -34,15 +34,16 @@ type IdentitySnapshotV1 struct {
 	Email string
 }
 
-// Actors
+// Actors.
 type UnregisteredUser struct{}
 
-// Use cases
+// Use cases.
 type IdentityRegistrationRequest struct {
 	Name  string
 	Age   int
 	Email string
 }
+
 type IdentityRegistrationResponse struct {
 	Id string
 }
@@ -52,31 +53,33 @@ type IdentityChangeNameRequest struct {
 	Id   string
 	Name string
 }
+
 type IdentityChangeNameResponse struct {
 	Success bool
 }
 type ChangeIdentityNameUseCase func(request IdentityChangeNameRequest) (IdentityChangeNameResponse, error)
 
-// Events
+// Events.
 type IdentityRegistered struct {
 	Id    string
 	Name  string
 	Age   int
 	Email string
 }
+
 type IdentityChangedName struct {
 	Name string
 }
+
 type IdentityChangedAge struct {
 	Age int
 }
+
 type IdentityChangedEmail struct {
 	Email string
 }
 
-var (
-	Producer = es.ProducerID("EventSourcingExample")
-)
+var Producer = es.ProducerID("EventSourcingExample")
 
 func main() {
 	// Scenario: A user reigstration is issued and afterwards the events are read to construct the aggregate

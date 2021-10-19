@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/cockroachdb/errors"
-
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 )

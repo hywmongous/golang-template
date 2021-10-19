@@ -12,13 +12,15 @@ var (
 	ErrIncorrectPassword = errors.New("password is incorrect")
 )
 
-type IdentityID string
-type Identity struct {
-	id       IdentityID
-	email    Email
-	password Password
-	sessions []Session
-}
+type (
+	IdentityID string
+	Identity   struct {
+		id       IdentityID
+		email    Email
+		password Password
+		sessions []Session
+	}
+)
 
 func (identity Identity) ID() IdentityID {
 	return identity.id

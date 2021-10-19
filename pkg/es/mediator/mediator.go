@@ -4,8 +4,10 @@ import (
 	"github.com/hywmongous/example-service/pkg/es"
 )
 
-type Subscription func(subject es.SubjectID, data es.Data)
-type Connector chan ConnectorResult
+type (
+	Subscription func(subject es.SubjectID, data es.Data)
+	Connector    chan ConnectorResult
+)
 
 type ConnectorResult struct {
 	Subject es.SubjectID
@@ -29,7 +31,7 @@ type defaultMediator struct {
 }
 
 // Singleton for the mediator used when one is not defined
-// This makes it possible to write "mediator.Publish(...)" and so one
+// This makes it possible to write "mediator.Publish(...)" and so one.
 var Default defaultMediator = createDefaultMediator()
 
 func createDefaultMediator() defaultMediator {

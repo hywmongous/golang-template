@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/cockroachdb/errors"
-
 	"github.com/google/uuid"
 )
 
@@ -19,9 +18,7 @@ type Snapshot struct {
 	Data          Data
 }
 
-var (
-	ErrSnapshotDataIsNil = errors.New("data cannot be nil")
-)
+var ErrSnapshotDataIsNil = errors.New("data cannot be nil")
 
 func CreateSnapshot(
 	producer ProducerID,

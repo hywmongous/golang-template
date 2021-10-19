@@ -2,11 +2,13 @@ package authentication
 
 import "github.com/google/uuid"
 
-type SessionID string
-type Session struct {
-	id      SessionID
-	revoked bool
-}
+type (
+	SessionID string
+	Session   struct {
+		id      SessionID
+		revoked bool
+	}
+)
 
 func (session Session) ID() SessionID {
 	return session.id

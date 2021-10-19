@@ -6,9 +6,7 @@ import (
 	"github.com/hywmongous/example-service/pkg/es"
 )
 
-var (
-	subject = es.SubjectID("Andreas")
-)
+var subject = es.SubjectID("Andreas")
 
 func main() {
 	log.Println("Staging example")
