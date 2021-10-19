@@ -30,7 +30,7 @@ type RegisterIdentityResponse struct {
 type RegisterIdentityUseCase func(request RegisterIdentityRequest) (RegisterIdentityResponse, error)
 
 type UnregisteredUser struct {
-	Register RegisterIdentityUseCase
+	mediator mediator.Mediator
 }
 
 func main() {
@@ -38,11 +38,10 @@ func main() {
 	uow := UnitOfWork{
 		events: make([]es.Data, 0),
 	}
-	mediator.Listen(uow.receiver)
 
 	// Create actor
-	actor := UnregisteredUser{
-		Register: RegisterIdentity,
+	actor := &UnregisteredUser{
+		mediator: mediator.CreateMediator(),
 	}
 
 	// Do "Register Identity" usecase by the actor
@@ -51,7 +50,9 @@ func main() {
 		age:   22,
 		email: "andreasbrandhoej@hotmail.com",
 	}
-	response, err := actor.Register(request)
+
+	var registrationUseCase RegisterIdentityUseCase = actor.RegisterIdentity
+	response, err := registrationUseCase(request)
 	if err != nil {
 		log.Println(err)
 		if err = uow.Rollback(); err != nil {
@@ -83,11 +84,11 @@ func main() {
 	}
 }
 
-func RegisterIdentity(request RegisterIdentityRequest) (RegisterIdentityResponse, error) {
+func (user *UnregisteredUser) RegisterIdentity(request RegisterIdentityRequest) (RegisterIdentityResponse, error) {
 	response := RegisterIdentityResponse{
 		success: true,
 	}
-	mediator.Publish(
+	user.mediator.Publish(
 		es.SubjectID("Me"),
 		IdentityRegistered{
 			time: es.Timestamp(time.Now().Unix()),

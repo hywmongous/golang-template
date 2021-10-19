@@ -4,10 +4,12 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/hywmongous/example-service/internal/domain/authentication"
 	"github.com/hywmongous/example-service/pkg/es"
+	"github.com/hywmongous/example-service/pkg/es/mediator"
 )
 
 type IdentityRepository struct {
-	store es.EventStore
+	store    es.EventStore
+	mediator mediator.Mediator
 }
 
 var (
@@ -18,9 +20,11 @@ var (
 
 func IdentityRepositoryFactory(
 	store es.EventStore,
+	mediator mediator.Mediator,
 ) authentication.Repository {
 	return IdentityRepository{
-		store: store,
+		store:    store,
+		mediator: mediator,
 	}
 }
 
@@ -40,6 +44,7 @@ func (repository IdentityRepository) FindIdentityByEmail(email string) (authenti
 		model.email,
 		model.password,
 		model.sessions,
+		repository.mediator,
 	), nil
 }
 

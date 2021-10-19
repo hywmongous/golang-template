@@ -17,6 +17,7 @@ type Event2 struct {
 }
 
 func main() {
+	mediator := mediator.CreateMediator()
 	topic1 := es.Topic("topic1")
 	topic2 := es.Topic("topic2")
 

@@ -19,6 +19,7 @@ type (
 		email    Email
 		password Password
 		sessions []Session
+		mediator mediator.Mediator
 	}
 )
 
@@ -39,12 +40,14 @@ func RecreateIdentity(
 	email Email,
 	password Password,
 	sessions []Session,
+	mediator mediator.Mediator,
 ) Identity {
 	return Identity{
 		id:       id,
 		email:    email,
 		password: password,
 		sessions: sessions,
+		mediator: mediator,
 	}
 }
 
@@ -115,5 +118,5 @@ func (identity *Identity) Logout(sessionID SessionID) error {
 }
 
 func (identity *Identity) publishEvent(event es.Data) {
-	mediator.Publish(es.SubjectID(identity.Email().address), event)
+	identity.mediator.Publish(es.SubjectID(identity.Email().address), event)
 }

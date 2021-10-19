@@ -37,6 +37,7 @@ func UnitOfWorkFactory(
 	store es.EventStore,
 	stream es.EventStream,
 	identityRepository authentication.Repository,
+	mediator mediator.Mediator,
 ) UnitOfWork {
 	uow := UnitOfWork{
 		store:              store,
