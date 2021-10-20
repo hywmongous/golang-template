@@ -3,27 +3,17 @@ package crypto
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"fmt"
-	"io"
 	"math/big"
+
+	"github.com/cockroachdb/errors"
 )
 
 // Adapted from https://elithrar.github.io/article/generating-secure-random-numbers-crypto-rand/
 
-func init() {
-	assertAvailablePRNG()
-}
-
-func assertAvailablePRNG() {
-	// Assert that a cryptographically secure PRNG is available.
-	// Panic otherwise.
-	buf := make([]byte, 1)
-
-	_, err := io.ReadFull(rand.Reader, buf)
-	if err != nil {
-		panic(fmt.Sprintf("crypto/rand is unavailable: Read() failed with %#v", err))
-	}
-}
+var (
+	ErrGeneratingRandomLetter = errors.New("generating random letter failed")
+	ErrInvlidBytes            = errors.New("byte array is invalid")
+)
 
 // GenerateRandomBytes returns securely generated random bytes.
 // It will return an error if the system's secure random
@@ -31,10 +21,9 @@ func assertAvailablePRNG() {
 // case the caller should not continue.
 func GenerateRandomBytes(n int) ([]byte, error) {
 	b := make([]byte, n)
-	_, err := rand.Read(b)
 	// Note that err == nil only if we read len(b) bytes.
-	if err != nil {
-		return nil, err
+	if _, err := rand.Read(b); err != nil {
+		return nil, errors.Wrap(err, ErrInvlidBytes.Error())
 	}
 
 	return b, nil
@@ -46,12 +35,15 @@ func GenerateRandomBytes(n int) ([]byte, error) {
 // case the caller should not continue.
 func GenerateRandomString(n int) (string, error) {
 	const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-"
+
 	ret := make([]byte, n)
+
 	for i := 0; i < n; i++ {
 		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
 		if err != nil {
-			return "", err
+			return "", errors.Wrap(err, ErrGeneratingRandomLetter.Error())
 		}
+
 		ret[i] = letters[num.Int64()]
 	}
 
@@ -65,5 +57,6 @@ func GenerateRandomString(n int) (string, error) {
 // case the caller should not continue.
 func GenerateRandomStringURLSafe(n int) (string, error) {
 	b, err := GenerateRandomBytes(n)
+
 	return base64.URLEncoding.EncodeToString(b), err
 }

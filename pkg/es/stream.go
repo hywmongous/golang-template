@@ -21,6 +21,7 @@ func CreateEventStream(events []Event) chan Event {
 		// We dont check for "ok" because we wont close it
 		channel <- event
 	}
+
 	return channel
 }
 
@@ -38,5 +39,6 @@ func CreateErrorPrinter() chan error {
 		}
 	}
 	go printer()
+
 	return errors
 }

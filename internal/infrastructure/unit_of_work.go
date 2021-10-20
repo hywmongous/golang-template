@@ -16,9 +16,9 @@ type UnitOfWork struct {
 	identityRepository authentication.Repository
 }
 
-var (
-	Producer = es.ProducerID("ia")
-	Topic    = es.Topic("ia")
+const (
+	producer = es.ProducerID("ia")
+	topic    = es.Topic("ia")
 )
 
 func (uow *UnitOfWork) IdentityRepository() authentication.Repository {
@@ -30,7 +30,7 @@ func MongoStoreFactory() es.EventStore {
 }
 
 func KafkaStreamFactory() es.EventStream {
-	return kafka.CreateKafkaStream(Topic)
+	return kafka.CreateKafkaStream(topic)
 }
 
 func UnitOfWorkFactory(
@@ -50,7 +50,7 @@ func UnitOfWorkFactory(
 
 func (uow *UnitOfWork) receiveEvent(subject es.SubjectID, data es.Data) {
 	if err := uow.store.Load(
-		Producer,
+		producer,
 		subject,
 		data,
 	); err != nil {

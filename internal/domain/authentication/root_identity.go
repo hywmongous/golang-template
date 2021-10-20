@@ -106,6 +106,7 @@ func (identity *Identity) session(sessionID SessionID) (Session, error) {
 			return session, nil
 		}
 	}
+
 	return Session{}, ErrSessionNotFound
 }
 
@@ -114,6 +115,7 @@ func (identity *Identity) Logout(sessionID SessionID) error {
 	if err != nil {
 		return err
 	}
+
 	session.revoke()
 	return nil
 }

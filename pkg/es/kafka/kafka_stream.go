@@ -9,7 +9,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-type KafkaStream struct {
+type Stream struct {
 	// We only use a single topic per "bounded context"
 	// For this reason it fits the "topic" to be a field
 	// within the kafka stream struct instance
@@ -53,49 +53,69 @@ const (
 	defaultAsync             = false            // By using false errors are not ignored
 	broker                   = "ia_kafka:9092"
 	group                    = "ia"
+
+	defaultOffset        = 0
+	defaultHighWaterMark = 0
 )
 
 var (
-	// Read kafka conf.
-	defaultLogger      kafka.Logger = nil
-	defaultErrorLogger kafka.Logger = nil
-
-	// Write kafka conf.
-	defaultBalancer                                = &kafka.RoundRobin{}
-	defaultDialer                                  = kafka.DefaultDialer
-	defaultCompressionCodec kafka.CompressionCodec = nil
+	ErrInvalidKafkaReaderConfig = errors.New("kafka reader config is invalid")
+	ErrInvalidKafkaWriterConfig = errors.New("kafka writer config is invalid")
+	ErrKafkaCouldNotWriteEvent  = errors.New("kafka writer failed writing the event")
+	ErrKafkaCouldNotCloseWriter = errors.New("kafka writer failed closing")
+	ErrEventMarhsallingFailed   = errors.New("failed marshalling event")
+	ErrFailedSteamingEvents     = errors.New("failed publishing the events through the kafka stream")
 )
 
-var ErrInvalidKafkaReaderConfig = errors.New("kafka reader config is invalid")
-
-func CreateKafkaStream(topic es.Topic) *KafkaStream {
-	return &KafkaStream{
+func CreateKafkaStream(topic es.Topic) *Stream {
+	return &Stream{
 		topic: topic,
 	}
 }
 
-func (stream *KafkaStream) write(ctx context.Context, config kafka.WriterConfig, events []es.Event) error {
+func (stream *Stream) write(ctx context.Context, config kafka.WriterConfig, events []es.Event) error {
+	var defaultHeaders []kafka.Header
+
 	writer := kafka.NewWriter(config)
+
 	for _, event := range events {
 		value, err := event.Marshall()
 		if err != nil {
-			return err
+			return errors.Wrap(err, ErrEventMarhsallingFailed.Error())
 		}
 
 		message := kafka.Message{
-			Key:   []byte(event.Subject),
-			Value: value,
+			Key:           []byte(event.Subject),
+			Value:         value,
+			Topic:         string(stream.topic),
+			Partition:     defaultPartition,
+			Offset:        defaultOffset,
+			HighWaterMark: defaultHighWaterMark,
+			Headers:       defaultHeaders,
+			Time:          time.Now(),
 		}
 
 		if err := writer.WriteMessages(ctx, message); err != nil {
-			return err
+			return errors.Wrap(err, ErrKafkaCouldNotWriteEvent.Error())
 		}
 	}
 
-	return writer.Close()
+	return errors.Wrap(
+		writer.Close(),
+		ErrKafkaCouldNotCloseWriter.Error(),
+	)
 }
 
-func (stream *KafkaStream) Publish(events []es.Event) error {
+func (stream *Stream) Publish(events []es.Event) error {
+	var defaultLogger kafka.Logger
+
+	var defaultErrorLogger kafka.Logger
+
+	var defaultCompressionCodec kafka.CompressionCodec
+
+	defaultBalancer := &kafka.RoundRobin{}
+	defaultDialer := kafka.DefaultDialer
+
 	config := kafka.WriterConfig{
 		Brokers:           []string{broker},
 		Topic:             string(stream.topic),
@@ -117,12 +137,20 @@ func (stream *KafkaStream) Publish(events []es.Event) error {
 		ErrorLogger:       defaultErrorLogger,
 	}
 
+	if err := config.Validate(); err != nil {
+		panic(errors.Wrap(err, ErrInvalidKafkaWriterConfig.Error()))
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	return stream.write(ctx, config, events)
+
+	return errors.Wrap(
+		stream.write(ctx, config, events),
+		ErrFailedSteamingEvents.Error(),
+	)
 }
 
-func (stream *KafkaStream) read(
+func (stream *Stream) read(
 	ctx context.Context,
 	config kafka.ReaderConfig,
 	events chan es.Event,
@@ -145,7 +173,11 @@ func (stream *KafkaStream) read(
 	}
 }
 
-func (stream *KafkaStream) Subscribe(ctx context.Context, topic es.Topic) (chan es.Event, chan error) {
+func (stream *Stream) Subscribe(ctx context.Context, topic es.Topic) (chan es.Event, chan error) {
+	var defaultLogger kafka.Logger
+
+	var defaultErrorLogger kafka.Logger
+
 	config := kafka.ReaderConfig{
 		Brokers:         []string{broker},
 		GroupID:         group,
@@ -187,5 +219,6 @@ func (stream *KafkaStream) Subscribe(ctx context.Context, topic es.Topic) (chan 
 	errors := make(chan error)
 
 	go stream.read(ctx, config, events, errors)
+
 	return events, errors
 }

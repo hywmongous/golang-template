@@ -42,6 +42,7 @@ func (stage Stage) Events() []Event {
 			events = append(events, eventStage.events...)
 		}
 	}
+
 	return events
 }
 
@@ -53,6 +54,7 @@ func (stage *Stage) Subjects() []SubjectID {
 		subjects[idx] = subject
 		idx++
 	}
+
 	return subjects
 }
 
@@ -68,6 +70,7 @@ func (stage *Stage) IsEmpty(subject SubjectID) bool {
 	if _, found := stage.subjects[subject]; !found {
 		return true
 	}
+
 	return len(stage.subjects[subject][0].events) == 0
 }
 
@@ -84,6 +87,7 @@ func (stage *Stage) EventStages(subject SubjectID) []EventStage {
 		stage.subjects[subject] = make([]EventStage, 0)
 		stage.addEventStage(subject)
 	}
+
 	return stage.subjects[subject]
 }
 
@@ -102,6 +106,7 @@ func (stage *Stage) FirstEvent(subject SubjectID) (Event, bool) {
 	if len(firstStage.events) > 0 {
 		return firstStage.events[0], true
 	}
+
 	return EmptyEvent(), false
 }
 
@@ -127,7 +132,8 @@ func (stage *Stage) LatestSnapshot(subject SubjectID) (Snapshot, bool) {
 	if len(eventStages) > 1 {
 		return *eventStages[len(eventStages)-2].snapshot, true
 	}
-	return Snapshot{}, false
+
+	return EmptySnapshot(), false
 }
 
 func (stage *Stage) AddEvent(event Event) {

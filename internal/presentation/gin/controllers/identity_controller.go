@@ -27,6 +27,7 @@ func (controller IdentityController) Create(context *gin.Context) {
 	email, password, ok := context.Request.BasicAuth()
 	if email == "" || password == "" || !ok {
 		context.String(http.StatusUnauthorized, "something went wrong with the basic auth")
+
 		return
 	}
 
@@ -38,6 +39,7 @@ func (controller IdentityController) Create(context *gin.Context) {
 	response, err := controller.unregisteredUser.Register(request)
 	if err != nil {
 		context.String(http.StatusInternalServerError, err.Error())
+
 		return
 	}
 	context.JSON(http.StatusCreated, response)

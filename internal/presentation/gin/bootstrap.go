@@ -21,6 +21,7 @@ func bootstrap(
 					panic(err)
 				}
 			}()
+
 			return nil
 		},
 		OnStop: func(c context.Context) error {

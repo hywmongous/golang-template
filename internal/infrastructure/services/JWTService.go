@@ -24,7 +24,7 @@ type TokenPair struct {
 }
 
 type Claims struct {
-	SessionId string `json:"sid,omitempty"`
+	SessionID string `json:"sid,omitempty"`
 	Csrf      string `json:"csrf,omitempty"`
 	jwt.StandardClaims
 }
@@ -38,14 +38,16 @@ var (
 
 	ErrVerificationNotIssuedAtTheSameTime = errors.New("the context was issued at a different time")
 	ErrVerificationSessionRevoked         = errors.New("session is revoked")
-	ErrVerificationIncorrestSessionId     = errors.New("session id is incorrect")
+	ErrVerificationIncorrestSessionID     = errors.New("session id is incorrect")
 	ErrVerificationIncorrectCsrf          = errors.New("CSRF is incorrect")
-	ErrVerificationIncorrectTokenId       = errors.New("the token id does not match the one in the context")
+	ErrVerificationIncorrectTokenID       = errors.New("the token id does not match the one in the context")
 	ErrVerificationIncorrectIssueTime     = errors.New("the issue time is incorrect")
+
+	ErrSigningToken = errors.New("token could not be signed as jwt")
 )
 
 type Token struct {
-	Id              string
+	ID              string
 	IssuedAt        int64
 	InitialTimeout  int64
 	AbsoluteTimeout int64
@@ -78,7 +80,7 @@ func createAccessToken(subject string) Token {
 	now := time.Now()
 	return Token{
 		Subject:         subject,
-		Id:              uuid.NewString(),
+		ID:              uuid.NewString(),
 		IssuedAt:        now.Unix(),
 		InitialTimeout:  now.Add(AccessTokenInitialTimeoutDuration).Unix(),
 		AbsoluteTimeout: now.Add(AccessTokenAbsoluteTimeoutDuration).Unix(),
@@ -90,7 +92,7 @@ func createRefreshToken(subject string) Token {
 	now := time.Now()
 	return Token{
 		Subject:         subject,
-		Id:              uuid.NewString(),
+		ID:              uuid.NewString(),
 		IssuedAt:        now.Unix(),
 		InitialTimeout:  now.Add(RefreshTokenInitialTimeoutDuration).Unix(),
 		AbsoluteTimeout: now.Add(RefreshTokenAbsoluteTimeoutDuration).Unix(),
@@ -99,17 +101,32 @@ func createRefreshToken(subject string) Token {
 
 func createClaims(token Token, sid string, csrf string) Claims {
 	return Claims{
-		SessionId: sid,
+		SessionID: sid,
 		Csrf:      csrf,
 		StandardClaims: jwt.StandardClaims{
-			Id:        token.Id,
+			Id:        token.ID,
 			Subject:   token.Subject,
 			Issuer:    Issuer,
 			IssuedAt:  token.IssuedAt,
 			NotBefore: token.InitialTimeout,
 			ExpiresAt: token.AbsoluteTimeout,
+			Audience:  "",
 		},
 	}
+}
+
+func emptyClaims() Claims {
+	return createClaims(
+		Token{
+			Subject:         "",
+			ID:              "",
+			IssuedAt:        0,
+			InitialTimeout:  0,
+			AbsoluteTimeout: 0,
+		},
+		"",
+		"",
+	)
 }
 
 func (jwtService JWTService) Sign(
@@ -123,7 +140,7 @@ func (jwtService JWTService) Sign(
 	)
 	accessTokenString, err := accessToken.SignedString(jwtService.privateKey)
 	if err != nil {
-		return TokenPair{}, err
+		return TokenPair{}, errors.Wrap(err, ErrSigningToken.Error())
 	}
 
 	refreshToken := jwt.NewWithClaims(
@@ -132,7 +149,7 @@ func (jwtService JWTService) Sign(
 	)
 	refreshTokenString, err := refreshToken.SignedString(jwtService.privateKey)
 	if err != nil {
-		return TokenPair{}, err
+		return TokenPair{}, errors.Wrap(err, ErrSigningToken.Error())
 	}
 
 	return TokenPair{
@@ -142,30 +159,32 @@ func (jwtService JWTService) Sign(
 }
 
 func (jwtService JWTService) Verify(token string, csrf string) (*Claims, error) {
+	jsonPartsCount := 3
+
 	// Verify general structure
 	parts := strings.Split(token, ".")
-	if len(parts) != 3 {
+	if len(parts) != jsonPartsCount {
 		return nil, ErrJwtInvalidStructure
 	}
 
 	// Verify the jwt signature
 	if err := jwtService.alg.Verify(
-		strings.Join(parts[0:2], "."),
-		parts[2],
+		strings.Join(parts[0:jsonPartsCount-1], "."),
+		parts[jsonPartsCount-1],
 		jwtService.privateKey,
 	); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, ErrJwtInvalidStructure.Error())
 	}
 
 	// Parse claims
-	claims := Claims{}
+	claims := emptyClaims()
 	parsedToken, err := jwt.ParseWithClaims(
 		token,
 		&claims,
 		func(t *jwt.Token) (interface{}, error) { return jwtService.privateKey, nil },
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, ErrJwtInvalidToken.Error())
 	}
 
 	// Check the successfulness of the parsing

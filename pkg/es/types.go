@@ -29,6 +29,7 @@ func CreateTitleForData(data Data) Title {
 	eventType := reflect.TypeOf(data).String()
 	eventTypeParts := strings.Split(eventType, ".")
 	eventName := eventTypeParts[len(eventTypeParts)-1]
+
 	return Title(eventName)
 }
 

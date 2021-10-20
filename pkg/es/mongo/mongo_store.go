@@ -410,6 +410,7 @@ func (store *EventStore) Send(producer es.ProducerID, subject es.SubjectID, data
 	if err != nil {
 		return nil, errors.Wrap(err, ErrEventBatchCreationFailedOnSend.Error())
 	}
+
 	return events, store.sendEvents(events)
 }
 
@@ -419,6 +420,7 @@ func (store *EventStore) sendEvents(events []es.Event) error {
 	}
 
 	documents := marshallEventDocuments(events)
+
 	return store.insertManyDocuments(documents, eventsCollection)
 }
 
@@ -435,6 +437,7 @@ func (store *EventStore) Load(producer es.ProducerID, subject es.SubjectID, data
 	}
 
 	store.stage.AddEvent(event)
+
 	return nil
 }
 
@@ -520,9 +523,11 @@ func (store *EventStore) Ship() error {
 			if rollbackErr != nil {
 				return errors.Wrap(err, rollbackErr.Error())
 			}
+
 			return errors.Wrap(err, "rollback successful")
 		}
 	}
+
 	return nil
 }
 

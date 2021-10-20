@@ -6,7 +6,7 @@ type Route interface {
 
 type Routes []Route
 
-func RoutesFactory(
+func Factory(
 	accountRoutes AccountRoutes,
 	authenticationRoutes AuthenticationRoutes,
 	sessionRoutes SessionRoutes,

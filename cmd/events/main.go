@@ -49,7 +49,7 @@ func main() {
 	}
 	log.Println("Stock")
 	for _, event := range stock {
-		log.Println(event.Id)
+		log.Println(event.ID)
 	}
 
 	log.Print("Event streaming")
@@ -73,7 +73,7 @@ func main() {
 				if !ok {
 					break
 				}
-				log.Println(event.Id)
+				log.Println(event.ID)
 			case err, ok := <-errs:
 				if !ok {
 					break

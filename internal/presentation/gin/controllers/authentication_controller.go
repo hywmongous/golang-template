@@ -17,8 +17,10 @@ type AuthenticationController struct {
 }
 
 const (
-	csrfHeaderKey             = "Csrf"
-	jwtAccessTokenCookieName  = "JWT-ACCESS-TOKEN"
+	csrfHeaderKey = "Csrf"
+	/* #nosec */
+	jwtAccessTokenCookieName = "JWT-ACCESS-TOKEN"
+	/* #nosec */
 	jwtRefreshTokenCookieName = "JWT-REFRESH-TOKEN"
 	secondsPerMinute          = 60
 )
@@ -39,6 +41,7 @@ func (controller AuthenticationController) Login(context *gin.Context) {
 	email, password, ok := context.Request.BasicAuth()
 	if email == "" || password == "" || !ok {
 		context.Writer.WriteHeader(http.StatusUnauthorized)
+
 		return
 	}
 
@@ -73,23 +76,26 @@ func (controller AuthenticationController) Logout(context *gin.Context) {
 	accessToken, err := context.Cookie(jwtAccessTokenCookieName)
 	if err != nil {
 		context.String(http.StatusUnauthorized, err.Error())
+
 		return
 	}
 
 	claims, err := controller.jwtService.Verify(accessToken, csrf)
 	if err != nil {
 		context.String(http.StatusUnauthorized, errors.Wrap(err, csrf).Error())
+
 		return
 	}
 
 	request := &application.LogoutIdentityRequest{
 		Email:     claims.Subject,
-		SessionID: claims.SessionId,
+		SessionID: claims.SessionID,
 	}
 
 	response, err := controller.registeredUser.Logout(request)
 	if err != nil {
 		context.String(http.StatusUnauthorized, err.Error())
+
 		return
 	}
 
@@ -123,7 +129,7 @@ func (controller AuthenticationController) writeSessionToResponse(
 
 	context.SetCookie(
 		jwtAccessTokenCookieName,
-		string(tokens.AccessToken),
+		tokens.AccessToken,
 		services.AccessTokenAbsoluteTimeoutMinutes*secondsPerMinute,
 		path,
 		domain,
@@ -133,7 +139,7 @@ func (controller AuthenticationController) writeSessionToResponse(
 
 	context.SetCookie(
 		jwtRefreshTokenCookieName,
-		string(tokens.RefreshToken),
+		tokens.RefreshToken,
 		services.RefreshTokenAbsoluteTimeoutMinutes*secondsPerMinute,
 		"/",
 		"localhost",

@@ -56,18 +56,21 @@ func visitEvents(events []es.Event, model readModel) error {
 			if err := event.Unmarshal(&data); err != nil {
 				return errors.Wrap(err, ErrVisitForEventFailed.Error())
 			}
+
 			model = model.ApplyIdentityRegistered(&data)
 		case "IdentityLoggedIn":
 			var data authentication.IdentityLoggedIn
 			if err := event.Unmarshal(&data); err != nil {
 				return errors.Wrap(err, ErrVisitForEventFailed.Error())
 			}
+
 			model = model.ApplyIdentityLoggedIn(&data)
 		case "IdentityLoggedOut":
 			var data authentication.IdentityLoggedOut
 			if err := event.Unmarshal(&data); err != nil {
 				return errors.Wrap(err, ErrVisitForEventFailed.Error())
 			}
+
 			model = model.ApplyIdentityLoggedOut(&data)
 		}
 	}

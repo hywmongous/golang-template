@@ -37,7 +37,7 @@ func Run() {
 	)
 
 	routeOptions := fx.Options(
-		fx.Provide(routes.RoutesFactory),
+		fx.Provide(routes.Factory),
 		fx.Provide(routes.CreateAccountRoutes),
 		fx.Provide(routes.CreateAuthenticationRoutes),
 		fx.Provide(routes.CreateSessionRoutes),

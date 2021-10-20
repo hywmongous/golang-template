@@ -9,7 +9,7 @@ import (
 
 type Event struct {
 	// UUID for the event
-	Id Ident
+	ID Ident
 
 	// The producer of the event
 	// This id be the service ID or name
@@ -45,8 +45,9 @@ type Event struct {
 }
 
 var (
-	ErrEventDataIsNil = errors.New("data cannot be nil")
-	ErrNoEventData    = errors.New("event data array is length 0")
+	ErrEventDataIsNil       = errors.New("data cannot be nil")
+	ErrNoEventData          = errors.New("event data array is length 0")
+	ErrFindingLatestVersion = errors.New("failure finding the latest version")
 )
 
 func CreateEvent(
@@ -125,7 +126,7 @@ func createEvent(
 	data Data,
 ) Event {
 	return Event{
-		Id:              Ident(uuid.New().String()),
+		ID:              Ident(uuid.New().String()),
 		Producer:        producer,
 		Subject:         subject,
 		Version:         version,
@@ -149,7 +150,7 @@ func RecreateEvent(
 	data Data,
 ) Event {
 	return Event{
-		Id:              id,
+		ID:              id,
 		Producer:        producer,
 		Subject:         subject,
 		Version:         version,
@@ -180,8 +181,9 @@ func nextEventVersion(subject SubjectID, store EventStore) (Version, error) {
 	if errors.Is(err, ErrNoEvents) {
 		return InitialEventVersion, nil
 	} else if err != nil {
-		return InitialEventVersion, err
+		return InitialEventVersion, errors.Wrap(err, ErrFindingLatestVersion.Error())
 	}
+
 	return latestEvent.Version + 1, nil
 }
 
@@ -190,7 +192,8 @@ func currentSnapshotVersion(subject SubjectID, store EventStore) (Version, error
 	if errors.Is(err, ErrNoSnapshots) {
 		return InitialSnapshotVersion, nil
 	} else if err != nil {
-		return InitialSnapshotVersion, err
+		return InitialSnapshotVersion, errors.Wrap(err, ErrFindingLatestVersion.Error())
 	}
+
 	return latestSnapshot.Version, nil
 }
