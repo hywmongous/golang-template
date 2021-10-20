@@ -204,6 +204,7 @@ func (store *EventStore) findAllEvents(filter interface{}, options ...*options.F
 
 		for cursor.Next(ctx) {
 			var event es.Event
+
 			err := decodeEvent(cursor, &event)
 			if err != nil {
 				return errors.Wrap(err, ErrEventCouldNotBeDecoded.Error())
@@ -538,6 +539,7 @@ func (store *EventStore) Snapshot(producer es.ProducerID, subject es.SubjectID, 
 	}
 
 	store.stage.AddSnapshot(snapshot)
+
 	return nil
 }
 
@@ -646,6 +648,7 @@ func (store *EventStore) LatestEvent(subject es.SubjectID) (es.Event, error) {
 	if latestStagedEvent, found := store.stage.LatestEvent(subject); found {
 		return latestStagedEvent, nil
 	}
+
 	return store.latestRemoteEvent(subject)
 }
 
@@ -668,5 +671,6 @@ func (store *EventStore) LatestSnapshot(subject es.SubjectID) (es.Snapshot, erro
 	if latestStagedSnapshot, found := store.stage.LatestSnapshot(subject); found {
 		return latestStagedSnapshot, nil
 	}
+
 	return store.latestRemoteSnapshot(subject)
 }

@@ -74,5 +74,6 @@ func visitEvents(events []es.Event, model readModel) error {
 			model = model.ApplyIdentityLoggedOut(&data)
 		}
 	}
+
 	return nil
 }

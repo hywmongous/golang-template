@@ -8,11 +8,12 @@ import (
 	"github.com/hywmongous/example-service/pkg/es/mongo"
 )
 
+const sleepTime = 10 * time.Second
+
 func main() {
 	// The goal of this example is to show how snapshotting
 	// can eliminate the need of the previous events
-
-	time.Sleep(10 * time.Second)
+	time.Sleep(sleepTime)
 
 	// producer := es.ProducerID("Producer")
 	subject := es.SubjectID("Subject")
@@ -28,9 +29,10 @@ func main() {
 	if err != nil {
 		log.Fatal("With:", err)
 	}
+
 	for _, event := range events {
 		log.Println(event)
 	}
 
-	time.Sleep(10 * time.Second)
+	time.Sleep(sleepTime)
 }

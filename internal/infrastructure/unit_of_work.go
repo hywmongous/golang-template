@@ -45,6 +45,7 @@ func UnitOfWorkFactory(
 		identityRepository: identityRepository,
 	}
 	mediator.Listen(uow.receiveEvent)
+
 	return uow
 }
 

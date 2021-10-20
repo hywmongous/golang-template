@@ -91,6 +91,7 @@ func createAccessToken(subject string) Token {
 func createRefreshToken(subject string) Token {
 	// Refresh tokens can be used after 15 minutes and expires after 30
 	now := time.Now()
+
 	return Token{
 		Subject:         subject,
 		ID:              uuid.NewString(),
@@ -116,20 +117,6 @@ func createClaims(token Token, sid string, csrf string) Claims {
 	}
 }
 
-func emptyClaims() Claims {
-	return createClaims(
-		Token{
-			Subject:         "",
-			ID:              "",
-			IssuedAt:        0,
-			InitialTimeout:  0,
-			AbsoluteTimeout: 0,
-		},
-		"",
-		"",
-	)
-}
-
 func (jwtService JWTService) Sign(
 	subject string,
 	sid string,
@@ -139,8 +126,8 @@ func (jwtService JWTService) Sign(
 		jwtService.alg,
 		createClaims(createAccessToken(subject), sid, csrf),
 	)
-	accessTokenString, err := accessToken.SignedString(jwtService.privateKey)
 
+	accessTokenString, err := accessToken.SignedString(jwtService.privateKey)
 	if err != nil {
 		return TokenPair{}, errors.Wrap(err, ErrSigningToken.Error())
 	}
@@ -149,8 +136,8 @@ func (jwtService JWTService) Sign(
 		jwtService.alg,
 		createClaims(createRefreshToken(subject), sid, csrf),
 	)
-	refreshTokenString, err := refreshToken.SignedString(jwtService.privateKey)
 
+	refreshTokenString, err := refreshToken.SignedString(jwtService.privateKey)
 	if err != nil {
 		return TokenPair{}, errors.Wrap(err, ErrSigningToken.Error())
 	}
@@ -180,7 +167,8 @@ func (jwtService JWTService) Verify(token string, csrf string) (*Claims, error) 
 	}
 
 	// Parse claims
-	claims := emptyClaims()
+	claims := Claims{}
+
 	parsedToken, err := jwt.ParseWithClaims(
 		token,
 		&claims,

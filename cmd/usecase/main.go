@@ -45,49 +45,37 @@ func main() {
 	}
 
 	// Do "Register Identity" usecase by the actor
+	age := 22
 	request := RegisterIdentityRequest{
 		name:  "Andreas",
-		age:   22,
+		age:   age,
 		email: "andreasbrandhoej@hotmail.com",
 	}
 
 	var registrationUseCase RegisterIdentityUseCase = actor.RegisterIdentity
+
 	response, err := registrationUseCase(request)
 	if err != nil {
 		log.Println(err)
-		if err = uow.Rollback(); err != nil {
-			log.Println("rollback failed")
-			log.Println(err)
-		}
-		log.Fatal(err)
+		uow.Rollback()
 	}
 
 	if response.success {
 		log.Println("Registration was successful")
 	} else {
 		log.Println(err)
-		if err = uow.Rollback(); err != nil {
-			log.Println("rollback failed")
-			log.Println(err)
-		}
-		log.Fatal(err)
+		uow.Rollback()
 	}
 
 	// Commit changes
-	if err = uow.Commit(); err != nil {
-		log.Println(err)
-		if err = uow.Rollback(); err != nil {
-			log.Println("rollback failed")
-			log.Println(err)
-		}
-		log.Fatal(err)
-	}
+	uow.Commit()
 }
 
 func (user *UnregisteredUser) RegisterIdentity(request RegisterIdentityRequest) (RegisterIdentityResponse, error) {
 	response := RegisterIdentityResponse{
 		success: true,
 	}
+
 	user.mediator.Publish(
 		es.SubjectID("Me"),
 		IdentityRegistered{
@@ -95,19 +83,18 @@ func (user *UnregisteredUser) RegisterIdentity(request RegisterIdentityRequest) 
 			name: request.name,
 		},
 	)
+
 	return response, nil
 }
 
-func (uow *UnitOfWork) Commit() error {
+func (uow *UnitOfWork) Commit() {
 	for _, event := range uow.events {
 		log.Println("Committing:", event)
 	}
+
 	uow.events = make([]es.Data, 0)
-	return nil
 }
 
-func (uow *UnitOfWork) Rollback() error {
+func (uow *UnitOfWork) Rollback() {
 	uow.events = make([]es.Data, 0)
-
-	return nil
 }

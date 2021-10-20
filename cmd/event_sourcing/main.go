@@ -277,7 +277,13 @@ func main() {
 	finished_identity = VisitEvents(finished_identity, proceedingEvents)
 
 	// print the final identity
-	log.Println("finished_identity", finished_identity.Id, finished_identity.Name, finished_identity.Age, finished_identity.Email)
+	log.Println(
+		"finished_identity",
+		finished_identity.Id,
+		finished_identity.Name,
+		finished_identity.Age,
+		finished_identity.Email
+	)
 
 	// For this example we sleep here such that you have the time to verify the output
 	time.Sleep(5 * time.Second)
@@ -336,7 +342,9 @@ func VisitEvents(identity Identity, events []es.Event) Identity {
 	return identity
 }
 
-func (unregisteredUser UnregisteredUser) Register(request IdentityRegistrationRequest) (IdentityRegistrationResponse, error) {
+func (unregisteredUser UnregisteredUser) Register(
+	request IdentityRegistrationRequest
+) (IdentityRegistrationResponse, error) {
 	response := IdentityRegistrationResponse{
 		Id: uuid.New().String(),
 	}
@@ -352,7 +360,9 @@ func (unregisteredUser UnregisteredUser) Register(request IdentityRegistrationRe
 	return response, nil
 }
 
-func (unregisteredUser UnregisteredUser) ChangeName(request IdentityChangeNameRequest) (IdentityChangeNameResponse, error) {
+func (unregisteredUser UnregisteredUser) ChangeName(
+	request IdentityChangeNameRequest
+) (IdentityChangeNameResponse, error) {
 	response := IdentityChangeNameResponse{
 		Success: true,
 	}

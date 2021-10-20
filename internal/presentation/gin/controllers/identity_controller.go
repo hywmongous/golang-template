@@ -42,6 +42,7 @@ func (controller IdentityController) Create(context *gin.Context) {
 
 		return
 	}
+
 	context.JSON(http.StatusCreated, response)
 }
 

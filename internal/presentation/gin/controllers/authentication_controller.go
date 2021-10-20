@@ -54,12 +54,14 @@ func (controller AuthenticationController) Login(context *gin.Context) {
 	if err != nil {
 		log.Println("Login endpoint error", err)
 		context.Writer.WriteHeader(http.StatusUnauthorized)
+
 		return
 	}
 
 	if err = controller.writeSessionToResponse(context, email, response.SessionID); err != nil {
 		log.Println("Login endpoint error", err)
 		context.Writer.WriteHeader(http.StatusUnauthorized)
+
 		return
 	}
 
@@ -112,6 +114,7 @@ func (controller AuthenticationController) writeSessionToResponse(
 	sid string,
 ) error {
 	csrf := uuid.NewString()
+
 	tokens, err := controller.jwtService.Sign(subject, sid, csrf)
 	if err != nil {
 		return errors.Wrap(

@@ -117,6 +117,7 @@ func (identity *Identity) Logout(sessionID SessionID) error {
 	}
 
 	session.revoke()
+
 	return nil
 }
 

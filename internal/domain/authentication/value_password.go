@@ -27,6 +27,7 @@ func CreatePassword(password string) (Password, error) {
 	if err := createdPassword.set(password); err != nil {
 		return DefaultPassword(), errors.Wrap(err, ErrInvalidPassword.Error())
 	}
+
 	return createdPassword, nil
 }
 
@@ -50,7 +51,9 @@ func (password *Password) set(input string) error {
 			ErrInvalidPassword.Error(),
 		)
 	}
+
 	password.hashedPassword = string(bytes)
+
 	return nil
 }
 

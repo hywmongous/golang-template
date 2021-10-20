@@ -162,20 +162,6 @@ func RecreateEvent(
 	}
 }
 
-func EmptyEvent() Event {
-	return RecreateEvent(
-		Ident(""),
-		ProducerID(""),
-		SubjectID(""),
-		Version(0),
-		Version(0),
-		Version(0),
-		Title(""),
-		Timestamp(0),
-		nil,
-	)
-}
-
 func nextEventVersion(subject SubjectID, store EventStore) (Version, error) {
 	latestEvent, err := store.LatestEvent(subject)
 	if errors.Is(err, ErrNoEvents) {

@@ -99,7 +99,7 @@ func (stage *Stage) HasSubject(subject SubjectID) bool {
 
 func (stage *Stage) FirstEvent(subject SubjectID) (Event, bool) {
 	if !stage.HasSubject(subject) {
-		return EmptyEvent(), false
+		return Event{}, false
 	}
 
 	firstStage := stage.subjects[subject][0]
@@ -107,12 +107,12 @@ func (stage *Stage) FirstEvent(subject SubjectID) (Event, bool) {
 		return firstStage.events[0], true
 	}
 
-	return EmptyEvent(), false
+	return Event{}, false
 }
 
 func (stage *Stage) LatestEvent(subject SubjectID) (latestEvent Event, found bool) {
 	if !stage.HasSubject(subject) {
-		return EmptyEvent(), false
+		return Event{}, false
 	}
 
 	eventStages := stage.subjects[subject]
@@ -133,7 +133,7 @@ func (stage *Stage) LatestSnapshot(subject SubjectID) (Snapshot, bool) {
 		return *eventStages[len(eventStages)-2].snapshot, true
 	}
 
-	return EmptySnapshot(), false
+	return Snapshot{}, false
 }
 
 func (stage *Stage) AddEvent(event Event) {

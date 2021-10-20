@@ -16,6 +16,8 @@ type Event2 struct {
 	time es.Timestamp
 }
 
+const sleepTime = 100 * time.Millisecond
+
 func main() {
 	mediator := mediator.CreateMediator()
 	topic1 := es.Topic("topic1")
@@ -24,12 +26,15 @@ func main() {
 	// Listeners
 	mediator.ListenTo(topic1, listener1)
 	mediator.Listen(universalListener1)
+
 	// Connectors
 	connector1 := mediator.ChannelTo(topic2)
-	go func() {
+	connector1Func := func() {
 		data := <-connector1
 		log.Println("connector1:", data)
-	}()
+	}
+
+	go connector1Func()
 
 	// Create events
 	event1 := Event1{
@@ -44,7 +49,7 @@ func main() {
 	mediator.Publish(es.SubjectID("me"), event2)
 
 	// We sleep in this example to ensure the channel has received the event data
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(sleepTime)
 }
 
 func listener1(subject es.SubjectID, data es.Data) {

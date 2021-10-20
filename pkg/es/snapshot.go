@@ -70,19 +70,6 @@ func RecreateSnapshot(
 	}
 }
 
-func EmptySnapshot() Snapshot {
-	return RecreateSnapshot(
-		Ident(""),
-		ProducerID(""),
-		SubjectID(""),
-		Version(0),
-		Version(0),
-		Title(""),
-		Timestamp(0),
-		nil,
-	)
-}
-
 func nextSnapshotVersion(subject SubjectID, store EventStore) (Version, error) {
 	latestSnapshot, err := store.LatestSnapshot(subject)
 	if errors.Is(err, ErrNoSnapshots) {

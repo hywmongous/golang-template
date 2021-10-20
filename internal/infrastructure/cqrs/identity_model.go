@@ -24,6 +24,7 @@ func (model *identityModel) ApplyIdentityRegistered(event *authentication.Identi
 	model.id = authentication.IdentityID(event.ID)
 	model.email = authentication.RecreateEmail(event.Email, false)
 	model.password = authentication.RecreatePassword(event.Passwordhash)
+
 	return model
 }
 
@@ -33,6 +34,7 @@ func (model *identityModel) ApplyIdentityLoggedIn(event *authentication.Identity
 		false,
 	)
 	model.sessions = append(model.sessions, session)
+
 	return model
 }
 
@@ -42,6 +44,7 @@ func (model *identityModel) ApplyIdentityLoggedOut(event *authentication.Identit
 		authentication.SessionID(event.SessionID),
 		true,
 	)
+
 	return model
 }
 
@@ -51,5 +54,6 @@ func (model *identityModel) getSessionIndexByID(id authentication.SessionID) int
 			return idx
 		}
 	}
+
 	return -1
 }

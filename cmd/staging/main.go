@@ -6,49 +6,76 @@ import (
 	"github.com/hywmongous/example-service/pkg/es"
 )
 
-var subject = es.SubjectID("Andreas")
+const subject = es.SubjectID("Andreas")
+
+func createEvent(version es.Version) es.Event {
+	return es.Event{
+		Subject: subject,
+		Version: version,
+	}
+}
+
+func createSnapshot(version es.Version) es.Snapshot {
+	return es.Snapshot{
+		Subject: subject,
+		Version: version,
+	}
+}
 
 func main() {
 	log.Println("Staging example")
 
-	stage := es.CreateStage()
+	stage := createStage()
 
-	event1 := es.Event{
-		Version: 1,
-		Subject: subject,
-	}
-	event2 := es.Event{
-		Version: 2,
-		Subject: subject,
-	}
-	event3 := es.Event{
-		Version: 3,
-		Subject: subject,
-	}
-	event4 := es.Event{
-		Version: 4,
-		Subject: subject,
-	}
-	event5 := es.Event{
-		Version: 5,
-		Subject: subject,
-	}
-	event6 := es.Event{
-		Version: 6,
-		Subject: subject,
-	}
-	snapshot1 := es.Snapshot{
-		Subject: subject,
-		Version: 1,
-	}
-	snapshot2 := es.Snapshot{
-		Subject: subject,
-		Version: 2,
-	}
-	snapshot3 := es.Snapshot{
-		Subject: subject,
-		Version: 3,
-	}
+	log.Println("Is empty (after adding)", stage.IsEmpty(subject))
+
+	log.Println("---Stages---")
+
+	stageEvents(stage)
+
+	log.Println("---Subjects---")
+
+	stageSubjects(stage)
+
+	log.Println("Is empty (after clearing)", stage.IsEmpty(subject))
+}
+
+func createStage() es.Stage {
+	stage := es.CreateStage()
+	currEventVersion := 1
+
+	event1 := createEvent(es.Version(currEventVersion))
+	currEventVersion++
+
+	event2 := createEvent(es.Version(currEventVersion))
+
+	currEventVersion++
+
+	event3 := createEvent(es.Version(currEventVersion))
+
+	currEventVersion++
+
+	event4 := createEvent(es.Version(currEventVersion))
+
+	currEventVersion++
+
+	event5 := createEvent(es.Version(currEventVersion))
+
+	currEventVersion++
+
+	event6 := createEvent(es.Version(currEventVersion))
+
+	currSnapshotVersion := 1
+
+	snapshot1 := createSnapshot(es.Version(currSnapshotVersion))
+
+	currSnapshotVersion++
+
+	snapshot2 := createSnapshot(es.Version(currSnapshotVersion))
+
+	currSnapshotVersion++
+
+	snapshot3 := createSnapshot(es.Version(currSnapshotVersion))
 
 	log.Println("Is empty (before adding)", stage.IsEmpty(subject))
 
@@ -65,12 +92,15 @@ func main() {
 	stage.AddEvent(event6)
 	stage.AddSnapshot(snapshot3)
 
-	log.Println("Is empty (after adding)", stage.IsEmpty(subject))
+	return stage
+}
 
-	log.Println("---Stages---")
+func stageEvents(stage es.Stage) {
 	eventStages := stage.EventStages(subject)
+
 	for idx, eventStage := range eventStages {
 		log.Println("Stage", idx)
+
 		for _, event := range eventStage.Events() {
 			log.Println(event)
 		}
@@ -99,9 +129,11 @@ func main() {
 	} else {
 		log.Println("No latest snapshot found")
 	}
+}
 
-	log.Println("---Subjects---")
+func stageSubjects(stage es.Stage) {
 	subjects := stage.Subjects()
+
 	for _, subject := range subjects {
 		log.Println(subject)
 	}
@@ -109,9 +141,12 @@ func main() {
 	stage.Clear(subject)
 
 	log.Println("---Stages (After clearing)---")
+
 	eventStagesAfterClearing := stage.EventStages(subject)
+
 	for idx, eventStage := range eventStagesAfterClearing {
 		log.Println("Stage", idx)
+
 		for _, event := range eventStage.Events() {
 			log.Println(event)
 		}
@@ -122,6 +157,4 @@ func main() {
 			log.Println("No snapshot")
 		}
 	}
-
-	log.Println("Is empty (after clearing)", stage.IsEmpty(subject))
 }
