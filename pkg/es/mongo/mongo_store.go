@@ -83,7 +83,8 @@ var (
 	ErrCustomSnapshotDecoder                     = errors.New("custom snapshot decoder could not decode snapshot")
 	ErrSnapshotFailedJSONMarshalling             = errors.New("event could not be json marshalled")
 	ErrSnapshotFailedJSONUnmarshalling           = errors.New("event could not be json unmarshalled")
-	ErrMongoDocumentDeletion                     = errors.New("deleting documents failed")
+	ErrMongoDocumentDeletionFailed               = errors.New("deleting documents failed")
+	ErrMongoDocumentInsertionFailed              = errors.New("inserting document failed")
 	ErrMongoClientCouldNotBeCreated              = errors.New("creating new mongo client failed")
 	ErrMongoClientCouldNotConnect                = errors.New("mongo client could not connect")
 	ErrMongoClientCouldNotCreateSession          = errors.New("mongo client could not create session")
@@ -235,7 +236,7 @@ func (store *EventStore) insertManyDocuments(documents []interface{}, collection
 			store.addToInsertionHistory(collectionName, results.InsertedIDs...)
 		}
 
-		return err
+		return errors.Wrap(err, ErrMongoDocumentInsertionFailed.Error())
 	}
 
 	return store.connect(action, collectionName)
@@ -247,8 +248,10 @@ func (store *EventStore) insertDocument(document interface{}, collectionName str
 		if err == nil {
 			store.addToInsertionHistory(collectionName, result.InsertedID)
 		}
-		return err
+
+		return errors.Wrap(err, ErrMongoDocumentInsertionFailed.Error())
 	}
+
 	return store.connect(action, collectionName)
 }
 
@@ -260,7 +263,7 @@ func (store *EventStore) deleteManyDocument(
 	action := func(ctx context.Context, collection *mongo.Collection) error {
 		_, err := collection.DeleteMany(ctx, filter, options...)
 
-		return errors.Wrap(err, ErrMongoDocumentDeletion.Error())
+		return errors.Wrap(err, ErrMongoDocumentDeletionFailed.Error())
 	}
 	return store.connect(action, collectionName)
 }

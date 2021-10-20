@@ -2,7 +2,9 @@ package kafka
 
 import (
 	"context"
+	"time"
 
+	"github.com/cockroachdb/errors"
 	"github.com/hywmongous/example-service/pkg/es"
 	"github.com/segmentio/kafka-go"
 )
@@ -16,9 +18,36 @@ type KafkaStream struct {
 }
 
 const (
+	defaultPartition              = 0
+	defaultQueueCapacity          = 100
+	defaultMinBytes               = 1
+	defaultMaxBytes               = 1 << 20 // 1MB
+	defaultMaxWait                = 10 * time.Second
+	defaultReadLagInterval        = 1 * time.Second
+	defaultHeartbeatInterval      = 3 * time.Second
+	defaultCommitInterval         = 0 // Synchronous commits
+	defaultPartitionWatchInterval = 5 * time.Second
+	defaultWatchPartitionChanges  = false
+	defaultSessionTimeout         = 30 * time.Second
+	defaultRebalanceTimeout       = 30 * time.Second
+	defaultJoinGroupBackoff       = 30 * time.Second
+	defaultRetentionTime          = 30 * time.Hour
+	defaultStartOffset            = kafka.FirstOffset
+	defaultReadBackoffMin         = 100 * time.Millisecond
+	defaultReadBackoffMax         = 1 * time.Second
+	defaultIsolationLevel         = kafka.ReadCommitted
+	defaultMaxAttempts            = 3
+
 	broker = "ia_kafka:9092"
 	group  = "ia"
 )
+
+var (
+	defaultLogger      kafka.Logger = nil
+	defaultErrorLogger kafka.Logger = nil
+)
+
+var ErrInvalidKafkaReaderConfig = errors.New("kafka reader config is invalid")
 
 func CreateKafkaStream(topic es.Topic) *KafkaStream {
 	return &KafkaStream{
@@ -66,7 +95,7 @@ func (stream *KafkaStream) read(ctx context.Context, config kafka.ReaderConfig, 
 		if err != nil {
 			errors <- err
 		}
-		event, err := es.Unmarshal(msg.Value)
+		event, err := es.UnmarshalEvent(msg.Value)
 		if err != nil {
 			errors <- err
 		}
@@ -76,9 +105,40 @@ func (stream *KafkaStream) read(ctx context.Context, config kafka.ReaderConfig, 
 
 func (stream *KafkaStream) Subscribe(topic es.Topic, ctx context.Context) (chan es.Event, chan error) {
 	config := kafka.ReaderConfig{
-		Brokers: []string{broker},
-		Topic:   string(topic),
-		GroupID: group,
+		Brokers:         []string{broker},
+		GroupID:         group,
+		GroupTopics:     nil, // Defined through "Topic"
+		Topic:           string(topic),
+		Partition:       defaultPartition, // the same as undefined
+		Dialer:          nil,
+		QueueCapacity:   defaultQueueCapacity,
+		MinBytes:        defaultMinBytes,
+		MaxBytes:        defaultMaxBytes, // 1 MB,
+		MaxWait:         defaultMaxWait,
+		ReadLagInterval: defaultReadLagInterval,
+		GroupBalancers: []kafka.GroupBalancer{
+			kafka.RangeGroupBalancer{},
+			kafka.RoundRobinGroupBalancer{},
+		},
+		HeartbeatInterval:      defaultHeartbeatInterval,
+		CommitInterval:         defaultCommitInterval,
+		PartitionWatchInterval: defaultPartitionWatchInterval,
+		WatchPartitionChanges:  defaultWatchPartitionChanges,
+		SessionTimeout:         defaultSessionTimeout,
+		RebalanceTimeout:       defaultRebalanceTimeout,
+		JoinGroupBackoff:       defaultJoinGroupBackoff,
+		RetentionTime:          defaultRetentionTime,
+		StartOffset:            defaultStartOffset,
+		ReadBackoffMin:         defaultReadBackoffMin,
+		ReadBackoffMax:         defaultReadBackoffMax,
+		Logger:                 defaultLogger,
+		ErrorLogger:            defaultErrorLogger,
+		IsolationLevel:         defaultIsolationLevel,
+		MaxAttempts:            defaultMaxAttempts,
+	}
+
+	if err := config.Validate(); err != nil {
+		panic(errors.Wrap(err, ErrInvalidKafkaReaderConfig.Error()))
 	}
 
 	events := make(chan es.Event)
