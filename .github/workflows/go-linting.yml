@@ -18,5 +18,5 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           Version: latest
-          args: golangci-lint run --enable-all --verbose --sort-results --tests --fix
-            --disable maligned --disable interfacer --disable scopelint --disable golint --disable exhaustivestruct ./...
+          args: golangci-lint run --enable-all --verbose --sort-results --tests --fixy
+            --disable maligned --disable interfacer --disable scopelint --disable golint --disable exhaustivestruct
