@@ -18,7 +18,7 @@ type (
 func CreateEventStream(events []Event) chan Event {
 	channel := make(chan Event, len(events))
 	for _, event := range events {
-		// We dont check for "ok" because we wont close it.
+		// We dont check for "ok" because we wont close it
 		channel <- event
 	}
 
