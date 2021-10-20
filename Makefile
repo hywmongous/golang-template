@@ -45,7 +45,7 @@ help:
 lint: misspell staticcheck vet gofmt
 # The disabled linters are deprecated
 	golangci-lint run --enable-all --verbose --sort-results --tests --fix \
-		--disable maligned --disable interfacer --disable scopelint --disable golint ./...
+		--disable maligned --disable interfacer --disable scopelint --disable golint --disable exhaustivestruct ./...
 
 misspell:
 	misspell -locale UK .

@@ -78,6 +78,7 @@ func JWTServiceFactory() JWTService {
 func createAccessToken(subject string) Token {
 	// Access tokens can be used immediately and expires after 30 minutes
 	now := time.Now()
+
 	return Token{
 		Subject:         subject,
 		ID:              uuid.NewString(),
@@ -139,6 +140,7 @@ func (jwtService JWTService) Sign(
 		createClaims(createAccessToken(subject), sid, csrf),
 	)
 	accessTokenString, err := accessToken.SignedString(jwtService.privateKey)
+
 	if err != nil {
 		return TokenPair{}, errors.Wrap(err, ErrSigningToken.Error())
 	}
@@ -148,6 +150,7 @@ func (jwtService JWTService) Sign(
 		createClaims(createRefreshToken(subject), sid, csrf),
 	)
 	refreshTokenString, err := refreshToken.SignedString(jwtService.privateKey)
+
 	if err != nil {
 		return TokenPair{}, errors.Wrap(err, ErrSigningToken.Error())
 	}
