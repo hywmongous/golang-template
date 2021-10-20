@@ -18,8 +18,12 @@ type KafkaStream struct {
 }
 
 const (
+	// Read/write shared kafka conf.
+	defaultMaxAttempts   = 8
+	defaultQueueCapacity = 100
+
+	// Read kafka conf.
 	defaultPartition              = 0
-	defaultQueueCapacity          = 100
 	defaultMinBytes               = 1
 	defaultMaxBytes               = 1 << 20 // 1MB
 	defaultMaxWait                = 10 * time.Second
@@ -36,15 +40,30 @@ const (
 	defaultReadBackoffMin         = 100 * time.Millisecond
 	defaultReadBackoffMax         = 1 * time.Second
 	defaultIsolationLevel         = kafka.ReadCommitted
-	defaultMaxAttempts            = 3
 
-	broker = "ia_kafka:9092"
-	group  = "ia"
+	// Write kafka conf.
+	defaultBatchSize         = 100
+	defaultBatchBytes        = 1 << 20
+	defaultBatchTimeout      = 1 * time.Second
+	defaultReadTimeout       = 10 * time.Second
+	defaultWriteTimeout      = 10 * time.Second
+	defaultRebalanceInterval = 10 * time.Second // Deprecated
+	defaultIdleConnTimeout   = 10 * time.Second // Deprecated
+	defaultRequiredAcks      = -1               // Wait for all replicas
+	defaultAsync             = false            // By using false errors are not ignored
+	broker                   = "ia_kafka:9092"
+	group                    = "ia"
 )
 
 var (
+	// Read kafka conf.
 	defaultLogger      kafka.Logger = nil
 	defaultErrorLogger kafka.Logger = nil
+
+	// Write kafka conf.
+	defaultBalancer                                = &kafka.RoundRobin{}
+	defaultDialer                                  = kafka.DefaultDialer
+	defaultCompressionCodec kafka.CompressionCodec = nil
 )
 
 var ErrInvalidKafkaReaderConfig = errors.New("kafka reader config is invalid")
@@ -78,8 +97,24 @@ func (stream *KafkaStream) write(ctx context.Context, config kafka.WriterConfig,
 
 func (stream *KafkaStream) Publish(events []es.Event) error {
 	config := kafka.WriterConfig{
-		Brokers: []string{broker},
-		Topic:   string(stream.topic),
+		Brokers:           []string{broker},
+		Topic:             string(stream.topic),
+		Dialer:            defaultDialer,
+		Balancer:          defaultBalancer,
+		MaxAttempts:       defaultMaxAttempts,
+		QueueCapacity:     defaultQueueCapacity,
+		BatchSize:         defaultBatchSize,
+		BatchBytes:        defaultBatchBytes,
+		BatchTimeout:      defaultBatchTimeout,
+		ReadTimeout:       defaultReadTimeout,
+		WriteTimeout:      defaultWriteTimeout,
+		RebalanceInterval: defaultRebalanceInterval,
+		IdleConnTimeout:   defaultIdleConnTimeout,
+		RequiredAcks:      defaultRequiredAcks,
+		Async:             defaultAsync,
+		CompressionCodec:  defaultCompressionCodec,
+		Logger:            defaultLogger,
+		ErrorLogger:       defaultErrorLogger,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -87,14 +122,21 @@ func (stream *KafkaStream) Publish(events []es.Event) error {
 	return stream.write(ctx, config, events)
 }
 
-func (stream *KafkaStream) read(ctx context.Context, config kafka.ReaderConfig, events chan es.Event, errors chan error) {
+func (stream *KafkaStream) read(
+	ctx context.Context,
+	config kafka.ReaderConfig,
+	events chan es.Event,
+	errors chan error,
+) {
 	reader := kafka.NewReader(config)
-	defer reader.Close() // TODO: What if closing the reader fails?
+	defer reader.Close() // What if closing the reader fails?
+
 	for {
 		msg, err := reader.ReadMessage(ctx)
 		if err != nil {
 			errors <- err
 		}
+
 		event, err := es.UnmarshalEvent(msg.Value)
 		if err != nil {
 			errors <- err
@@ -103,7 +145,7 @@ func (stream *KafkaStream) read(ctx context.Context, config kafka.ReaderConfig, 
 	}
 }
 
-func (stream *KafkaStream) Subscribe(topic es.Topic, ctx context.Context) (chan es.Event, chan error) {
+func (stream *KafkaStream) Subscribe(ctx context.Context, topic es.Topic) (chan es.Event, chan error) {
 	config := kafka.ReaderConfig{
 		Brokers:         []string{broker},
 		GroupID:         group,

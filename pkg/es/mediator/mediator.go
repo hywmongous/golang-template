@@ -54,12 +54,14 @@ func (mediator *Mediator) ChannelTo(topic es.Topic) Connector {
 	}
 
 	mediator.connectors[topic] = append(mediator.connectors[topic], channel)
+
 	return channel
 }
 
 func (mediator *Mediator) Channel() Connector {
 	channel := createConnector()
 	mediator.universalConnectors = append(mediator.universalConnectors, channel)
+
 	return channel
 }
 

@@ -7,7 +7,7 @@ import (
 
 type EventStream interface {
 	Publish(events []Event) error
-	Subscribe(topic Topic, ctx context.Context) (chan Event, chan error)
+	Subscribe(ctx context.Context, topic Topic) (chan Event, chan error)
 }
 
 type (

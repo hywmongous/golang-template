@@ -14,6 +14,7 @@ var (
 
 func (event Event) Marshall() ([]byte, error) {
 	data, err := json.Marshal(event)
+
 	return data, errors.Wrap(err, ErrDataCouldNotBeMarshalledAsEvent.Error())
 }
 

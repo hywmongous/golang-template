@@ -194,6 +194,7 @@ func (store *EventStore) findOneEvent(filter interface{}, options ...*options.Fi
 
 func (store *EventStore) findAllEvents(filter interface{}, options ...*options.FindOptions) ([]es.Event, error) {
 	var events []es.Event
+
 	action := func(ctx context.Context, collection *mongo.Collection) error {
 		cursor, err := collection.Find(ctx, filter, options...)
 		if err != nil {
@@ -265,6 +266,7 @@ func (store *EventStore) deleteManyDocument(
 
 		return errors.Wrap(err, ErrMongoDocumentDeletionFailed.Error())
 	}
+
 	return store.connect(action, collectionName)
 }
 
@@ -293,6 +295,7 @@ func (store *EventStore) rollbackInsertions() error {
 			return errors.Wrap(err, "rollback deletion of documents failed")
 		}
 	}
+
 	return nil
 }
 
@@ -350,6 +353,7 @@ func marshallEventDocuments(events []es.Event) []interface{} {
 	for idx, event := range events {
 		documents[idx] = marshallEventDocument(event)
 	}
+
 	return documents
 }
 

@@ -64,7 +64,7 @@ func main() {
 
 	log.Print("Event subscription")
 	ctx := context.Background()
-	subscriptions, errs := stream.Subscribe(topic, ctx)
+	subscriptions, errs := stream.Subscribe(ctx, topic)
 	go func() {
 		log.Println("Subscription")
 		for {

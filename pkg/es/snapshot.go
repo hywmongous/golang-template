@@ -81,5 +81,6 @@ func nextSnapshotVersion(subject SubjectID, store EventStore) (Version, error) {
 	} else if err != nil {
 		return InitialSnapshotVersion, errors.Wrap(err, "could not retrieve the latests snapshot")
 	}
+
 	return latestSnapshot.Version + 1, nil
 }
