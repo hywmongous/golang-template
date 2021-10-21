@@ -8,7 +8,7 @@ export const TLD = ""; // eg. '.com'
 export const BASE_URL = `${PROTOCOL}://${SUBDOMAIN}${ROOT_DOMAIN}${TLD}:${PORT}`;
 export function buildUrl(basic, path) {
     if (path === undefined) {
-        path = ""
+        path = "";
     }
     return encodeURI(
         `${PROTOCOL}://${basic}@${SUBDOMAIN}${ROOT_DOMAIN}${TLD}:${PORT}${path}`
