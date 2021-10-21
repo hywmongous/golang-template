@@ -13,27 +13,27 @@ networks:
         - subnet: 10.11.0.0/16
 
 services:
-  ia_nginx:
-    image: nginx:latest
-    restart: always
-    depends_on:
-      - ia_api
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/mime.types:/etc/nginx/mime.types
-      - ./nginx/proxy.conf:/etc/nginx/proxy.conf
-      - ./nginx/fastcgi.conf:/etc/nginx/fastcgi.conf
-      #- ./nginx/:/etc/nginx/error_log.log
-      - ./nginx/logs:/etc/nginx/logs
-      #- ia_nginx_letsencrypt:/etc/nginx/letsencrypt/
-      - ia_nginx_cache:/etc/nginx/cache
-    ports:
-      - 80:80
-      - 443:443
-    networks:
-      - service_net
-    env_file:
-      - ./nginx/environment.env
+#  ia_nginx:
+#    image: nginx:latest
+#    restart: always
+#    depends_on:
+#      - ia_api
+#    volumes:
+#      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+#      - ./nginx/mime.types:/etc/nginx/mime.types
+#      - ./nginx/proxy.conf:/etc/nginx/proxy.conf
+#      - ./nginx/fastcgi.conf:/etc/nginx/fastcgi.conf
+#      #- ./nginx/:/etc/nginx/error_log.log
+#      - ./nginx/logs:/etc/nginx/logs
+#      #- ia_nginx_letsencrypt:/etc/nginx/letsencrypt/
+#      - ia_nginx_cache:/etc/nginx/cache
+#    ports:
+#      - 80:80
+#      - 443:443
+#    networks:
+#      - service_net
+#    env_file:
+#      - ./nginx/environment.env
 
   ia_api:
     image: example-service:latest
@@ -45,6 +45,9 @@ services:
       - service_net
     env_file:
       - ./api/environment.env
+    ports:
+      - 80:80
+      - 443:443
 
   ia_zookeeper:
     image: wurstmeister/zookeeper:latest
