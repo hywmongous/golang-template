@@ -23,8 +23,8 @@ features:
 	$(eval type=$(word 1, $(argv))) \
 	$(eval feature=$(word 2, $(argv))) \
 
-	$(if $(type),,
-		k6 run ./$(feature)_all.js
-	,
-		k6 run ./$(feature)/$(type)_test.js
+	$(if $(feature), \
+		k6 run ./$(type)/$(feature)_test.js \
+	, \
+		k6 run ./$(type)_all.js \
 	)

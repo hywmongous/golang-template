@@ -46,8 +46,7 @@ services:
     env_file:
       - ./api/environment.env
     ports:
-      - 80:80
-      - 443:443
+      - 80:5000
 
   ia_zookeeper:
     image: wurstmeister/zookeeper:latest
