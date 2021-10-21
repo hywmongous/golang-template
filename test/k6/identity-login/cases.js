@@ -19,8 +19,7 @@ export function successful_login(
     username = "some1@email",
     password = "P@ssw0rd"
 ) {
-    const base = buildUrl(`${username}:${password}`);
-    const url = `${base}/api/v1/authentication/login`;
+    const url = buildUrl(`${username}:${password}`, "/api/v1/authentication/login");
 
     const login_response = http.post(url);
 

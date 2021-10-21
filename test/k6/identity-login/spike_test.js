@@ -16,6 +16,7 @@ export const options = {
         { duration: "10s", target: 0 },
     ],
 };
+
 export default () => {
     runCaseWeighted(weightedCases);
 };

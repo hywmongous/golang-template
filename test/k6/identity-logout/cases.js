@@ -4,9 +4,6 @@ import { successful_login } from "../identity-login/cases.js";
 import {
     BASE_URL,
     CSRF_HEADER_KEY,
-    JWT_ACCESS_TOKEN_COOKIE_NAME,
-    JWT_REFRESH_TOKEN_COOKIE_NAME,
-    buildUrl,
     initCases,
 } from "../index.js";
 
@@ -16,6 +13,9 @@ export function successful_logout(
 ) {
     const login_response = successful_login(username, password);
 
+    // Mimics a user session before logging out
+    sleep(0.1)
+
     const logout_url = `${BASE_URL}/api/v1/authentication/logout`;
     const logout_body = null;
     const logout_headers = {
@@ -23,7 +23,7 @@ export function successful_logout(
     };
 
     const logout_response = http.post(logout_url, logout_body, {
-        headers: logout_headers,
+        headers: Authorization,
     });
 
     check(logout_response, {
