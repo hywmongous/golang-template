@@ -77,10 +77,11 @@ services:
       - ./mongodb/environment.env
     volumes:
       - ia_mongo_data:/data/db
-      - ./mongodb/users.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+#      - ./mongodb/users.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     ports:
       - 27017:27017
     networks:
       - service_net
     logging:
       driver: "none"
+
