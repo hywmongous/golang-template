@@ -87,6 +87,11 @@ protoc:
 # Test targets
 	$(if $(filter $(firstword $(argv)),$(TESTMETHODS)), \
 		$(eval test=$(word 1, $(argv))) \
+		$(eval targetspec=$(word 3, $(argv))) \
+
+		$(if $(targetspec), \
+			$(eval target=$(target)_$(targetspec)) \
+		)
 
 		$(info Test: $(test)) \
 		$(info Target: $(target)) \
