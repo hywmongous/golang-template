@@ -59,4 +59,3 @@ services:
       - service_net
     logging:
       driver: "none"
-
