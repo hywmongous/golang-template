@@ -33,7 +33,7 @@ export function getRandomEmail() {
 }
 
 export function getRandomPassword() {
-    return randomString(15)
+    return randomString(15);
 }
 
 export function getWeightedElement(weightedArray) {

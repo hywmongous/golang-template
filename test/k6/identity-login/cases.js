@@ -9,29 +9,29 @@ import {
     buildUrl,
     initCases,
     getRandomEmail,
-    getRandomPassword
+    getRandomPassword,
 } from "../index.js";
 
 export function successful_login(
     username = getRandomEmail(),
     password = getRandomPassword()
 ) {
-    const regitration_response = successful_registration(username, password)
+    const regitration_response = successful_registration(username, password);
 
-    console.log("Login")
-    console.log(username)
-    console.log(password)
-    console.log(regitration_response.status)
+    console.log("Login");
+    console.log(username);
+    console.log(password);
+    console.log(regitration_response.status);
 
     // Mimics a user activating or doing something with the new identity
-    sleep(0.1)
+    sleep(0.1);
 
     const url = buildUrl(
         `${username}:${password}`,
         "/api/v1/authentication/login"
     );
 
-    console.log(url)
+    console.log(url);
 
     const login_response = http.post(url);
 

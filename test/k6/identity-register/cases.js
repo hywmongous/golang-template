@@ -5,7 +5,7 @@ import {
     initCases,
     REGISTERED_USERS,
     getRandomEmail,
-    getRandomPassword
+    getRandomPassword,
 } from "../index.js";
 
 export function successful_registration(
@@ -17,9 +17,9 @@ export function successful_registration(
         "/api/v1/identities"
     );
 
-    console.log("Registration")
-    console.log(username)
-    console.log(password)
+    console.log("Registration");
+    console.log(username);
+    console.log(password);
 
     const registration_response = http.post(registration_url);
 

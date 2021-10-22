@@ -6,7 +6,7 @@ import {
     CSRF_HEADER_KEY,
     initCases,
     getRandomEmail,
-    getRandomPassword
+    getRandomPassword,
 } from "../index.js";
 
 export function successful_logout(
@@ -25,7 +25,7 @@ export function successful_logout(
     };
 
     const logout_response = http.post(logout_url, logout_body, {
-        headers: logout_headers
+        headers: logout_headers,
     });
 
     check(logout_response, {
