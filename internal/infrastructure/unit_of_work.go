@@ -3,7 +3,6 @@ package infrastructure
 import (
 	"github.com/cockroachdb/errors"
 	"github.com/hywmongous/example-service/internal/domain/authentication"
-	"github.com/hywmongous/example-service/internal/infrastructure/cqrs"
 	"github.com/hywmongous/example-service/pkg/es"
 	"github.com/hywmongous/example-service/pkg/es/kafka"
 	"github.com/hywmongous/example-service/pkg/es/mediator"
@@ -40,9 +39,9 @@ func KafkaStreamFactory() es.EventStream {
 func UnitOfWorkFactory(
 	store es.EventStore,
 	stream es.EventStream,
+	mediator *mediator.Mediator,
+	identityRepository authentication.Repository,
 ) UnitOfWork {
-	mediator := mediator.Create()
-	identityRepository := cqrs.IdentityRepositoryFactory(store, mediator)
 	uow := UnitOfWork{
 		store:              store,
 		stream:             stream,
