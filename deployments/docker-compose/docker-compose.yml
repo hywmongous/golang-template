@@ -12,7 +12,7 @@ networks:
 
 services:
   ia_api:
-    image: example-service:latest
+    image: ghcr.io/hywmongous/golang-template
     restart: always
     depends_on:
       - ia_mongo
@@ -25,7 +25,7 @@ services:
       - 80:5000
 
   ia_zookeeper:
-    image: wurstmeister/zookeeper:latest
+    image: hub.docker.com/r/wurstmeister/zookeeper
     restart: always
     env_file:
       - ./zookeeper/environment.env
@@ -35,7 +35,7 @@ services:
       driver: "none"
 
   ia_kafka:
-    image: wurstmeister/kafka:latest
+    image: hub.docker.com/r/wurstmeister/kafka
     restart: always
     depends_on:
       - ia_zookeeper
@@ -47,7 +47,7 @@ services:
       driver: "none"
 
   ia_mongo:
-    image: mongo:latest
+    image: hub.docker.com/_/mongo
     restart: always
     env_file:
       - ./mongodb/environment.env
