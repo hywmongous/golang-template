@@ -31,7 +31,9 @@ RUN make golang_build
 WORKDIR /dist
 
 # Copy the go binary executable to the current workdir (./dist)
-RUN cp ../builds/dist/golang/bin/main ./
+#   ".." because we exit the new WORKDIR ("/dist") and then wants
+#   to enter the old one ("/build") and copy the dist created by golang
+RUN cp ../build/dist/golang/main ./
 
 # Stage 2: Executing
 # scratch is a no-op (Does not add a layer) image used to create
