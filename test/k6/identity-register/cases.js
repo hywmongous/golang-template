@@ -5,7 +5,7 @@ import {
     initCases,
     REGISTERED_USERS,
     getRandomEmail,
-    getRandomPassword
+    getRandomPassword,
 } from "../index.js";
 
 export function successful_registration(

@@ -9,7 +9,7 @@ import {
     buildUrl,
     initCases,
     getRandomEmail,
-    getRandomPassword
+    getRandomPassword,
 } from "../index.js";
 
 export function successful_login(
@@ -19,14 +19,14 @@ export function successful_login(
     successful_registration(username, password)
 
     // Mimics a user activating or doing something with the new identity
-    sleep(0.1)
+    sleep(0.1);
 
     const url = buildUrl(
         `${username}:${password}`,
         "/api/v1/authentication/login"
     );
 
-    console.log(url)
+    console.log(url);
 
     const login_response = http.post(url);
 
