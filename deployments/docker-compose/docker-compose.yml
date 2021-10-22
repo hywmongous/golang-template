@@ -23,6 +23,7 @@ services:
       - ./api/environment.env
     ports:
       - 80:5000
+      - 5000:5000
 
   ia_zookeeper:
     image: wurstmeister/zookeeper
