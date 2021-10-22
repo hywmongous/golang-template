@@ -12,7 +12,7 @@ networks:
 
 services:
   ia_api:
-    image: ghcr.io/hywmongous/golang-template:main
+    image: ghcr.io/hywmongous/golang-template:latest
     restart: always
     depends_on:
       - ia_mongo
