@@ -16,12 +16,7 @@ export function successful_login(
     username = getRandomEmail(),
     password = getRandomPassword()
 ) {
-    const regitration_response = successful_registration(username, password)
-
-    console.log("Login")
-    console.log(username)
-    console.log(password)
-    console.log(regitration_response.status)
+    successful_registration(username, password)
 
     // Mimics a user activating or doing something with the new identity
     sleep(0.1)
