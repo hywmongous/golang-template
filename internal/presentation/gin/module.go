@@ -4,11 +4,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hywmongous/example-service/internal/application"
 	"github.com/hywmongous/example-service/internal/infrastructure"
-	"github.com/hywmongous/example-service/internal/infrastructure/cqrs"
 	"github.com/hywmongous/example-service/internal/infrastructure/services"
 	"github.com/hywmongous/example-service/internal/presentation/gin/controllers"
 	"github.com/hywmongous/example-service/internal/presentation/gin/routes"
-	"github.com/hywmongous/example-service/pkg/es/mediator"
 	"go.uber.org/fx"
 )
 
@@ -22,11 +20,10 @@ func Run() {
 
 	infrastructureOptions := fx.Options(
 		fx.Provide(services.JWTServiceFactory),
-		fx.Provide(cqrs.IdentityRepositoryFactory),
-		fx.Provide(mediator.CreateMediator),
+		// fx.Provide(mediator.Create, infrastructure.UnitOfWorkFactory, cqrs.IdentityRepositoryFactory),
+		fx.Provide(infrastructure.UnitOfWorkFactory),
 		fx.Provide(infrastructure.KafkaStreamFactory),
 		fx.Provide(infrastructure.MongoStoreFactory),
-		fx.Provide(infrastructure.UnitOfWorkFactory),
 	)
 
 	controllerOptions := fx.Options(

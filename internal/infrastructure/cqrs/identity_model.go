@@ -11,15 +11,6 @@ type identityModel struct {
 	sessions []authentication.Session
 }
 
-func defaultIdentityModel() identityModel {
-	return identityModel{
-		id:       authentication.IdentityID(""),
-		email:    authentication.RecreateEmail("", false),
-		password: authentication.RecreatePassword(""),
-		sessions: make([]authentication.Session, 0),
-	}
-}
-
 func (model *identityModel) ApplyIdentityRegistered(event *authentication.IdentityRegistered) readModel {
 	model.id = authentication.IdentityID(event.ID)
 	model.email = authentication.RecreateEmail(event.Email, false)

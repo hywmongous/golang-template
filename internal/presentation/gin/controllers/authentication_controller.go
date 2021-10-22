@@ -77,6 +77,7 @@ func (controller AuthenticationController) Logout(context *gin.Context) {
 
 	accessToken, err := context.Cookie(jwtAccessTokenCookieName)
 	if err != nil {
+		log.Println(err)
 		context.String(http.StatusUnauthorized, err.Error())
 
 		return
@@ -84,6 +85,7 @@ func (controller AuthenticationController) Logout(context *gin.Context) {
 
 	claims, err := controller.jwtService.Verify(accessToken, csrf)
 	if err != nil {
+		log.Println(err)
 		context.String(http.StatusUnauthorized, errors.Wrap(err, csrf).Error())
 
 		return
@@ -96,6 +98,7 @@ func (controller AuthenticationController) Logout(context *gin.Context) {
 
 	response, err := controller.registeredUser.Logout(request)
 	if err != nil {
+		log.Println(err)
 		context.String(http.StatusUnauthorized, err.Error())
 
 		return

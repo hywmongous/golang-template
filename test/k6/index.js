@@ -1,4 +1,5 @@
 import { Counter } from "k6/metrics";
+import { randomString } from "https://jslib.k6.io/k6-utils/1.1.0/index.js";
 
 export const PORT = "80";
 export const PROTOCOL = "http";
@@ -21,10 +22,18 @@ export const JWT_REFRESH_TOKEN_COOKIE_NAME = "JWT-REFRESH-TOKEN";
 
 export const REGISTERED_USERS = [];
 
-export function getRandomUser() {
+export function getRandomRegisteredUser() {
     return REGISTERED_USERS[
         Math.floor(Math.random() * REGISTERED_USERS.length)
     ];
+}
+
+export function getRandomEmail() {
+    return `${randomString(15)}@${randomString(5)}.${randomString(5)}`;
+}
+
+export function getRandomPassword() {
+    return randomString(15)
 }
 
 export function getWeightedElement(weightedArray) {

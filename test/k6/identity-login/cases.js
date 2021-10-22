@@ -1,5 +1,6 @@
-import { check } from "k6";
+import { check, sleep } from "k6";
 import http from "k6/http";
+import { successful_registration } from "../identity-register/cases.js";
 import {
     BASE_URL,
     CSRF_HEADER_KEY,
@@ -7,22 +8,30 @@ import {
     JWT_REFRESH_TOKEN_COOKIE_NAME,
     buildUrl,
     initCases,
-    getRandomUser,
+    getRandomEmail,
+    getRandomPassword
 } from "../index.js";
 
-export function random_successful_login() {
-    const user = getRandomUser();
-    return successful_login(user.username, user.password);
-}
-
 export function successful_login(
-    username = "some1@email",
-    password = "P@ssw0rd"
+    username = getRandomEmail(),
+    password = getRandomPassword()
 ) {
+    const regitration_response = successful_registration(username, password)
+
+    console.log("Login")
+    console.log(username)
+    console.log(password)
+    console.log(regitration_response.status)
+
+    // Mimics a user activating or doing something with the new identity
+    sleep(0.1)
+
     const url = buildUrl(
         `${username}:${password}`,
         "/api/v1/authentication/login"
     );
+
+    console.log(url)
 
     const login_response = http.post(url);
 
@@ -86,7 +95,5 @@ export function missing_credentials_login() {
 }
 
 export const weightedCases = initCases([
-    { weight: 85, case: random_successful_login },
-    { weight: 10, case: invalid_credentials_login },
-    { weight: 5, case: missing_credentials_login },
+    { weight: 85, case: successful_login },
 ]);

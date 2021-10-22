@@ -1,11 +1,17 @@
 import { check, sleep } from "k6";
 import http from "k6/http";
 import { successful_login } from "../identity-login/cases.js";
-import { BASE_URL, CSRF_HEADER_KEY, initCases } from "../index.js";
+import {
+    BASE_URL,
+    CSRF_HEADER_KEY,
+    initCases,
+    getRandomEmail,
+    getRandomPassword
+} from "../index.js";
 
 export function successful_logout(
-    username = "some1@email",
-    password = "P@ssw0rd"
+    username = getRandomEmail(),
+    password = getRandomPassword()
 ) {
     const login_response = successful_login(username, password);
 
@@ -19,7 +25,7 @@ export function successful_logout(
     };
 
     const logout_response = http.post(logout_url, logout_body, {
-        headers: Authorization,
+        headers: logout_headers
     });
 
     check(logout_response, {

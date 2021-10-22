@@ -19,7 +19,7 @@ type Event2 struct {
 const sleepTime = 100 * time.Millisecond
 
 func main() {
-	mediator := mediator.CreateMediator()
+	mediator := mediator.Create()
 	topic1 := es.Topic("topic1")
 	topic2 := es.Topic("topic2")
 

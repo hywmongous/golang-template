@@ -21,8 +21,8 @@ type Mediator struct {
 	universalReceivers  []Subscription
 }
 
-func CreateMediator() Mediator {
-	return Mediator{
+func Create() *Mediator {
+	return &Mediator{
 		connectors:          make(map[es.Topic][]Connector),
 		universalConnectors: make([]Connector, 0),
 		receivers:           make(map[es.Topic][]Subscription),

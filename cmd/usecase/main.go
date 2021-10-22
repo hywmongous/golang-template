@@ -41,7 +41,7 @@ func main() {
 
 	// Create actor
 	actor := &UnregisteredUser{
-		mediator: mediator.CreateMediator(),
+		mediator: mediator.Create(),
 	}
 
 	// Do "Register Identity" usecase by the actor

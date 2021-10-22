@@ -1,23 +1,25 @@
 import { check } from "k6";
-import { randomString } from "https://jslib.k6.io/k6-utils/1.1.0/index.js";
 import http from "k6/http";
-import { buildUrl, initCases, REGISTERED_USERS } from "../index.js";
-
-export function successful_random_registration() {
-    return successful_registration(
-        `${randomString(15)}@${randomString(5)}.${randomString(5)}`,
-        randomString(15)
-    );
-}
+import {
+    buildUrl,
+    initCases,
+    REGISTERED_USERS,
+    getRandomEmail,
+    getRandomPassword
+} from "../index.js";
 
 export function successful_registration(
-    username = "some1@email",
-    password = "Passw0rd"
+    username = getRandomEmail(),
+    password = getRandomPassword()
 ) {
     const registration_url = buildUrl(
         `${username}:${password}`,
         "/api/v1/identities"
     );
+
+    console.log("Registration")
+    console.log(username)
+    console.log(password)
 
     const registration_response = http.post(registration_url);
 
@@ -38,5 +40,5 @@ export function successful_registration(
 }
 
 export const weightedCases = initCases([
-    { weight: 100, case: successful_random_registration },
+    { weight: 100, case: successful_registration },
 ]);

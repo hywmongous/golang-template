@@ -29,6 +29,7 @@ func (user UnregisteredUser) Register(request *RegisterIdentityRequest) (*Regist
 	identity, err := authentication.Register(
 		request.Email,
 		request.Password,
+		user.uow.Mediator(),
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrRegistrationFailed.Error())

@@ -9,7 +9,7 @@ import (
 
 type IdentityRepository struct {
 	store    es.EventStore
-	mediator mediator.Mediator
+	mediator *mediator.Mediator
 }
 
 var (
@@ -20,7 +20,7 @@ var (
 
 func IdentityRepositoryFactory(
 	store es.EventStore,
-	mediator mediator.Mediator,
+	mediator *mediator.Mediator,
 ) authentication.Repository {
 	return IdentityRepository{
 		store:    store,
@@ -34,7 +34,7 @@ func (repository IdentityRepository) FindIdentityByEmail(email string) (authenti
 		return authentication.Identity{}, errors.Wrap(err, ErrCouldNotFindEntity.Error())
 	}
 
-	model := defaultIdentityModel()
+	model := identityModel{}
 	if err = visitEvents(events, &model); err != nil {
 		return authentication.Identity{}, errors.Wrap(err, ErrCouldNotReconstructEntity.Error())
 	}

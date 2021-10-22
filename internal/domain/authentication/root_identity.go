@@ -19,7 +19,7 @@ type (
 		email    Email
 		password Password
 		sessions []Session
-		mediator mediator.Mediator
+		mediator *mediator.Mediator
 	}
 )
 
@@ -40,7 +40,7 @@ func RecreateIdentity(
 	email Email,
 	password Password,
 	sessions []Session,
-	mediator mediator.Mediator,
+	mediator *mediator.Mediator,
 ) Identity {
 	return Identity{
 		id:       id,
@@ -54,6 +54,7 @@ func RecreateIdentity(
 func Register(
 	emailAddress string,
 	plainTextPassword string,
+	mediator *mediator.Mediator,
 ) (Identity, error) {
 	email, err := CreateEmail(emailAddress)
 	if err != nil {
@@ -70,6 +71,7 @@ func Register(
 		email:    email,
 		password: password,
 		sessions: make([]Session, 0),
+		mediator: mediator,
 	}
 
 	identity.publishEvent(&IdentityRegistered{
@@ -117,6 +119,10 @@ func (identity *Identity) Logout(sessionID SessionID) error {
 	}
 
 	session.revoke()
+
+	identity.publishEvent(&IdentityLoggedOut{
+		SessionID: string(sessionID),
+	})
 
 	return nil
 }
