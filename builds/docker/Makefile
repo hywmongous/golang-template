@@ -5,7 +5,7 @@ HOSTPORT=5000
 CONTAINERPORT=5000
 PORTMAPPING=$(HOSTPORT):$(CONTAINERPORT)
 
-TAG=example-service:latest
+TAG=ghcr.io/hywmongous/golang-template:latest
 DOCKER=docker
 
 .PHONY:
