@@ -30,6 +30,6 @@ func (routes SessionRoutes) Setup() {
 	group.PATCH("/identities/:aid/sessions", routes.controller.UseAll)
 	// GET since we read a single session for an account
 	group.GET("/identities/:aid/sessions/:sid", routes.controller.Get)
-	// PATCH since we partially updates the session by invalidating it
+	// PATCH since we partially updates the session by invalidating it.
 	group.PATCH("/identities/:aid/sessions/:sid", routes.controller.Use)
 }

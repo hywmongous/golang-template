@@ -25,7 +25,7 @@ services:
       - 80:5000
 
   ia_zookeeper:
-    image: wurstmeister/zookeeper
+    image: wurstmeister/zookeeper:latest
     restart: always
     env_file:
       - ./zookeeper/environment.env
@@ -35,7 +35,7 @@ services:
       driver: "none"
 
   ia_kafka:
-    image: wurstmeister/kafka
+    image: wurstmeister/kafka:latest
     restart: always
     depends_on:
       - ia_zookeeper
@@ -47,7 +47,7 @@ services:
       driver: "none"
 
   ia_mongo:
-    image: mongo
+    image: mongo:latest
     restart: always
     env_file:
       - ./mongodb/environment.env
