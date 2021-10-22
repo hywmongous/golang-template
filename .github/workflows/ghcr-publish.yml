@@ -2,6 +2,10 @@
 name: Docker push
 
 on:
+  push:
+    paths:
+      - "**.go"
+      - "./builds/**"
   release:
     types: [published]
   workflow_dispatch:
@@ -58,7 +62,7 @@ jobs:
           # The context is NOT relative to the Dockerfile location but the repository root
           context: .
           push: ${{ github.event_name != 'pull_request' }}
-          file: ./build/docker/Dockerfile
+          file: ./builds/docker/Dockerfile
           tags: ${{ steps.docker_meta.outputs.tags }}
 
       - name: Snyk Docker
@@ -70,7 +74,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           image: ${{ steps.docker_meta.outputs.tags }}
-          args: --file=./build/docker/Dockerfile
+          args: --file=./builds/docker/Dockerfile
             --severity-threshold=${{ env.SNYK_THRESHOLD }}
 
         # Temp fix
