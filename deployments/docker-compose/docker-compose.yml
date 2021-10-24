@@ -18,8 +18,10 @@ services:
     depends_on:
       - ia_mongo
       - ia_kafka
+      - jaeger
     networks:
       - service_net
+      - tracing
     env_file:
       - ./api/environment.env
     ports:
