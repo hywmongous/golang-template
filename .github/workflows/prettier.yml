@@ -12,3 +12,5 @@ jobs:
       - uses: actions/checkout@v2
       - uses: creyD/prettier_action@v4.0
         name: Prettify
+        with:
+          github_token: ${{ github.token }}
