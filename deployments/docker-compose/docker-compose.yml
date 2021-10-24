@@ -9,6 +9,7 @@ networks:
     ipam:
       config:
         - subnet: 10.11.0.0/16
+  tracing:
 
 services:
   ia_api:
@@ -59,3 +60,11 @@ services:
       - service_net
     logging:
       driver: "none"
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    networks:
+    - tracing
+    ports:
+    - 16686:16686
+    - 14269:14269
