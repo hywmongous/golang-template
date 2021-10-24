@@ -16,7 +16,7 @@ export function successful_login(
     username = getRandomEmail(),
     password = getRandomPassword()
 ) {
-    successful_registration(username, password);
+    successful_registration(username, password)
 
     // Mimics a user activating or doing something with the new identity
     sleep(0.1);
@@ -25,8 +25,6 @@ export function successful_login(
         `${username}:${password}`,
         "/api/v1/authentication/login"
     );
-
-    console.log(url);
 
     const login_response = http.post(url);
 
