@@ -30,7 +30,7 @@ type RegisterIdentityResponse struct {
 type RegisterIdentityUseCase func(request RegisterIdentityRequest) (RegisterIdentityResponse, error)
 
 type UnregisteredUser struct {
-	mediator mediator.Mediator
+	mediator *mediator.Mediator
 }
 
 func main() {
