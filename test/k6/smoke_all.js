@@ -1,6 +1,6 @@
 export { default as identity_login } from "./identity-login/smoke_test.js";
 export { default as identity_logout } from "./identity-logout/smoke_test.js";
-export { default as identity_register } from "./identity-register/smoke_test.js"
+export { default as identity_register } from "./identity-register/smoke_test.js";
 
 const minDuration = 3;
 
@@ -9,7 +9,7 @@ export const options = {
     scenarios: {
         identity_login: createSmokeScenario("identity_login"),
         identity_logout: createSmokeScenario("identity_logout"),
-        identity_register: createSmokeScenario("identity_register")
+        identity_register: createSmokeScenario("identity_register"),
     },
 };
 
