@@ -9,15 +9,8 @@ jobs:
   prettier:
     runs-on: ubuntu-latest
     steps:
-      - name: GitHub token
-        if: env.GH_TOKEN == ''
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: echo "GH_TOKEN=${GITHUB_TOKEN}" >> $GITHUB_ENV
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-          ref: ${{ github.head_ref }}
-          token: ${{ env.GH_TOKEN }}
       - uses: creyD/prettier_action@v4.0
         name: Prettify
+        with:
+          github_token: ${{ github.token }}
