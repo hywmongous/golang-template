@@ -9,11 +9,15 @@ jobs:
   prettier:
     runs-on: ubuntu-latest
     steps:
+      - name: GitHub token
+        if: env.GH_TOKEN == ''
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: echo "GH_TOKEN=${GITHUB_TOKEN}" >> $GITHUB_ENV
       - uses: actions/checkout@v2
         with:
-          # Make sure the actual branch is checked out when running on pull requests
-          ref: ${{ github.head_ref }}
-          # This is important to fetch the changes to the previous commit
           fetch-depth: 0
+          ref: ${{ github.head_ref }}
+          token: ${{ env.GH_TOKEN }}
       - uses: creyD/prettier_action@v4.0
         name: Prettify

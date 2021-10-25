@@ -55,7 +55,7 @@ export function getWeightedElement(weightedArray) {
 export function initCases(cases) {
     for (const elemenet of cases) {
         const prefix = "iterations-";
-        // counter has prefix to ensure they are grouped in the summary
+        // counter has prefix to ensure they are grouped in the summary.
         elemenet.counter = new Counter(`${prefix}${elemenet.case.name}`);
     }
     return cases;
