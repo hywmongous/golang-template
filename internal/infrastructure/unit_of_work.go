@@ -1,8 +1,11 @@
 package infrastructure
 
 import (
+	"context"
+
 	"github.com/cockroachdb/errors"
 	"github.com/hywmongous/example-service/internal/domain/authentication"
+	"github.com/hywmongous/example-service/internal/infrastructure/jaeger"
 	"github.com/hywmongous/example-service/pkg/es"
 	"github.com/hywmongous/example-service/pkg/es/kafka"
 	"github.com/hywmongous/example-service/pkg/es/mediator"
@@ -64,19 +67,31 @@ func (uow *UnitOfWork) receiveEvent(subject es.SubjectID, data es.Data) {
 	}
 }
 
-func (uow *UnitOfWork) Commit() error {
+func (uow *UnitOfWork) Commit(ctx context.Context) error {
+	span, ctx := jaeger.StartSpanFromSpanContext(ctx, "UnitOfWork commit")
+	defer span.Finish()
+
 	events := uow.store.Stage().Events()
 	if len(events) == 0 {
 		return ErrEmptyCommit
 	}
 
-	if err := uow.store.Ship(); err != nil {
-		return errors.Wrap(err, "UnitOfWork store failed shipping the events")
+	if err := uow.shipEvents(ctx); err != nil {
+		return err
 	}
 	// if err := uow.stream.Publish(events); err != nil {
 	// 	return errors.Wrap(err, "UnitOfWork stream failed publishing the events")
 	// }
 	return nil
+}
+
+func (uow *UnitOfWork) shipEvents(ctx context.Context) error {
+	span, ctx := jaeger.StartSpanFromSpanContext(ctx, "UnitOfWork ship")
+	defer span.Finish()
+
+	err := uow.store.Ship(ctx)
+
+	return errors.Wrap(err, "UnitOfWork store failed shipping the events")
 }
 
 func (uow *UnitOfWork) Clear() {

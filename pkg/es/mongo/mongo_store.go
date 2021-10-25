@@ -496,7 +496,7 @@ func (store *EventStore) shipSubject(subject es.SubjectID) error {
 	return nil
 }
 
-func (store *EventStore) Ship() error {
+func (store *EventStore) Ship(ctx context.Context) error {
 	// Clearing the insertion history is not "defered"
 	//   the reason for this is: When an error cocured when
 	//   shipping then it might be rollbacking itself failed.

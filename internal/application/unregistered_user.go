@@ -1,9 +1,12 @@
 package application
 
 import (
+	"context"
+
 	"github.com/cockroachdb/errors"
 	"github.com/hywmongous/example-service/internal/domain/authentication"
 	"github.com/hywmongous/example-service/internal/infrastructure"
+	"github.com/hywmongous/example-service/internal/infrastructure/jaeger"
 )
 
 type UnregisteredUser struct {
@@ -23,7 +26,13 @@ func UnregisteredUserFactory(
 	}
 }
 
-func (user UnregisteredUser) Register(request *RegisterIdentityRequest) (*RegisterIdentityResponse, error) {
+func (user UnregisteredUser) Register(
+	ctx context.Context,
+	request *RegisterIdentityRequest,
+) (*RegisterIdentityResponse, error) {
+	span, ctx := jaeger.StartSpanFromSpanContext(ctx, "Register")
+	defer span.Finish()
+
 	defer user.uow.Clear()
 
 	identity, err := authentication.Register(
@@ -35,7 +44,7 @@ func (user UnregisteredUser) Register(request *RegisterIdentityRequest) (*Regist
 		return nil, errors.Wrap(err, ErrRegistrationFailed.Error())
 	}
 
-	if err = user.uow.Commit(); err != nil {
+	if err = user.uow.Commit(ctx); err != nil {
 		return nil, errors.Wrap(err, ErrRegistrationFailedCommitting.Error())
 	}
 

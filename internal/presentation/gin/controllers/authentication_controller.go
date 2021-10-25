@@ -1,14 +1,16 @@
 package controllers
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/hywmongous/example-service/internal/application"
+	"github.com/hywmongous/example-service/internal/infrastructure/jaeger"
 	"github.com/hywmongous/example-service/internal/infrastructure/services"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/log"
 )
 
 type AuthenticationController struct {
@@ -38,46 +40,61 @@ func AuthenticationControllerFactory(
 }
 
 func (controller AuthenticationController) Login(context *gin.Context) {
+	ctx := context.Request.Context()
+	span := opentracing.SpanFromContext(ctx)
+
 	email, password, ok := context.Request.BasicAuth()
 	if email == "" || password == "" || !ok {
+		jaeger.SetError(span, errors.New("basic auth does not have email and password"))
+		// log.Println("Basic auth does not have email and password")
 		context.Writer.WriteHeader(http.StatusUnauthorized)
 
 		return
 	}
+
+	span.LogFields(log.String("email", email))
 
 	request := &application.LoginIdentityRequest{
 		Email:    email,
 		Password: password,
 	}
 
-	response, err := controller.registeredUser.Login(request)
+	response, err := controller.registeredUser.Login(ctx, request)
 	if err != nil {
-		log.Println("Login endpoint error", err)
+		jaeger.SetError(span, err)
+		// log.Println("Login endpoint error", err)
 		context.Writer.WriteHeader(http.StatusUnauthorized)
 
 		return
 	}
 
 	if err = controller.writeSessionToResponse(context, email, response.SessionID); err != nil {
-		log.Println("Login endpoint error", err)
+		jaeger.SetError(span, err)
+		// log.Println("Login endpoint error", err)
 		context.Writer.WriteHeader(http.StatusUnauthorized)
 
 		return
 	}
 
 	if response == nil {
-		log.Println("Login response was nil")
+		jaeger.SetError(span, err)
+		// log.Println("Login response was nil")
+		context.Writer.WriteHeader(http.StatusUnauthorized)
+
+		return
 	}
 
 	context.JSON(http.StatusOK, response)
 }
 
 func (controller AuthenticationController) Logout(context *gin.Context) {
+	ctx := context.Request.Context()
+	span := opentracing.SpanFromContext(ctx)
 	csrf := context.Request.Header.Get(csrfHeaderKey)
 
 	accessToken, err := context.Cookie(jwtAccessTokenCookieName)
 	if err != nil {
-		log.Println(err)
+		// log.Println(err)
 		context.String(http.StatusUnauthorized, err.Error())
 
 		return
@@ -85,20 +102,22 @@ func (controller AuthenticationController) Logout(context *gin.Context) {
 
 	claims, err := controller.jwtService.Verify(accessToken, csrf)
 	if err != nil {
-		log.Println(err)
+		// log.Println(err)
 		context.String(http.StatusUnauthorized, errors.Wrap(err, csrf).Error())
 
 		return
 	}
+
+	span.LogFields(log.String("subject", claims.Subject))
 
 	request := &application.LogoutIdentityRequest{
 		Email:     claims.Subject,
 		SessionID: claims.SessionID,
 	}
 
-	response, err := controller.registeredUser.Logout(request)
+	response, err := controller.registeredUser.Logout(ctx, request)
 	if err != nil {
-		log.Println(err)
+		// log.Println(err)
 		context.String(http.StatusUnauthorized, err.Error())
 
 		return

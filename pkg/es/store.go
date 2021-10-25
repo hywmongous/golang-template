@@ -1,6 +1,9 @@
 package es
 
-import "errors"
+import (
+	"context"
+	"errors"
+)
 
 /* Goals:
  * Composite keys: The subject is the PK, however
@@ -17,7 +20,7 @@ type EventStore interface {
 	// The same as removing all the events loaded
 	Clear()
 	// Ships the EventData to the Database
-	Ship() error
+	Ship(ctx context.Context) error
 
 	// Creates a new snapshot
 	Snapshot(producer ProducerID, subject SubjectID, data Data) error
