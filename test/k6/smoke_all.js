@@ -1,6 +1,6 @@
 export { default as identity_login } from "./identity-login/smoke_test.js";
 export { default as identity_logout } from "./identity-logout/smoke_test.js";
-export { default as identity_register } from "./identity-register/smoke_test"
+export { default as identity_register } from "./identity-register/smoke_test.js"
 
 const minDuration = 3;
 
