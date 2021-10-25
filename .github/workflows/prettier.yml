@@ -11,6 +11,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          github_token: ${{ github.token }}
+          token: ${{ github.token }}
       - uses: creyD/prettier_action@v4.0
         name: Prettify
