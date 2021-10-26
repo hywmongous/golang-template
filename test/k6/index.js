@@ -1,10 +1,10 @@
 import { Counter } from "k6/metrics";
 import { randomString } from "https://jslib.k6.io/k6-utils/1.1.0/index.js";
 
-export const PORT = "80";
+export const PORT = "5000";
 export const PROTOCOL = "http";
 export const SUBDOMAIN = ""; // eg. 'www.'
-export const ROOT_DOMAIN = "localhost";
+export const ROOT_DOMAIN = "ia_api";
 export const TLD = ""; // eg. '.com'
 export const BASE_URL = `${PROTOCOL}://${SUBDOMAIN}${ROOT_DOMAIN}${TLD}:${PORT}`;
 export function buildUrl(basic, path) {

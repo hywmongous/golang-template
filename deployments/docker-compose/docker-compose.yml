@@ -6,9 +6,6 @@ volumes:
 networks:
   service_net:
     driver: overlay
-    ipam:
-      config:
-        - subnet: 10.11.0.0/16
   tracing:
 
 services:

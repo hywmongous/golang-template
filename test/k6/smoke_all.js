@@ -2,7 +2,7 @@ export { default as identity_login } from "./identity-login/smoke_test.js";
 export { default as identity_logout } from "./identity-logout/smoke_test.js";
 export { default as identity_register } from "./identity-register/smoke_test.js"
 
-const minDuration = 3;
+const minDuration = 300;
 
 export const options = {
     minIterationDuration: `${minDuration}s`,
