@@ -68,6 +68,18 @@ var (
 )
 
 func CreateKafkaStream(topic es.Topic) *Stream {
+	/*conn, err := kafka.Dial("tcp", broker)
+	if err != nil {
+		panic(err)
+	}
+	defer conn.Close()
+
+	conn.CreateTopics(kafka.TopicConfig{
+		Topic:             string(topic),
+		NumPartitions:     1,
+		ReplicationFactor: 3,
+	})*/
+
 	return &Stream{
 		topic: topic,
 	}
