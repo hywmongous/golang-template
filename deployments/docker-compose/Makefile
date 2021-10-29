@@ -13,23 +13,23 @@ help:
 	@echo '  rm                            - Removes the $(STACK) stack'
 
 build:
-	sudo docker-compose build --force-rm --compress --parallel
+	docker-compose build --force-rm --compress --parallel
 
 create: build
-	sudo docker-compose up --force-recreate --build --no-start --always-recreate-deps
+	docker-compose up --force-recreate --build --no-start --always-recreate-deps
 
 up:
-	sudo docker-compose up --build --remove-orphans
+	docker-compose up --build --remove-orphans
 	@echo ''
-	sudo docker ps
+	docker ps
 
 down:
-	sudo docker-compose down --volumes
+	docker-compose down --volumes
 
 deploy:
-	sudo docker stack deploy --compose-file docker-compose.yml ${STACK}
+	docker stack deploy --compose-file docker-compose.yml ${STACK}
 	@echo ''
-	sudo docker ps
+	docker ps
 
 rm:
-	sudo docker stack rm ${STACK}
+	docker stack rm ${STACK}

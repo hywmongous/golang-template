@@ -1,2 +1,2 @@
 #!/bin/sh
-sudo docker login ghcr.io
+docker login ghcr.io

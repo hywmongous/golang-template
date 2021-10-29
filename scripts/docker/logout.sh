@@ -1,2 +1,2 @@
 #!/bin/sh
-sudo docker logout ghcr.io
+docker logout ghcr.io

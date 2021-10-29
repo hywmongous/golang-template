@@ -1,2 +1,2 @@
 #!/bin/sh
-sudo docker kill "$(sudo docker ps -q)"
+docker kill "$(docker ps -q)"

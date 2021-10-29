@@ -22,6 +22,7 @@ WORKFLOWSPATH=$(GITHUBPATH)/workflows
 
 help:
 	@echo 'Project targets:'
+	@echi '  dev                           - Starts and attaches the dev container'
 	@echo '  lint                          - Applies golangci and misspell, staticcheck, vet, and gofmt'
 	@echo '  misspell                      - Applies client9 misspell with UK'
 	@echo '  vet                           - Runs go vet with all checks'
@@ -41,6 +42,11 @@ help:
 	@echo '  "make docker-compose_up"      - Deploy docker-compose'
 	@echo '  "make k6_smoke"               - Runs k6 smoke_all test'
 	@echo '  "make k6_smoke_identity-login"- Runs k6 smoke test for the feature identity-login'
+
+dev:
+	docker build --tag hyw-godevcontainer --file ./.devcontainer/Dockerfile ../
+	docker run --interactive --tty --rm --volume ${PWD}:/workspace --workdir /workspace hyw-godevcontainer
+	echo 'use ctrl-d to exit'
 
 lint: misspell staticcheck vet gofmt
 # The disabled linters are deprecated

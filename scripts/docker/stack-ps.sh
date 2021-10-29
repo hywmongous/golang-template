@@ -1,2 +1,2 @@
 #!/bin/sh
-sudo docker stack ps
+docker stack ps

@@ -25,19 +25,19 @@ help:
 	@echo '  "make run"                     - Runs the docker image in a container with ports $(PORTMAPPING)'
 
 build:
-	sudo docker build -t $(TAG) -f $(DOCKERFILEPATH) $(ROOTDIRECTORY) --compress
+	docker build -t $(TAG) -f $(DOCKERFILEPATH) $(ROOTDIRECTORY) --compress
 
 create: build
-	sudo docker create $(TAG)
+	docker create $(TAG)
 
 run: create
-	sudo docker run -p $(PORTMAPPING) $(TAG)
+	docker run -p $(PORTMAPPING) $(TAG)
 
 runit: create
-	sudo docker run -p $(PORTMAPPING) -it $(TAG)
+	docker run -p $(PORTMAPPING) -it $(TAG)
 
 rm:
-	sudo docker rm -f $(TAG) 2> /dev/null
+	docker rm -f $(TAG) 2> /dev/null
 
 ps:
 	sudo $(DOCKER) ps
