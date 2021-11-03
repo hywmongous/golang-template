@@ -6,8 +6,8 @@ import (
 )
 
 type TicketRoutes struct {
-	engine     *gin.Engine
 	controller controllers.TicketController
+	engine     *gin.Engine
 }
 
 func CreateTicketRoutes(

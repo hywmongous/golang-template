@@ -6,8 +6,8 @@ import (
 )
 
 type SessionRoutes struct {
-	engine     *gin.Engine
 	controller controllers.SessionController
+	engine     *gin.Engine
 }
 
 func CreateSessionRoutes(
