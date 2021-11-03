@@ -7,6 +7,8 @@ networks:
   service_net:
     driver: overlay
   tracing:
+    external: true
+    name: tracing_jaeger
 
 services:
   ia_api:
@@ -24,28 +26,6 @@ services:
     ports:
       - 80:5000
 
-  ia_zookeeper:
-    image: wurstmeister/zookeeper:latest
-    restart: always
-    env_file:
-      - ./zookeeper/environment.env
-    networks:
-      - service_net
-    logging:
-      driver: "none"
-
-  ia_kafka:
-    image: wurstmeister/kafka:latest
-    restart: always
-    depends_on:
-      - ia_zookeeper
-    env_file:
-      - ./kafka/environment.env
-    networks:
-      - service_net
-    logging:
-      driver: "none"
-
   ia_mongo:
     image: mongo:latest
     restart: always
@@ -59,11 +39,3 @@ services:
       - service_net
     logging:
       driver: "none"
-
-  jaeger:
-    image: jaegertracing/all-in-one:latest
-    networks:
-      - tracing
-    ports:
-      - 16686:16686
-      - 14269:14269
