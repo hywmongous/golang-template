@@ -21,6 +21,8 @@ services:
       - tracing
     env_file:
       - ./api/environment.env
+    ports:
+      - 5000
 
   ia_mongo:
     image: mongo:latest
@@ -30,7 +32,7 @@ services:
     volumes:
       - ia_mongo_data:/data/db
     ports:
-      - 27017:27017
+      - 27017
     networks:
       - service_net
     logging:
