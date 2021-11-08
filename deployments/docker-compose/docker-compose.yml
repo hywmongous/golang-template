@@ -16,15 +16,11 @@ services:
     restart: always
     depends_on:
       - ia_mongo
-      - ia_kafka
-      - jaeger
     networks:
       - service_net
       - tracing
     env_file:
       - ./api/environment.env
-    ports:
-      - 80:5000
 
   ia_mongo:
     image: mongo:latest

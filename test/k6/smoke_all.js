@@ -2,7 +2,7 @@ export { default as identity_login } from "./identity-login/smoke_test.js";
 export { default as identity_logout } from "./identity-logout/smoke_test.js";
 export { default as identity_register } from "./identity-register/smoke_test.js";
 
-const minDuration = 300;
+const minDuration = 5;
 
 export const options = {
     minIterationDuration: `${minDuration}s`,
@@ -18,7 +18,7 @@ function createSmokeScenario(func) {
         exec: func,
         executor: "constant-vus",
         vus: 1,
-        duration: "10s",
+        duration: "30s",
         startTime: `${Math.random() * minDuration}s`,
         gracefulStop: "5s",
     };
