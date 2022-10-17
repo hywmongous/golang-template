@@ -13,6 +13,8 @@ import (
 	"github.com/hywmongous/example-service/pkg/es/mongo"
 )
 
+
+
 type Transaction struct {
 	AggregateID string
 	Amount      int
