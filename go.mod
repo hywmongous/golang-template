@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/cockroachdb/errors v1.8.6
-	github.com/gin-gonic/gin v1.7.4
+	github.com/gin-gonic/gin v1.7.7
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.3.0
 	github.com/opentracing-contrib/go-gin v0.0.0-20201220185307-1dd2273433a4
